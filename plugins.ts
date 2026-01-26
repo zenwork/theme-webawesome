@@ -49,6 +49,7 @@ export default function (userOptions?: Options) {
       }))
       .add('uploads')
       .add('style.css')
+      .add('ts/index.ts')
       .copy("npm:@awesome.me/webawesome@^3.1.0/dist/styles/**/*.css", "styles/webawesome")
   }
 }
