@@ -3,6 +3,7 @@
     "imports": {
         "webawesome": "npm:@awesome.me/webawesome@^3.1.0",
         "lit": "npm:lit@^3.3.2",
+        "prismjs": "npm:prismjs@^1.29.0",
         "lume/": "https://cdn.jsdelivr.net/gh/lumeland/lume@3.1.0/",
         "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.13.0/",
         "lume/jsx-runtime": "https://cdn.jsdelivr.net/gh/oscarotero/ssx@0.1.12/jsx-runtime.ts"
@@ -28,10 +29,13 @@
     },
     "compilerOptions": {
         "types": [
-            "lume/types.ts"
+            "lume/types.ts",
+            "webawesome/dist/custom-elements-jsx.d.ts"
         ],
         "jsx": "react-jsx",
-        "jsxImportSource": "lume"
+        "jsxImportSource": "lume",
+        "experimentalDecorators": true,
+        
     },
     "exclude": [
         "./_site"

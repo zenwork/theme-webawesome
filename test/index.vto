@@ -7,4 +7,10 @@ title: Home
 
   <my-hello></my-hello>
   <my-bye></my-bye>
+
+  <demo-pane
+    data='{"label": "Click Me!", "variant": "brand", "size": "medium"}'
+    template='<wa-button variant="{{variant}}" size="{{size}}">{{label}}</wa-button>'
+    imports='["button"]'>
+  </demo-pane>
 </header>
