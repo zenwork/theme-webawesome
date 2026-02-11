@@ -7,7 +7,11 @@
     <meta name="color-scheme" content="light dark">
     <link rel="stylesheet" href="/style.css">
     <link rel="canonical" href="{{ url |> url(true) }}">
-    <link rel="stylesheet" href="/styles/webawesome/webawesome.css" />
+    {{# WEBAWESOME COMPONENT LIBRARY #}}
+    <link rel="stylesheet" href="/lib/webawesome/dist-cdn/styles/webawesome.css" />
+    <script type="module" src="/lib/webawesome/dist-cdn/webawesome.loader.js" data-webawesome="/lib/webawesome/dist-cdn" ></script>
+    <script type="module" src="/lib/webawesome/dist-cdn/components/split-panel/split-panel.js" data-webawesome="/lib/webawesome/dist-cdn" ></script>
+    {{# CUSTOM COMPONENTS #}}
     <script type="module" src="/components/index.js"></script>
   </head>
   <body>

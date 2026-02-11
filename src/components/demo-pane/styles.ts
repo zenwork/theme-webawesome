@@ -3,6 +3,7 @@ import {css}      from 'npm:lit@^3.3.2'
 export let styles: any = css`
   :host {
     display: block;
+    min-height: 600px;
     border: 1px solid var(--wa-color-neutral-200);
     border-radius: var(--wa-border-radius-medium);
     overflow: hidden;

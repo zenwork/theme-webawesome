@@ -2,3 +2,7 @@ _site
 _cache
 .DS_Store
 .idea
+
+package.json
+package-lock.json
+src/lib/webawesome

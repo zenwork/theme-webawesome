@@ -50,6 +50,7 @@ export default function (userOptions?: Options) {
       .add('uploads')
       .add('style.css')
       .add('components/index.ts')
-      .copy("npm:@awesome.me/webawesome@^3.1.0/dist/styles/**/*.css", "styles/webawesome")
+      // .copy("npm:@awesome.me/webawesome@^3.1.0/dist/styles/**/*.css", "styles/webawesome")
+      .copy("lib", "lib")
   }
 }

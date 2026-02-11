@@ -1,21 +1,18 @@
-import { html, LitElement, PropertyValueMap } from 'npm:lit@^3.3.2'
-import { property, state } from 'npm:lit@^3.3.2/decorators.js'
-import { unsafeHTML } from 'npm:lit@^3.3.2/directives/unsafe-html.js'
-import Prism from 'npm:prismjs@^1.29.0'
-import 'npm:prismjs@^1.29.0/components/prism-json.js'
-import 'npm:prismjs@^1.29.0/components/prism-markup.js'
+import { html, LitElement, PropertyValueMap } from 'lit'
+import { property, state } from 'lit/decorators.js'
+import { unsafeHTML } from 'lit/directives/unsafe-html.js'
+import Prism from 'prismjs'
+import 'prismjs/components/prism-json.js'
+import 'prismjs/components/prism-markup.js'
 import { styles } from './styles.ts'
 import { parseJSON, renderTemplate, TemplateData } from './template-renderer.ts'
-
-// Import WebAwesome components
-import 'npm:@awesome.me/webawesome@^3.1.0/dist/webawesome.loader.js'
 
 /**
  * A 3-pane demo component for showcasing web components
  * Displays JSON data, HTML markup, and rendered output side-by-side
  */
 class DemoPane extends LitElement {
-  static override styles = styles
+  // static override styles = styles
 
   @property({ type: String })
   data = '{}'
@@ -93,11 +90,12 @@ class DemoPane extends LitElement {
 
   private async loadImports(): Promise<void> {
     try {
-      const importList = JSON.parse(this.imports) as string[]
-      const baseUrl = 'npm:@awesome.me/webawesome@^3.1.0/dist/components'
+      // Always load split-panel since it's required for the layout
+      // await import('webawesome/components/split-panel/split-panel.js')
 
+      const importList = JSON.parse(this.imports) as string[]
       for (const componentName of importList) {
-        await import(`${baseUrl}/${componentName}/${componentName}.js`)
+        await import(`webawesome/components/${componentName}/${componentName}.js`)
       }
     } catch (e) {
       console.warn('Failed to load imports:', e)
@@ -172,17 +170,15 @@ class DemoPane extends LitElement {
     }
 
     return html`
-      <wa-split-panel>
-
+      <wa-split-panel position="33">
         <div slot="start">${this.renderPane('JSON Data', this._highlightedJson, 'json', 'copy-json')}</div>
 
-        <wa-split-panel slot="end" >
+        <wa-split-panel slot="end" position="50">
           <div slot="start">${this.renderPane('HTML Markup', this._highlightedHtml, 'html', 'copy-html')}</div>
           <div slot="end">${this.renderOutputPane()}</div>
         </wa-split-panel>
       </wa-split-panel>
     `
-
   }
 }
 

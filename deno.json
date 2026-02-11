@@ -1,7 +1,7 @@
 {
-    "version": "0.0.0",
+    "version": "0.1.0",
     "imports": {
-        "webawesome": "npm:@awesome.me/webawesome@^3.1.0",
+        "webawesome": "./lib/webawesome/dist/",
         "lit": "npm:lit@^3.3.2",
         "prismjs": "npm:prismjs@^1.29.0",
         "lume/": "https://cdn.jsdelivr.net/gh/lumeland/lume@3.1.0/",
@@ -25,6 +25,10 @@
         "changelog": {
             "description": "Run the changelog utility to format the CHANGELOG.md file",
             "command": "deno run --allow-read --allow-write https://deno.land/x/changelog@v2.6.2/bin.ts"
+        },
+        "npm": {
+            "description": "Build the npm package",
+            "command": "deno run --allow-read --allow-write --allow-env tools/npm.ts"
         }
     },
     "compilerOptions": {
@@ -84,5 +88,6 @@
         "indentWidth": 2,
         "semiColons": false,
         "singleQuote": true
-    }
+    },
+    "nodeModulesDir": "auto"
 }
