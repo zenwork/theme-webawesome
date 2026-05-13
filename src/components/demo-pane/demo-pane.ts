@@ -13,7 +13,7 @@ import Prism from 'prismjs'
 import 'prismjs/components/prism-json.js'
 import 'prismjs/components/prism-markup.js'
 import { styles } from './styles.ts'
-import { parseJSON, renderTemplate, TemplateData } from './template-renderer.ts'
+import { formatHtmlTemplate, parseJSON, renderTemplate, TemplateData } from './template-renderer.ts'
 
 /**
  * A 3-pane demo component for showcasing web components
@@ -330,12 +330,25 @@ class DemoPane extends LitElement {
   }
 
   private formatJson(): void {
+    if (this._jsonEditor) {
+      this._draftData = this._jsonEditor.state.doc.toString()
+    }
     const parsed = parseJSON(this._draftData)
     if (!parsed) {
       this._error = 'Invalid JSON data'
       return
     }
     this._draftData = JSON.stringify(parsed, null, 2)
+    this.syncEditorsFromDraft()
+    this.updateEditorHighlighting()
+    this.processData()
+  }
+
+  private formatHtml(): void {
+    if (this._templateEditor) {
+      this._draftTemplate = this._templateEditor.state.doc.toString()
+    }
+    this._draftTemplate = formatHtmlTemplate(this._draftTemplate)
     this.syncEditorsFromDraft()
     this.updateEditorHighlighting()
     this.processData()
@@ -362,6 +375,7 @@ class DemoPane extends LitElement {
         <div class="editor-actions">
           <wa-button size="small" variant="brand" @click=${this.runDemo}>Run</wa-button>
           <wa-button size="small" variant="neutral" @click=${this.formatJson}>Format JSON</wa-button>
+          <wa-button size="small" variant="neutral" @click=${this.formatHtml}>Format HTML</wa-button>
           <wa-button size="small" variant="neutral" appearance="plain" @click=${this.resetDemo}>Reset</wa-button>
         </div>
       </div>

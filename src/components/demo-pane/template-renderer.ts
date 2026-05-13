@@ -1,32 +1,86 @@
-import Handlebars from 'handlebars'
-
 export interface TemplateData {
   [key: string]: unknown
 }
 
 /**
- * Renders a template string with Handlebars syntax.
- * Supports conditionals, loops, and nested property access.
- * Also supports legacy [[key]] placeholders by converting them to {{key}}.
+ * Renders an HTML template string with JS template-literal interpolation.
+ * The template supports `${...}` expressions, where expression scope comes
+ * from the provided data object.
  *
- * @param template - Template string with Handlebars syntax
- * @param data - Data object with values to replace
- * @returns Rendered string
+ * Example:
+ * template: `<wa-button variant="${variant}">${label}</wa-button>`
  */
 export function renderTemplate(template: string, data: TemplateData): string {
   const normalized = normalizeTemplateSyntax(template)
-  const compiled = Handlebars.compile(normalized, {
-    noEscape: false,
-    strict: true,
-  })
-  return compiled(data)
+  const escaped = normalized.replaceAll('\\', '\\\\').replaceAll('`', '\\`')
+  const evaluator = new Function(
+    'props',
+    `with (props) { return \`${escaped}\`; }`,
+  ) as (props: TemplateData) => string
+  return evaluator(data)
+}
+
+export function formatHtmlTemplate(template: string): string {
+  const normalized = normalizeTemplateSyntax(template).trim()
+  if (!normalized) {
+    return ''
+  }
+
+  const doc = new DOMParser().parseFromString(`<body>${normalized}</body>`, 'text/html')
+  const body = doc.body
+  const lines: string[] = []
+
+  const writeNode = (node: Node, depth: number): void => {
+    const indent = '  '.repeat(depth)
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent?.trim()
+      if (text) {
+        lines.push(`${indent}${text}`)
+      }
+      return
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return
+    }
+
+    const element = node as Element
+    const attrs = [...element.attributes]
+      .map((attr) => ` ${attr.name}="${attr.value}"`)
+      .join('')
+
+    if (!element.childNodes.length) {
+      lines.push(`${indent}<${element.tagName.toLowerCase()}${attrs}></${element.tagName.toLowerCase()}>`)
+      return
+    }
+
+    const hasElementChildren = [...element.childNodes].some((child) => child.nodeType === Node.ELEMENT_NODE)
+    const textChildren = [...element.childNodes]
+      .filter((child) => child.nodeType === Node.TEXT_NODE)
+      .map((child) => child.textContent?.trim() ?? '')
+      .filter(Boolean)
+
+    lines.push(`${indent}<${element.tagName.toLowerCase()}${attrs}>`)
+    for (const child of element.childNodes) {
+      writeNode(child, depth + 1)
+    }
+    lines.push(`${indent}</${element.tagName.toLowerCase()}>`)
+  }
+
+  for (const child of body.childNodes) {
+    writeNode(child, 0)
+  }
+
+  return lines.join('\n')
 }
 
 /**
- * Converts legacy [[key]] placeholders to Handlebars {{key}} placeholders.
+ * Backwards-compatible normalization for older demo snippets.
+ * `[[value]]` becomes `${value}`.
  */
 function normalizeTemplateSyntax(template: string): string {
-  return template.replace(/\[\[\s*([^[\]]+?)\s*\]\]/g, '{{$1}}')
+  return template.replace(/\[\[\s*([^[\]]+?)\s*\]\]/g, '${$1}')
 }
 
 /**
