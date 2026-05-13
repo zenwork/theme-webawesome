@@ -92,7 +92,7 @@ function getUniqueSlug(slug: string, used: Set<string>): string {
   return next
 }
 
-function buildHtmlToc(content: string, pageUrl: string | undefined, minLevel = 2): { content: string; toc: TocNode[] } {
+function buildHtmlToc(content: string, minLevel = 2): { content: string; toc: TocNode[] } {
   const root: TocNode = { level: 0, text: '', slug: '', url: '', children: [] }
   const stack: TocNode[] = [root]
   const usedSlugs = new Set<string>()
@@ -112,7 +112,7 @@ function buildHtmlToc(content: string, pageUrl: string | undefined, minLevel = 2
 
     const existingId = attributes.match(headingIdPattern)?.[2]?.trim()
     const slug = getUniqueSlug(existingId || slugifyHeading(text), usedSlugs)
-    const url = pageUrl ? `${pageUrl}#${slug}` : `#${slug}`
+    const url = `#${slug}`
     const node: TocNode = { level, text, slug, url, children: [] }
 
     if (node.level > stack[0].level) {
@@ -174,7 +174,7 @@ export default function (userOptions?: Options) {
           continue
         }
 
-        const { content: nextContent, toc: htmlToc } = buildHtmlToc(content, page.data.url)
+        const { content: nextContent, toc: htmlToc } = buildHtmlToc(content)
 
         if (!htmlToc.length) {
           continue

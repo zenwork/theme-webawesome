@@ -36,6 +36,14 @@ Run:
 deno task serve
 ```
 
+## What the theme wires up
+
+- WebAwesome CSS + loader scripts in the base layout
+- Theme components bundle loaded from `componentEntrypoint` (default: `components/index.ts`)
+- Site/table-of-contents navigation helpers (`nav` + markdown `toc`)
+- HTML heading preprocessing that assigns IDs and builds page TOC data from `h2`-`h6`
+- Docs plugin stack: `lightningcss`, `base_path`, `metas`, `sitemap`, `favicon`, `esbuild`
+
 ## WebAwesome: free vs Pro configuration
 
 ```ts
@@ -48,7 +56,7 @@ site.use(theme({
   webawesome: {
     mode: 'free', // or 'pro'
     // Free default:
-    // assetBasePath: 'https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.1.0/dist-cdn',
+    // assetBasePath: '/lib/webawesome/dist-cdn',
     //
     // Pro example:
     // assetBasePath: '/lib/webawesome-pro/dist-cdn',
@@ -102,7 +110,9 @@ site.use(theme({
 Notes:
 
 - `componentEntrypoint` is loaded in the base layout as a module script.
-- `additionalComponentEntrypoints` are bundled too.
+- `additionalComponentEntrypoints` are added and bundled, but are not auto-injected by `src/_includes/layouts/base.vto`.
+- Load additional entrypoints by importing them from your primary entrypoint, or by adding script tags in a custom
+  layout.
 - Always register custom elements with a guard:
   - `if (!customElements.get('my-tag')) customElements.define('my-tag', MyEl)`
 
@@ -128,7 +138,7 @@ deno task build
 ## Theme consumer checklist
 
 - [ ] `style.css` is included in generated output and loads in browser.
-- [ ] WebAwesome CSS + loader URLs are reachable (free CDN or configured Pro path).
+- [ ] WebAwesome CSS + loader URLs are reachable (default local `/lib/webawesome/dist-cdn` or configured path).
 - [ ] `componentEntrypoint` points to a valid `.ts`/`.js` file.
 - [ ] custom elements are registered before use in templates.
 - [ ] If using `demo-pane`, template expressions use `${propName}` from JSON data.

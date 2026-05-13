@@ -1,6 +1,7 @@
 ---
 layout: layouts/base.vto
 title: Getting Started
+order: 30
 ---
 
 <section class="docs-stack">
@@ -16,9 +17,9 @@ title: Getting Started
     <p>In your Lume site config, import the theme and use it as a site plugin:</p>
     <code-example language="typescript">
       import lume from 'lume/mod.ts'
-      import theme from 'theme-webawesome/mod.ts'
+      import theme from 'theme-webawesome/mod.ts'; const site = lume()
 
-      const site = lume() site.use(theme())
+      site.use(theme())
       export default site
     </code-example>
   </section>
@@ -29,7 +30,13 @@ title: Getting Started
       <li>Loads WebAwesome CSS and component loader scripts</li>
       <li>Compiles TypeScript component entrypoints with esbuild</li>
       <li>Registers a default theme component bundle at <code>/components/index.js</code></li>
-      <li>Adds default docs plugins: metas, sitemap, favicon, base path, and lightningcss</li>
+      <li>Builds site navigation and page TOC data with <code>nav</code> and markdown <code>toc</code></li>
+      <li>
+        Preprocesses rendered HTML headings (<code>h2</code> to <code>h6</code>) to assign IDs and page TOC entries
+      </li>
+      <li>
+        Adds default docs plugins: lightningcss, base path, nav, metas, markdown toc, sitemap, favicon, and esbuild
+      </li>
     </ul>
   </section>
 

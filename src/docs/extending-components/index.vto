@@ -1,0 +1,59 @@
+---
+layout: layouts/base.vto
+title: Extending Components
+order: 60
+---
+<section class="docs-stack">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      Register your own Lit components through theme entrypoints so docs pages can use project-specific custom elements.
+    </p>
+  </header>
+
+  <section class="docs-section">
+    <h2>Primary Entrypoint</h2>
+    <p>
+      Set <code>componentEntrypoint</code> to the module that imports and registers your custom elements. This
+      entrypoint is auto-loaded by the base layout.
+    </p>
+    <code-example language="typescript">
+      site.use(
+        theme({
+                componentEntrypoint: 'components/custom-entry.ts'
+              }))
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Additional Entrypoints</h2>
+    <p>
+      Additional entrypoints are added to the build pipeline, but not auto-injected by the base layout. Import them from
+      the primary entrypoint, or load their scripts in a custom layout.
+    </p>
+    <code-example language="typescript">
+      site.use(
+        theme({
+                componentEntrypoint: 'components/custom-entry.ts',
+                additionalComponentEntrypoints:
+                  ['components/analytics.ts', 'components/carts.ts'],
+              }))
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Registration Pattern</h2>
+    <p>Guard each custom element definition to avoid duplicate registration errors:</p>
+    <code-example language="typescript">
+      import { LitElement } from 'lit'
+
+      class ProductCallout extends LitElement {
+        // implementation
+      }
+
+      if (!customElements.get('product-callout')) {
+        customElements.define('product-callout', ProductCallout)
+      }
+    </code-example>
+  </section>
+</section>

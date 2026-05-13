@@ -1,6 +1,7 @@
 ---
 layout: layouts/base.vto
 title: Theme Configuration
+order: 40
 ---
 <section class="docs-stack">
   <header>
@@ -14,19 +15,27 @@ title: Theme Configuration
   <section class="docs-section">
     <h2>Default Behavior</h2>
     <p>
-      By default, the theme uses WebAwesome free mode and loads assets from the jsDelivr
-      <code>@awesome.me/webawesome</code> distribution.
+      By default, the theme uses WebAwesome free mode and loads assets from
+      <code>/lib/webawesome/dist-cdn</code>. The Pro default base path is <code>/lib/webawesome-pro/dist-cdn</code>.
     </p>
   </section>
 
   <section class="docs-section">
     <h2>Options</h2>
-    <code-example language="typescript"
-    >site.use(theme({ webawesome: { mode: 'free', // or 'pro' assetBasePath:
-      'https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.1.0/dist-cdn', cssPath:
-      'https://.../styles/webawesome.css', loaderPath: 'https://.../webawesome.loader.js', splitPanelPath:
-      'https://.../components/split-panel/split-panel.js', }, componentEntrypoint: 'components/index.ts',
-      additionalComponentEntrypoints: ['components/custom.ts'], }))</code-example>
+    <code-example language="typescript">
+      site.use(
+        theme({
+                webawesome: {
+                  mode: 'free',
+                  assetBasePath: '/lib/webawesome/dist-cdn',
+                  cssPath: '/lib/webawesome/dist-cdn/styles/webawesome.css',
+                  loaderPath: '/lib/webawesome/dist-cdn/webawesome.loader.js',
+                  splitPanelPath: '/lib/webawesome/dist-cdn/components/split-panel/split-panel.js',
+                },
+                componntEntrypoint: 'components/index.ts',
+                additionalComponentEntrypoints: ['components/custom.ts'],
+              }))
+    </code-example>
   </section>
 
   <section class="docs-section">
@@ -35,7 +44,23 @@ title: Theme Configuration
       Set <code>mode</code> to <code>pro</code> and provide a compatible asset path if your Pro files are not located at
       the theme default.
     </p>
-    <code-example language="typescript"
-    >site.use(theme({ webawesome: { mode: 'pro', assetBasePath: '/lib/webawesome-pro/dist-cdn', }, }))</code-example>
+    <code-example language="typescript">
+      site.use(
+        theme({
+                webawesome: {
+                  mode: 'pro',
+                  assetBasePath: 'lib/webawesome-pro/dist-cd',
+                ,
+             }));
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Component Entrypoints</h2>
+    <p>
+      The base layout auto-loads only the primary script generated from <code>componentEntrypoint</code>. Additional
+      entrypoints are still built, but you must import them from your primary entrypoint or load them in a custom
+      layout.
+    </p>
   </section>
 </section>

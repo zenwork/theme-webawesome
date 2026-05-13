@@ -1,0 +1,59 @@
+---
+layout: layouts/base.vto
+title: Navigation and TOC
+order: 50
+---
+<section class="docs-stack">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      This theme builds both site-level and page-level navigation so technical docs remain scannable as pages grow.
+    </p>
+  </header>
+
+  <section class="docs-section">
+    <h2>Site Navigation</h2>
+    <p>
+      The left sidebar tree is built from docs pages under <code>/docs/</code> and is rendered in
+      <code>src/_includes/site-toc.vto</code>. Tree expansion state is persisted by <code>site-toc-tree</code> using
+      local storage.
+    </p>
+  </section>
+
+  <section class="docs-section">
+    <h2><code>site-toc-tree</code> API</h2>
+    <ul>
+      <li><code>storage-key</code> (string, default <code>site-toc-expanded-v1</code>)</li>
+    </ul>
+    <p>
+      The component wraps a <code>wa-tree</code>, persists expanded <code>wa-tree-item</code> keys to local storage, and
+      restores them on load. It also syncs the selected tree item from the current pathname.
+    </p>
+    <code-example language="html">
+      &lt;site-toc-tree storage-key="site-toc-expanded-v1"&gt;
+        &lt;wa-tree&gt;...&lt;/wa-tree&gt;
+      &lt;/site-toc-tree&gt;
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Page TOC</h2>
+    <p>
+      During preprocess, headings <code>h2</code> to <code>h6</code> receive IDs and are converted into page TOC data.
+      The right panel in <code>layouts/base.vto</code> renders this TOC when headings exist.
+    </p>
+  </section>
+
+  <section class="docs-section">
+    <h2>Controlling Sidebar Entries</h2>
+    <p>Use page front matter to shape sidebar discovery:</p>
+    <code-example language="yaml">
+      --- title: API Reference order: 70 hide_menu: true ---
+    </code-example>
+    <ul>
+      <li><code>title</code>: sidebar label</li>
+      <li><code>order</code>: sort priority within docs navigation</li>
+      <li><code>hide_menu: true</code>: omit the page from sidebar menus</li>
+    </ul>
+  </section>
+</section>

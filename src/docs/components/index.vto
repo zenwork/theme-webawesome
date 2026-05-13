@@ -1,6 +1,7 @@
 ---
 layout: layouts/base.vto
 title: Theme Components
+order: 45
 ---
 <section class="docs-stack">
   <header>
@@ -18,9 +19,7 @@ title: Theme Components
         <code>&lt;demo-pane&gt;</code>: interactive code example surface with JSON data, template, and output tabs
       </li>
       <li><code>&lt;code-example&gt;</code>: read-only CodeMirror block for documentation snippets</li>
-      <li>
-        <code>&lt;my-hello&gt;</code> and <code>&lt;my-bye&gt;</code>: small reference components for extension tests
-      </li>
+      <li><code>&lt;site-toc-tree&gt;</code>: persists sidebar tree expansion state and selected page behavior</li>
     </ul>
     <p>Use <code>src/components/index.ts</code> as the default registration/export surface.</p>
   </section>
@@ -28,9 +27,11 @@ title: Theme Components
   <section class="docs-section">
     <h2>Using Code Examples</h2>
     <p>Use <code>&lt;code-example&gt;</code> when you want static snippets with theme-consistent syntax styling.</p>
-    <code-example language="html"
-    >&lt;code-example language="typescript"&gt;import theme from
-      'theme-webawesome/mod.ts'&lt;/code-example&gt;</code-example>
+    <code-example language="html">
+      &lt;code-example language="typescript"&gt;
+        console.log('Hello, world!');
+      &lt;/code-example&gt;
+    </code-example>
   </section>
 
   <section class="docs-section">
@@ -49,11 +50,54 @@ title: Theme Components
   </section>
 
   <section class="docs-section">
+    <h2><code>demo-pane</code> API</h2>
+    <ul>
+      <li><code>data</code> (string, default <code>{}</code>): JSON object string used as template scope</li>
+      <li><code>template</code> (string, default empty): HTML template with <code>${...}</code> expressions</li>
+      <li>
+        <code>imports</code> (string, default <code>[]</code>): JSON array of WebAwesome component names to import
+      </li>
+      <li><code>editable</code> (boolean, default <code>true</code>): enables editors and run/format/reset actions</li>
+      <li><code>layout</code> (<code>horizontal</code> | <code>tabs</code>, default <code>horizontal</code>)</li>
+      <li>
+        <code>default-tab</code> (<code>data</code> | <code>markup</code> | <code>output</code>, default
+        <code>output</code>)
+      </li>
+      <li><code>editor-open</code> (boolean, default <code>false</code>): opens the editor details panel on load</li>
+      <li><code>data-label</code> / <code>template-label</code> (string, default empty): editor field labels</li>
+    </ul>
+    <p>
+      Notes: JSON must parse to an object. The component sanitizes rendered output, auto-detects <code>wa-*</code> tags
+      for imports, and supports <code>Mod+Enter</code> to run from editors.
+    </p>
+  </section>
+
+  <section class="docs-section">
+    <h2><code>code-example</code> API</h2>
+    <ul>
+      <li>
+        <code>language</code> (<code>json</code> | <code>html</code> | <code>javascript</code> |
+        <code>typescript</code> | <code>text</code>, default <code>text</code>)
+      </li>
+      <li><code>line-numbers</code> (boolean, default <code>true</code>)</li>
+      <li><code>code</code> (string, default empty): explicit snippet text</li>
+    </ul>
+    <p>
+      If <code>code</code> is not provided, content is read from the element slot, normalized for indentation, and then
+      rendered in a read-only CodeMirror view.
+    </p>
+  </section>
+
+  <section class="docs-section">
     <h2>Adding Project Components</h2>
     <p>Register your own Lit bundles with extra entrypoints:</p>
-    <code-example language="typescript"
-    >site.use(theme({ componentEntrypoint: 'components/index.ts', additionalComponentEntrypoints:
-      ['components/product-docs.ts'], }))</code-example>
-    <p>Each entrypoint is emitted as an ES module script and loaded by the theme layout.</p>
+    <code-example language="typescript">
+      site.use(theme({ componentEntrypoint: 'components/index.ts', additionalComponentEntrypoints:
+      ['components/product-docs.ts'], }));
+    </code-example>
+    <p>
+      The base layout auto-loads only the primary script from <code>componentEntrypoint</code>. Import additional
+      entrypoints from that file, or load them in a custom layout.
+    </p>
   </section>
 </section>
