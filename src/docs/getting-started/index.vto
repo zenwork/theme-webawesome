@@ -2,6 +2,7 @@
 layout: layouts/base.vto
 title: Getting Started
 ---
+
 <section class="docs-stack">
   <header>
     <h1>{{ title }}</h1>
@@ -14,7 +15,10 @@ title: Getting Started
     <h2>Install and Import</h2>
     <p>In your Lume site config, import the theme and use it as a site plugin:</p>
     <code-example language="typescript">
-      import lume from 'lume/mod.ts' import theme from 'theme-webawesome/mod.ts' const site = lume() site.use(theme())
+      import lume from 'lume/mod.ts'
+      import theme from 'theme-webawesome/mod.ts'
+
+      const site = lume() site.use(theme())
       export default site
     </code-example>
   </section>
