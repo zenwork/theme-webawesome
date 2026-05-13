@@ -1,16 +1,31 @@
 ---
 layout: layouts/base.vto
-title: Home
+title: Technical Docs Theme
 ---
-<header>
-  <h1>{{ title }}</h1>
+<section class="docs-stack">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      WebAwesome + Lit focused documentation theme with runnable examples.
+      Use this as a baseline for component docs, API guides, and interactive snippets.
+    </p>
+  </header>
 
-  <p>This is a boilerplate to create a Lume theme</p>
+  <section class="example-grid">
+    <a class="example-card" href="/examples/buttons/">
+      <h3>Button Examples</h3>
+      <p>Variants, sizes, icon buttons, and live output.</p>
+    </a>
+    <a class="example-card" href="/examples/forms/">
+      <h3>Form Control Examples</h3>
+      <p>Inputs, select controls, and composed form rows.</p>
+    </a>
+  </section>
 
   <demo-pane
     data='{"label": "Click Me!", "variant": "brand", "size": "medium"}'
-    template='<wa-button variant="brand" size="medium">Click Me!</wa-button>'
-    imports='["button"]'>
+    template='<wa-button variant="[[variant]]" size="[[size]]">[[label]]</wa-button>'
+    imports='["button"]'
+    default-tab="output">
   </demo-pane>
-
-</header>
+</section>

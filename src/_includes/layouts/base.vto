@@ -8,17 +8,22 @@
     <link rel="stylesheet" href="/style.css">
     <link rel="canonical" href="{{ url |> url(true) }}">
     {{# WEBAWESOME COMPONENT LIBRARY #}}
-    <link rel="stylesheet" href="/lib/webawesome/dist-cdn/styles/webawesome.css" />
-    <script type="module" src="/lib/webawesome/dist-cdn/webawesome.loader.js" data-webawesome="/lib/webawesome/dist-cdn" ></script>
-    <script type="module" src="/lib/webawesome/dist-cdn/components/split-panel/split-panel.js" data-webawesome="/lib/webawesome/dist-cdn" ></script>
+    <link rel="stylesheet" href="{{ webawesome.cssPath }}" />
+    <script type="module" src="{{ webawesome.loaderPath }}" data-webawesome="{{ webawesome.assetBasePath }}" ></script>
+    <script type="module" src="{{ webawesome.splitPanelPath }}" data-webawesome="{{ webawesome.assetBasePath }}" ></script>
     {{# CUSTOM COMPONENTS #}}
-    <script type="module" src="/components/index.js"></script>
+    <script type="module" src="{{ themeComponents.primaryScript }}"></script>
   </head>
   <body>
-    <header>
+    <header class="site-header">
+      <nav class="site-nav" aria-label="Primary">
+        <a href="/">Overview</a>
+        <a href="/examples/buttons/">Buttons</a>
+        <a href="/examples/forms/">Forms</a>
+      </nav>
       {{ include "../theme-toggle.vto" }}
     </header>
-    <main>
+    <main class="docs-shell">
       {{ content }}
     </main>
   </body>

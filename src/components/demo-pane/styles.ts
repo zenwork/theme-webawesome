@@ -1,6 +1,6 @@
-import {css}      from 'npm:lit@^3.3.2'
+import { css, CSSResultGroup } from 'lit'
 
-export let styles: any = css`
+export const styles: CSSResultGroup = css`
   :host {
     display: block;
     min-height: 600px;
@@ -84,9 +84,72 @@ export let styles: any = css`
     opacity: 1;
   }
 
+  .tabs-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--wa-color-neutral-200);
+    background: var(--wa-color-neutral-50);
+  }
+
+  .tab-btn {
+    appearance: none;
+    border: 1px solid var(--wa-color-neutral-300);
+    background: var(--wa-color-neutral-0);
+    color: var(--wa-color-neutral-900);
+    border-radius: var(--wa-border-radius-small);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.5rem 0.625rem;
+    cursor: pointer;
+  }
+
+  .tab-btn.is-active {
+    background: var(--wa-color-brand-fill-loud);
+    border-color: var(--wa-color-brand-border-loud);
+    color: var(--wa-color-brand-on-loud);
+  }
+
   @media (max-width: 768px) {
+    :host {
+      min-height: 460px;
+    }
+
     .pane {
       min-height: 300px;
+    }
+
+    wa-split-panel {
+      display: none;
+    }
+
+    .tabs-toolbar {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.375rem;
+      padding: 0.5rem;
+      border-bottom: 1px solid var(--wa-color-neutral-200);
+      background: var(--wa-color-neutral-50);
+    }
+
+    .tab-btn {
+      appearance: none;
+      border: 1px solid var(--wa-color-neutral-300);
+      background: var(--wa-color-neutral-0);
+      color: var(--wa-color-neutral-900);
+      border-radius: var(--wa-border-radius-small);
+      font: inherit;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 0.625rem;
+      cursor: pointer;
+    }
+
+    .tab-btn.is-active {
+      background: var(--wa-color-brand-fill-loud);
+      border-color: var(--wa-color-brand-border-loud);
+      color: var(--wa-color-brand-on-loud);
     }
   }
 `

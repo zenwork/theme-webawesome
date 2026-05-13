@@ -15,7 +15,8 @@ export interface TemplateData {
  * @returns Rendered string
  */
 export function renderTemplate(template: string, data: TemplateData): string {
-  return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+  return template.replace(/\{\{([^}]+)\}\}|\[\[([^\]]+)\]\]/g, (match, moustachePath, bracketPath) => {
+    const path = (moustachePath ?? bracketPath).trim()
     const value = getNestedValue(data, path.trim())
     return value !== undefined ? String(value) : match
   })

@@ -3,7 +3,12 @@
     "lume/": "https://cdn.jsdelivr.net/gh/lumeland/lume@3.1.4/",
     "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.14.12/",
     "theme/": "../",
-    "lume/jsx-runtime": "https://cdn.jsdelivr.net/gh/oscarotero/ssx@0.1.14/jsx-runtime.ts"
+    "lume/jsx-runtime": "https://cdn.jsdelivr.net/gh/oscarotero/ssx@0.1.14/jsx-runtime.ts",
+    "lit": "npm:lit@3.3.2",
+    "lit/": "npm:lit@3.3.2/",
+    "lit/decorators.js": "npm:lit@3.3.2/decorators.js",
+    "lit/directives/unsafe-html.js": "npm:lit@3.3.2/directives/unsafe-html.js",
+    "prismjs": "npm:prismjs@^1.29.0"
   },
   "lock": false,
   "tasks": {

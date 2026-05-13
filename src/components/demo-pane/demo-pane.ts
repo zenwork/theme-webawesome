@@ -12,7 +12,7 @@ import { parseJSON, renderTemplate, TemplateData } from './template-renderer.ts'
  * Displays JSON data, HTML markup, and rendered output side-by-side
  */
 class DemoPane extends LitElement {
-  // static override styles = styles
+  static override styles = styles
 
   @property({ type: String })
   data = '{}'
@@ -24,7 +24,10 @@ class DemoPane extends LitElement {
   imports = '[]'
 
   @property({ type: String })
-  layout: 'horizontal' | 'vertical' | 'tabs' = 'horizontal'
+  layout: 'horizontal' | 'tabs' = 'horizontal'
+
+  @property({ type: String, attribute: 'default-tab' })
+  defaultTab: 'data' | 'markup' | 'output' = 'output'
 
   @state()
   private _parsedData: TemplateData | null = null
@@ -41,12 +44,34 @@ class DemoPane extends LitElement {
   @state()
   private _highlightedHtml = ''
 
+  @state()
+  private _activeTab: 'data' | 'markup' | 'output' = 'output'
+
+  @state()
+  private _isCompact = false
+
+  private _mediaQuery: MediaQueryList | null = null
+
   override connectedCallback(): void {
     super.connectedCallback()
+    this._activeTab = this.defaultTab
+    this._mediaQuery = globalThis.matchMedia('(max-width: 768px)')
+    this._isCompact = this._mediaQuery.matches
+    this._mediaQuery.addEventListener('change', this.handleMediaChange)
     if (this.data || this.template || this.imports) {
       this.processData()
       this.requestUpdate()
     }
+  }
+
+  override disconnectedCallback(): void {
+    this._mediaQuery?.removeEventListener('change', this.handleMediaChange)
+    this._mediaQuery = null
+    super.disconnectedCallback()
+  }
+
+  private handleMediaChange = (event: MediaQueryListEvent): void => {
+    this._isCompact = event.matches
   }
 
   protected override updated(_changedProperties: PropertyValueMap<DemoPane>): void {
@@ -82,10 +107,7 @@ class DemoPane extends LitElement {
     // Highlight HTML
     this._highlightedHtml = Prism.highlight(this._renderedHtml, Prism.languages.markup, 'markup')
 
-    // Load required imports
-    this.loadImports()
-
-    // console.log(this._parsedData, this._renderedHtml, this._highlightedJson, this._highlightedHtml)
+    void this.loadImports()
   }
 
   private async loadImports(): Promise<void> {
@@ -119,7 +141,6 @@ class DemoPane extends LitElement {
 
   private renderPane(title: string, content: string, type: 'json' | 'html', buttonId: string): unknown {
     const copyText = type === 'json' ? this.data : this._renderedHtml
-    console.log('content:', content)
     return html`
       <div class="pane">
         <div class="pane-header">
@@ -161,12 +182,46 @@ class DemoPane extends LitElement {
     `
   }
 
+  private renderTabs(): unknown {
+    const tabs: Array<{ key: 'data' | 'markup' | 'output'; label: string }> = [
+      { key: 'data', label: 'Data' },
+      { key: 'markup', label: 'Markup' },
+      { key: 'output', label: 'Output' },
+    ]
+
+    let tabContent: unknown = this.renderOutputPane()
+    if (this._activeTab === 'data') {
+      tabContent = this.renderPane('JSON Data', this._highlightedJson, 'json', 'copy-json')
+    } else if (this._activeTab === 'markup') {
+      tabContent = this.renderPane('HTML Markup', this._highlightedHtml, 'html', 'copy-html')
+    }
+
+    return html`
+      <div class="tabs-toolbar" role="tablist" aria-label="Demo pane sections">
+        ${tabs.map((tab) => html`
+          <button
+            class="tab-btn ${this._activeTab === tab.key ? 'is-active' : ''}"
+            role="tab"
+            aria-selected="${this._activeTab === tab.key}"
+            @click="${() => (this._activeTab = tab.key)}"
+          >
+            ${tab.label}
+          </button>
+        `)}
+      </div>
+      ${tabContent}
+    `
+  }
+
   protected override render(): unknown {
-    console.log('render')
     if (this._error && !this._parsedData) {
       return html`
         <div class="error">${this._error}</div>
       `
+    }
+
+    if (this.layout === 'tabs' || this._isCompact) {
+      return this.renderTabs()
     }
 
     return html`
