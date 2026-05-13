@@ -55,12 +55,6 @@ export function formatHtmlTemplate(template: string): string {
       return
     }
 
-    const hasElementChildren = [...element.childNodes].some((child) => child.nodeType === Node.ELEMENT_NODE)
-    const textChildren = [...element.childNodes]
-      .filter((child) => child.nodeType === Node.TEXT_NODE)
-      .map((child) => child.textContent?.trim() ?? '')
-      .filter(Boolean)
-
     lines.push(`${indent}<${element.tagName.toLowerCase()}${attrs}>`)
     for (const child of element.childNodes) {
       writeNode(child, depth + 1)

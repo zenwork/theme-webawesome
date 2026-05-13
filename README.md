@@ -112,6 +112,7 @@ Theme repo:
 deno task serve
 deno task build
 deno lint
+deno task test:browser
 ```
 
 Integration test site (`test/`):
@@ -128,7 +129,7 @@ deno task build
 - [ ] WebAwesome CSS + loader URLs are reachable (free CDN or configured Pro path).
 - [ ] `componentEntrypoint` points to a valid `.ts`/`.js` file.
 - [ ] custom elements are registered before use in templates.
-- [ ] If using `demo-pane`, template placeholders use `[[key]]` (or `{{key}}` when safe from Vento interpolation).
+- [ ] If using `demo-pane`, template expressions use `${propName}` from JSON data.
 - [ ] Root `deno task build` and `test/deno task build` both pass.
 
 ## Maintainer notes

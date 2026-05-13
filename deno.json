@@ -33,6 +33,10 @@
             "description": "Run and serve the site for development",
             "command": "deno task lume -s"
         },
+        "test:browser": {
+            "description": "Run browser-level smoke tests for demo pane",
+            "command": "node test/browser/demo-pane-smoke.mjs"
+        },
         "changelog": {
             "description": "Run the changelog utility to format the CHANGELOG.md file",
             "command": "deno run --allow-read --allow-write https://deno.land/x/changelog@v2.6.2/bin.ts"
