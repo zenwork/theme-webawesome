@@ -1,0 +1,107 @@
+---
+layout: layouts/base.vto
+title: Registering Components
+order: 60
+---
+<section class="docs-stack">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      Register your own Lit components through theme entrypoints so docs pages can use project-specific custom elements.
+    </p>
+  </header>
+
+  <section class="docs-section">
+    <h2>Focused Pattern for Lit Components</h2>
+    <p>
+      Keep one primary entrypoint that imports all shared custom elements and guards each registration. This keeps load
+      order predictable and avoids duplicate definition errors across docs pages.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+import { LitElement, html } from 'lit'
+
+class ProductCallout extends LitElement {
+  override render() {
+    return html`&lt;slot&gt;&lt;/slot&gt;`
+  }
+}
+
+if (!customElements.get('product-callout')) {
+  customElements.define('product-callout', ProductCallout)
+}
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Primary Entrypoint Wiring</h2>
+    <p>
+      Set <code>componentEntrypoint</code> to the module that imports and registers your custom elements. This
+      entrypoint is auto-loaded by the base layout.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+site.use(
+  theme({
+    componentEntrypoint: 'components/custom-entry.ts',
+  }),
+)
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Additional Entrypoints</h2>
+    <p>
+      Additional entrypoints are added to the build pipeline, but not auto-injected by the base layout. Import them from
+      the primary entrypoint, or load their scripts in a custom layout.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+site.use(
+  theme({
+    componentEntrypoint: 'components/custom-entry.ts',
+    additionalComponentEntrypoints: ['components/analytics.ts', 'components/carts.ts'],
+  }),
+)
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Recommended Loading Patterns</h2>
+    <p>Choose one of these patterns for additional entrypoints:</p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+// Pattern A: import secondary modules from your primary entrypoint
+// components/custom-entry.ts
+import './analytics.ts'
+import './carts.ts'
+import './product-callout.ts'
+    </code-example>
+    <!-- deno-fmt-ignore -->
+    <code-example language="html">
+&lt;!-- Pattern B: custom layout injects additional built scripts --&gt;
+&lt;script type="module" src="/components/custom-entry.js"&gt;&lt;/script&gt;
+&lt;script type="module" src="/components/analytics.js"&gt;&lt;/script&gt;
+&lt;script type="module" src="/components/carts.js"&gt;&lt;/script&gt;
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Troubleshooting</h2>
+    <ul>
+      <li>
+        <strong>Asset path mismatch (WebAwesome files not found):</strong> verify
+        <code>webawesome.assetBasePath</code>, <code>webawesome.cssPath</code>, and <code>webawesome.loaderPath</code>
+        in theme config. Confirm the resolved URLs in browser network logs.
+      </li>
+      <li>
+        <strong>Custom element not rendering:</strong> confirm the component module is included in
+        <code>componentEntrypoint</code> or loaded as an additional entrypoint script.
+      </li>
+      <li>
+        <strong>"Failed to execute 'define' on 'CustomElementRegistry'":</strong> add
+        <code>if (!customElements.get('your-tag'))</code> guards around each registration.
+      </li>
+    </ul>
+  </section>
+</section>

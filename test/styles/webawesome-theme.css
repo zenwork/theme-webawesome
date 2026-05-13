@@ -1,0 +1,11 @@
+:root,
+.wa-light {
+  --wa-color-brand-fill-loud: oklch(0.624 0.239 339.646);
+  --wa-color-brand-on-loud: oklch(98% 0 0);
+  --wa-border-radius-m: 0.5rem;
+}
+
+.wa-dark {
+  --wa-color-brand-fill-loud: oklch(0.708 0.158 336.648);
+  --wa-color-brand-on-loud: oklch(17% 0 0);
+}

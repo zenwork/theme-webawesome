@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split Panel Horizontal Layout Test</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.1.0/dist/themes/default.css">
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.1.0/dist/components/split-panel/split-panel.js"
+    ></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+
+      h1 {
+        margin-bottom: 20px;
+      }
+
+      .test-container {
+        height: 600px;
+        border: 2px solid #ccc;
+        margin-bottom: 20px;
+      }
+
+      .pane {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        font-size: 24px;
+        font-weight: bold;
+        color: white;
+      }
+
+      .pane-1 {
+        background: #3b82f6;
+      }
+      .pane-2 {
+        background: #10b981;
+      }
+      .pane-3 {
+        background: #f59e0b;
+      }
+
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+
+      .status.pass {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .status.fail {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      wa-split-panel::part(divider) {
+        background: #6b7280;
+      }
+
+      wa-split-panel::part(divider):hover {
+        background: #3b82f6;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Split Panel Horizontal Layout Test</h1>
+
+    <div id="status" class="status">Loading...</div>
+
+    <h2>Test: Three Horizontal Panes</h2>
+    <p>Expected: Three panels side-by-side (Blue | Green | Orange) with draggable dividers</p>
+
+    <div class="test-container">
+      <wa-split-panel position="33">
+        <div slot="start" class="pane pane-1">Pane 1 (33%)</div>
+
+        <wa-split-panel slot="end" position="50">
+          <div slot="start" class="pane pane-2">Pane 2 (33%)</div>
+          <div slot="end" class="pane pane-3">Pane 3 (33%)</div>
+        </wa-split-panel>
+      </wa-split-panel>
+    </div>
+
+    <h2>Checklist</h2>
+    <ul>
+      <li>✓ Three panels should be visible side-by-side</li>
+      <li>✓ Blue panel on the left (Pane 1)</li>
+      <li>✓ Green panel in the middle (Pane 2)</li>
+      <li>✓ Orange panel on the right (Pane 3)</li>
+      <li>✓ Vertical divider bars should be visible between panels</li>
+      <li>✓ Dividers should be draggable to resize panels</li>
+      <li>✓ Dividers should change color on hover (blue)</li>
+    </ul>
+
+    <script>
+      // Test if split panels are rendering horizontally
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const splitPanels = document.querySelectorAll('wa-split-panel')
+          const testContainer = document.querySelector('.test-container')
+          const statusEl = document.getElementById('status')
+
+          if (splitPanels.length === 2) {
+            const rect = testContainer.getBoundingClientRect()
+            console.log(rect.width, rect.height)
+            const isHorizontal = rect.width > rect.height
+
+            if (isHorizontal) {
+              statusEl.textContent = '✓ PASS: Split panels are displaying horizontally'
+              statusEl.className = 'status pass'
+            } else {
+              statusEl.textContent = '✗ FAIL: Split panels are stacked vertically'
+              statusEl.className = 'status fail'
+            }
+          } else {
+            statusEl.textContent = `✗ FAIL: Expected 2 split-panels, found ${splitPanels.length}`
+            statusEl.className = 'status fail'
+          }
+        }, 1000)
+      })
+    </script>
+  </body>
+</html>

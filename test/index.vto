@@ -1,10 +1,93 @@
 ---
 layout: layouts/base.vto
-title: Home
+title: Theme Demo Home
 ---
-<header>
-  <h1>{{ title }}</h1>
+<section class="docs-stack">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      Interactive playground for validating the theme in a consumer site,
+      including runnable component recipes and long-page TOC behavior.
+    </p>
+  </header>
 
-  <my-hello></my-hello>
-  <my-bye></my-bye>
-</header>
+  <section class="docs-section">
+    <h2>Demo Navigation</h2>
+    <ul>
+      <li>
+        <a href="/docs/smoke/">Docs Smoke page</a>
+      </li>
+      <li>
+        <a href="/404.html">404 page</a>
+      </li>
+    </ul>
+  </section>
+
+  <section class="docs-section">
+    <h2>Code Example Surface</h2>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+import { LitElement, html } from 'lit'
+
+class ReleaseCallout extends LitElement {
+  static properties = {
+    version: { type: String },
+    status: { type: String },
+  }
+
+  version = 'v0.2.0'
+  status = 'stable'
+
+  override render() {
+    return html`
+      <wa-callout variant="brand">
+        <strong>${this.version}</strong> is ${this.status}
+      </wa-callout>
+    `
+  }
+}
+
+if (!customElements.get('release-callout')) {
+  customElements.define('release-callout', ReleaseCallout)
+}
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Editable Demo Pane: Release Summary</h2>
+    <demo-pane
+      data='{"title":"Release v0.2.0","state":"Ready","items":["Navigation offsets","TOC active state","Resizable editors"]}'
+      template='<wa-card><strong>${title}</strong><div style="margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap"><wa-badge variant="success">${state}</wa-badge></div><ul style="margin:.75rem 0 0 1rem">${items.map((item) => `<li>${item}</li>`).join("")}</ul></wa-card>'
+      imports='["card","badge"]'
+      editor-open
+    >
+    </demo-pane>
+  </section>
+
+  <section class="docs-section">
+    <h2>Read-only Demo Pane: Deployment Controls</h2>
+    <demo-pane
+      data='{"label":"Deploy","state":"Stable","version":"v0.2.0"}'
+      template='<div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap"><wa-button variant="brand" size="small">${label}</wa-button><wa-badge variant="success">${state}</wa-badge><wa-badge variant="neutral">${version}</wa-badge></div>'
+      imports='["button","badge"]'
+      readonly
+    >
+    </demo-pane>
+  </section>
+
+  <section class="docs-section">
+    <h2>TOC Behavior Check</h2>
+    <p>
+      Use this section to validate sticky-header offset and active state in the
+      page TOC.
+    </p>
+  </section>
+
+  <section class="docs-section">
+    <h2>Long-scroll Anchor</h2>
+    <p>
+      This heading helps validate active section changes while scrolling through
+      the page.
+    </p>
+  </section>
+</section>

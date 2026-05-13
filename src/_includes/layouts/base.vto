@@ -5,14 +5,272 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ title || metas.title }} - {{ metas.site }}</title>
     <meta name="color-scheme" content="light dark">
+    <script>
+      ;(() => {
+        const lightTheme = 'wa-light'
+        const darkTheme = 'wa-dark'
+        const saved = window.localStorage.getItem('theme')
+        const preferredDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        const next = saved === darkTheme || saved === lightTheme ? saved : preferredDark ? darkTheme : lightTheme
+        document.documentElement.classList.add(next)
+      })()
+    </script>
+    <style>
+      wa-drawer:not(:defined),
+      site-toc-tree:not(:defined),
+      wa-tree:not(:defined),
+      wa-tree-item:not(:defined) {
+        display: none;
+      }
+
+      site-toc-tree:defined:not([data-ready]) {
+        visibility: hidden;
+      }
+    </style>
+    <link rel="preload" href="{{ webawesome.cssPath }}" as="style">
+    {{ if webawesome.customPropertiesCssPath }}
+      <link rel="preload" href="{{ webawesome.customPropertiesCssPath }}" as="style">
+    {{ /if }}
+    <link rel="preload" href="{{ webawesome.loaderPath }}" as="script">
     <link rel="stylesheet" href="/style.css">
     <link rel="canonical" href="{{ url |> url(true) }}">
-    <link rel="stylesheet" href="/styles/webawesome/webawesome.css" />
-    <script type="module" src="/ts/index.js"></script>
+    {{# WEBAWESOME COMPONENT LIBRARY #}}
+    <link rel="stylesheet" href="{{ webawesome.cssPath }}" />
+    {{ if webawesome.customPropertiesCssPath }}
+      <link rel="stylesheet" href="{{ webawesome.customPropertiesCssPath }}" />
+    {{ /if }}
+    <script type="module" src="{{ webawesome.loaderPath }}" data-webawesome="{{ webawesome.assetBasePath }}"></script>
+    <script
+      type="module"
+      src="{{ webawesome.splitPanelPath }}"
+      data-webawesome="{{ webawesome.assetBasePath }}"
+    ></script>
+    <script
+      type="module"
+      src="{{ webawesome.assetBasePath }}/components/details/details.js"
+      data-webawesome="{{ webawesome.assetBasePath }}"
+    ></script>
+    <script
+      type="module"
+      src="{{ webawesome.assetBasePath }}/components/button/button.js"
+      data-webawesome="{{ webawesome.assetBasePath }}"
+    ></script>
+    <script
+      type="module"
+      src="{{ webawesome.assetBasePath }}/components/icon/icon.js"
+      data-webawesome="{{ webawesome.assetBasePath }}"
+    ></script>
+    {{# CUSTOM COMPONENTS #}}
+    <script type="module" src="{{ themeComponents.primaryScript }}"></script>
   </head>
   <body>
-    <main>
-      {{ content }}
+    <wa-drawer id="site-toc-drawer" label="Documentation" placement="start">
+      <section class="site-toc-shell">
+        <h2>Documentation</h2>
+        {{ include '../site-toc.vto' }}
+      </section>
+    </wa-drawer>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <wa-button class="site-toc-trigger" variant="neutral" size="small" id="site-toc-trigger">Docs</wa-button>
+        <a class="site-title" href="/">{{ metas.site }}</a>
+        {{ include '../theme-toggle.vto' }}
+      </div>
+    </header>
+    <main class="docs-shell">
+      <aside class="site-toc-panel">
+        <section class="site-toc-shell">
+          <h2>Documentation</h2>
+          {{ include '../site-toc.vto' }}
+        </section>
+      </aside>
+      <article class="docs-content">
+        {{ content }}
+      </article>
+      {{ if toc?.length }}
+        <aside class="page-toc-panel">
+          <section class="page-toc-shell">
+            <h2>On this page</h2>
+            <nav aria-label="Page table of contents">
+              <ol class="page-toc-list">
+                {{ for item of toc }}
+                  <li>
+                    <a href="{{ item.slug ? `#${item.slug}` : item.url }}" class="toc-link">{{ item.text }}</a>
+                    {{ if item.children.length }}
+                      <ul class="page-toc-list">
+                        {{ for child of item.children }}
+                          <li>
+                            <a href="{{ child.slug ? `#${child.slug}` : child.url }}" class="toc-link">{{
+                              child.text
+                            }}</a>
+                          </li>
+                        {{ /for }}
+                      </ul>
+                    {{ /if }}
+                  </li>
+                {{ /for }}
+              </ol>
+            </nav>
+          </section>
+        </aside>
+      {{ /if }}
     </main>
+    <script>
+      ;(() => {
+        const trigger = document.getElementById('site-toc-trigger')
+        const drawer = document.getElementById('site-toc-drawer')
+        if (trigger && drawer) {
+          let openedAt = 0
+          const stopEvent = (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+
+          trigger.addEventListener('pointerdown', stopEvent, { capture: true })
+          trigger.addEventListener('pointerup', stopEvent, { capture: true })
+          trigger.addEventListener('click', (event) => {
+            stopEvent(event)
+            openedAt = Date.now()
+            window.setTimeout(() => drawer.show(), 0)
+          }, { capture: true })
+
+          drawer.addEventListener('wa-hide', (event) => {
+            if (Date.now() - openedAt < 400) {
+              event.preventDefault()
+            }
+          })
+        }
+
+        const header = document.querySelector('.site-header')
+        const pageToc = document.querySelector('.page-toc-panel')
+        if (!pageToc) {
+          return
+        }
+
+        const tocLinks = Array.from(pageToc.querySelectorAll('a.toc-link[href^="#"]'))
+        if (!tocLinks.length) {
+          return
+        }
+
+        const parseHashId = (hash) => {
+          if (!hash || hash[0] !== '#') {
+            return ''
+          }
+          const raw = hash.slice(1)
+          try {
+            return decodeURIComponent(raw)
+          } catch {
+            return raw
+          }
+        }
+
+        const getHeaderOffset = () => {
+          const headerHeight = header?.getBoundingClientRect().height ?? 0
+          return Math.round(headerHeight + 12)
+        }
+
+        const syncHeaderOffsetVar = () => {
+          document.documentElement.style.setProperty('--site-header-scroll-offset', `${getHeaderOffset()}px`)
+        }
+
+        const tocItems = tocLinks
+          .map((link) => {
+            const id = parseHashId(link.hash)
+            if (!id) {
+              return null
+            }
+            const target = document.getElementById(id)
+            if (!target) {
+              return null
+            }
+            return { id, link, target }
+          })
+          .filter((item) => item !== null)
+
+        if (!tocItems.length) {
+          return
+        }
+
+        const setActiveToc = (activeId) => {
+          for (const { id, link } of tocItems) {
+            link.classList.toggle('is-active', id === activeId)
+            if (id === activeId) {
+              link.setAttribute('aria-current', 'location')
+            } else {
+              link.removeAttribute('aria-current')
+            }
+          }
+        }
+
+        const scrollToHeading = (id, behavior = 'smooth') => {
+          const item = tocItems.find((entry) => entry.id === id)
+          if (!item) {
+            return
+          }
+          const targetTop = item.target.getBoundingClientRect().top + window.scrollY - getHeaderOffset()
+          window.scrollTo({ top: Math.max(0, targetTop), behavior })
+        }
+
+        const updateActiveFromScroll = () => {
+          const offset = getHeaderOffset()
+          const activationOffset = offset + 24
+          const viewportHeight = window.innerHeight || 0
+          const atPageBottom = window.scrollY + viewportHeight >= document.documentElement.scrollHeight - 2
+
+          if (atPageBottom) {
+            setActiveToc(tocItems[tocItems.length - 1].id)
+            return
+          }
+
+          let activeId = tocItems[0].id
+          for (const { id, target } of tocItems) {
+            if (target.getBoundingClientRect().top <= activationOffset) {
+              activeId = id
+            } else {
+              break
+            }
+          }
+          setActiveToc(activeId)
+        }
+
+        for (const { id, link } of tocItems) {
+          link.addEventListener('click', (event) => {
+            event.preventDefault()
+            scrollToHeading(id, 'smooth')
+            history.pushState(null, '', `#${encodeURIComponent(id)}`)
+            setActiveToc(id)
+          })
+        }
+
+        const hashId = parseHashId(window.location.hash)
+        syncHeaderOffsetVar()
+        if (hashId) {
+          const item = tocItems.find((entry) => entry.id === hashId)
+          if (item) {
+            requestAnimationFrame(() => scrollToHeading(hashId, 'auto'))
+            setActiveToc(hashId)
+          } else {
+            updateActiveFromScroll()
+          }
+        } else {
+          updateActiveFromScroll()
+        }
+
+        window.addEventListener('scroll', updateActiveFromScroll, { passive: true })
+        window.addEventListener('resize', () => {
+          syncHeaderOffsetVar()
+          updateActiveFromScroll()
+        })
+        window.addEventListener('hashchange', () => {
+          const nextId = parseHashId(window.location.hash)
+          if (!nextId) {
+            updateActiveFromScroll()
+            return
+          }
+          scrollToHeading(nextId, 'auto')
+          setActiveToc(nextId)
+        })
+      })()
+    </script>
   </body>
 </html>

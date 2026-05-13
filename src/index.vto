@@ -1,10 +1,69 @@
 ---
 layout: layouts/base.vto
-title: Home
+title: Theme Documentation
 ---
-<header>
-  <h1>{{ title }}</h1>
+<section class="docs-stack">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      This theme provides a practical foundation for technical documentation sites built with Lume, WebAwesome, and Lit.
+    </p>
+  </header>
 
-  <p>This is a boilerplate to create a Lume theme</p>
-  <my-hello> </my-hello>
-</header>
+  <section class="docs-section">
+    <h2>Design</h2>
+    <p>
+      The theme is designed for code-focused documentation where pages combine explanatory content, component examples,
+      and runnable snippets without introducing a heavyweight frontend framework.
+    </p>
+    <p>
+      It defaults to the free WebAwesome distribution and keeps Pro compatibility configuration-driven, so teams can
+      switch asset sources without changing page structure.
+    </p>
+  </section>
+
+  <section class="docs-section">
+    <h2>Summary</h2>
+    <ul>
+      <li>Built on Lume with plugin wiring for docs site essentials</li>
+      <li>Lit-based component architecture with simple extension points</li>
+      <li>WebAwesome integration with free mode defaults and Pro-ready options</li>
+      <li>Code example surfaces for technical and API-oriented documentation pages</li>
+    </ul>
+  </section>
+
+  <section class="docs-section">
+    <h2>Next Steps</h2>
+    <p>Use the documentation guide to navigate theme setup, feature surfaces, and extension paths:</p>
+    <section class="example-grid">
+      <a class="example-card" href="/docs/">
+        <h3>Documentation Guide</h3>
+        <p>Start here for a guided path across setup, components, navigation, and extension docs.</p>
+      </a>
+      <a class="example-card" href="/docs/Design/">
+        <h3>Design</h3>
+        <p>Project scope and architecture decisions for this theme.</p>
+      </a>
+      <a class="example-card" href="/docs/getting-started/">
+        <h3>Getting Started</h3>
+        <p>Install and mount the theme in a Lume site.</p>
+      </a>
+      <a class="example-card" href="/docs/configuration/">
+        <h3>Configuration</h3>
+        <p>Control free/pro WebAwesome assets and component entrypoints.</p>
+      </a>
+      <a class="example-card" href="/docs/components/">
+        <h3>Theme Components</h3>
+        <p>Built-in Lit components and extension patterns for custom components.</p>
+      </a>
+      <a class="example-card" href="/docs/navigation-and-toc/">
+        <h3>Navigation and TOC</h3>
+        <p>Site sidebar behavior and page-level heading TOC generation.</p>
+      </a>
+      <a class="example-card" href="/docs/extending-components/">
+        <h3>Registering Components</h3>
+        <p>Load and register your own Lit components through theme entrypoints.</p>
+      </a>
+    </section>
+  </section>
+</section>

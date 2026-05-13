@@ -1,3 +1,3 @@
-import cms from "../_cms.ts";
+import cms from '../_cms.ts'
 
-export default cms;
+export default cms

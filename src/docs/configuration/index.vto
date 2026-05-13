@@ -1,0 +1,105 @@
+---
+layout: layouts/base.vto
+title: Theme Configuration
+order: 40
+---
+<section class="docs-stack">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      The theme defaults to free WebAwesome assets and exposes overrides for Pro setups and custom component
+      entrypoints.
+    </p>
+  </header>
+
+  <section class="docs-section">
+    <h2>Default Behavior</h2>
+    <p>
+      By default, the theme uses WebAwesome free mode and loads assets from
+      <code>/lib/webawesome/dist-cdn</code>. The Pro default base path is <code>/lib/webawesome-pro/dist-cdn</code>.
+    </p>
+  </section>
+
+  <section class="docs-section">
+    <h2>Options</h2>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+site.use(
+  theme({
+    webawesome: {
+      mode: 'free',
+      assetBasePath: '/lib/webawesome/dist-cdn',
+      cssPath: '/lib/webawesome/dist-cdn/styles/webawesome.css',
+      customPropertiesCssPath: '/styles/webawesome-theme.css',
+      loaderPath: '/lib/webawesome/dist-cdn/webawesome.loader.js',
+      splitPanelPath: '/lib/webawesome/dist-cdn/components/split-panel/split-panel.js',
+    },
+    componentEntrypoint: 'components/index.ts',
+    additionalComponentEntrypoints: ['components/custom.ts'],
+  }),
+)
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Using WebAwesome Pro</h2>
+    <p>
+      Set <code>mode</code> to <code>pro</code> and provide a compatible asset path if your Pro files are not located at
+      the theme default.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+site.use(
+  theme({
+    webawesome: {
+      mode: 'pro',
+      assetBasePath: '/lib/webawesome-pro/dist-cdn',
+      cssPath: '/lib/webawesome-pro/dist-cdn/styles/webawesome.css',
+      customPropertiesCssPath: '/styles/webawesome-theme.css',
+      loaderPath: '/lib/webawesome-pro/dist-cdn/webawesome.loader.js',
+      splitPanelPath: '/lib/webawesome-pro/dist-cdn/components/split-panel/split-panel.js',
+    },
+  }),
+)
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Custom Properties Stylesheet</h2>
+    <p>
+      Use <code>webawesome.customPropertiesCssPath</code> to load a CSS file that sets WebAwesome custom properties. The
+      stylesheet is injected after <code>webawesome.cssPath</code> so variable overrides apply globally.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+site.use(
+  theme({
+    webawesome: {
+      customPropertiesCssPath: '/styles/webawesome-theme.css',
+    },
+  }),
+)
+    </code-example>
+    <!-- deno-fmt-ignore -->
+    <code-example language="css">
+:root,
+.wa-light {
+  --wa-color-brand-fill-loud: oklch(59% 0.16 258);
+  --wa-font-family-body: 'Inter', system-ui, sans-serif;
+}
+
+.wa-dark {
+  --wa-color-brand-fill-loud: oklch(72% 0.12 258);
+}
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Component Entrypoints</h2>
+    <p>
+      The base layout auto-loads only the primary script generated from <code>componentEntrypoint</code>. Additional
+      entrypoints are still built, but you must import them from your primary entrypoint or load them in a custom
+      layout.
+    </p>
+  </section>
+</section>

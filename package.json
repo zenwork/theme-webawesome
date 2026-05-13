@@ -1,0 +1,17 @@
+{
+  "name": "theme-webawesome",
+  "version": "0.1.0",
+  "dependencies": {
+    "lit": "3.3.2/directives/unsafe-html.js",
+    "dompurify": "^3.2.6",
+    "prismjs": "^1.29.0",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.6",
+    "@codemirror/commands": "^6.8.1",
+    "@codemirror/language": "^6.11.3",
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/lang-html": "^6.4.11",
+    "@codemirror/lang-javascript": "^6.2.4",
+    "@codemirror/theme-one-dark": "^6.1.3"
+  }
+}

@@ -1,0 +1,53 @@
+---
+layout: layouts/base.vto
+title: Getting Started
+order: 30
+---
+
+<section class="docs-stack">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      Add the theme to a Lume project, apply plugin defaults, and verify that WebAwesome and Lit components are loading.
+    </p>
+  </header>
+
+  <section class="docs-section">
+    <h2>Install and Import</h2>
+    <p>In your Lume site config, import the theme and use it as a site plugin:</p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+import lume from 'lume/mod.ts'
+import theme from 'theme-webawesome/mod.ts'
+
+const site = lume()
+
+site.use(theme())
+
+export default site
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>What the Theme Wires Up</h2>
+    <ul>
+      <li>Loads WebAwesome CSS and component loader scripts</li>
+      <li>Compiles TypeScript component entrypoints with esbuild</li>
+      <li>Registers a default theme component bundle at <code>/components/index.js</code></li>
+      <li>Builds site navigation and page TOC data with <code>nav</code> and markdown <code>toc</code></li>
+      <li>
+        Preprocesses rendered HTML headings (<code>h2</code> to <code>h6</code>) to assign IDs and page TOC entries
+      </li>
+      <li>
+        Adds default docs plugins: lightningcss, base path, nav, metas, markdown toc, sitemap, favicon, and esbuild
+      </li>
+    </ul>
+  </section>
+
+  <section class="docs-section">
+    <h2>Verify Locally</h2>
+    <p>Run a local build from the theme or test site:</p>
+    <code-example language="text">deno task build</code-example>
+    <p>Then open a page with WebAwesome components or a <code>&lt;demo-pane&gt;</code> and verify rendered output.</p>
+  </section>
+</section>
