@@ -9,7 +9,15 @@ export default function (options: Partial<Options> = {}) {
     // Configure the site
     site.use(plugins(options))
 
-    // Add the files needed for the theme
-    site.remote('/', import.meta.resolve('./src'), ['/**/*'])
+    // Add only infrastructure files needed by theme consumers.
+    // Do not import the theme's own docs pages/content into downstream sites.
+    site.remote('/', import.meta.resolve('./src'), [
+      '/_includes/**/*',
+      '/components/**/*',
+      '/style.css',
+      '/uploads/**/*',
+      '/lib/**/*',
+      '/_data.yml',
+    ])
   }
 }
