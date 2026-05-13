@@ -28,11 +28,17 @@
       }
     </style>
     <link rel="preload" href="{{ webawesome.cssPath }}" as="style">
+    {{ if webawesome.customPropertiesCssPath }}
+      <link rel="preload" href="{{ webawesome.customPropertiesCssPath }}" as="style">
+    {{ /if }}
     <link rel="preload" href="{{ webawesome.loaderPath }}" as="script">
     <link rel="stylesheet" href="/style.css">
     <link rel="canonical" href="{{ url |> url(true) }}">
     {{# WEBAWESOME COMPONENT LIBRARY #}}
     <link rel="stylesheet" href="{{ webawesome.cssPath }}" />
+    {{ if webawesome.customPropertiesCssPath }}
+      <link rel="stylesheet" href="{{ webawesome.customPropertiesCssPath }}" />
+    {{ /if }}
     <script type="module" src="{{ webawesome.loaderPath }}" data-webawesome="{{ webawesome.assetBasePath }}"></script>
     <script
       type="module"

@@ -57,16 +57,41 @@ site.use(theme({
     mode: 'free', // or 'pro'
     // Free default:
     // assetBasePath: '/lib/webawesome/dist-cdn',
+    // customPropertiesCssPath: '/styles/webawesome-theme.css',
     //
     // Pro example:
     // assetBasePath: '/lib/webawesome-pro/dist-cdn',
     // cssPath: '/lib/webawesome-pro/dist-cdn/styles/webawesome.css',
+    // customPropertiesCssPath: '/styles/webawesome-theme.css',
     // loaderPath: '/lib/webawesome-pro/dist-cdn/webawesome.loader.js',
     // splitPanelPath: '/lib/webawesome-pro/dist-cdn/components/split-panel/split-panel.js',
   },
 }))
 
 export default site
+```
+
+## Customize WebAwesome tokens with CSS custom properties
+
+Point the theme at your own CSS file and define the variables WebAwesome exposes:
+
+```ts
+site.use(theme({
+  webawesome: {
+    customPropertiesCssPath: '/styles/webawesome-theme.css',
+  },
+}))
+```
+
+```css
+:root,
+.wa-light {
+  --wa-color-brand-fill-loud: oklch(59% 0.16 258);
+}
+
+.wa-dark {
+  --wa-color-brand-fill-loud: oklch(72% 0.12 258);
+}
 ```
 
 ## Inject your Lit components

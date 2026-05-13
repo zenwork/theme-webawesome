@@ -30,6 +30,7 @@ site.use(
       mode: 'free',
       assetBasePath: '/lib/webawesome/dist-cdn',
       cssPath: '/lib/webawesome/dist-cdn/styles/webawesome.css',
+      customPropertiesCssPath: '/styles/webawesome-theme.css',
       loaderPath: '/lib/webawesome/dist-cdn/webawesome.loader.js',
       splitPanelPath: '/lib/webawesome/dist-cdn/components/split-panel/split-panel.js',
     },
@@ -54,11 +55,42 @@ site.use(
       mode: 'pro',
       assetBasePath: '/lib/webawesome-pro/dist-cdn',
       cssPath: '/lib/webawesome-pro/dist-cdn/styles/webawesome.css',
+      customPropertiesCssPath: '/styles/webawesome-theme.css',
       loaderPath: '/lib/webawesome-pro/dist-cdn/webawesome.loader.js',
       splitPanelPath: '/lib/webawesome-pro/dist-cdn/components/split-panel/split-panel.js',
     },
   }),
 )
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Custom Properties Stylesheet</h2>
+    <p>
+      Use <code>webawesome.customPropertiesCssPath</code> to load a CSS file that sets WebAwesome custom properties. The
+      stylesheet is injected after <code>webawesome.cssPath</code> so variable overrides apply globally.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+site.use(
+  theme({
+    webawesome: {
+      customPropertiesCssPath: '/styles/webawesome-theme.css',
+    },
+  }),
+)
+    </code-example>
+    <!-- deno-fmt-ignore -->
+    <code-example language="css">
+:root,
+.wa-light {
+  --wa-color-brand-fill-loud: oklch(59% 0.16 258);
+  --wa-font-family-body: 'Inter', system-ui, sans-serif;
+}
+
+.wa-dark {
+  --wa-color-brand-fill-loud: oklch(72% 0.12 258);
+}
     </code-example>
   </section>
 

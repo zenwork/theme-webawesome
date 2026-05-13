@@ -15,6 +15,7 @@ export interface WebAwesomeOptions {
   mode?: 'free' | 'pro'
   assetBasePath?: string
   cssPath?: string
+  customPropertiesCssPath?: string
   loaderPath?: string
   splitPanelPath?: string
 }
@@ -31,6 +32,7 @@ interface ResolvedWebAwesomeOptions {
   mode: 'free' | 'pro'
   assetBasePath: string
   cssPath: string
+  customPropertiesCssPath?: string
   loaderPath: string
   splitPanelPath: string
 }
@@ -59,6 +61,7 @@ const headingPattern = /<h([2-6])(\s[^>]*)?>([\s\S]*?)<\/h\1>/gi
 const headingIdPattern = /\sid=(["'])(.*?)\1/i
 const stripTagsPattern = /<[^>]*>/g
 const collapseWhitespacePattern = /\s+/g
+const absoluteUrlPattern = /^(?:[a-z]+:)?\/\//i
 const slugifyHeading = createSlugifier()
 
 function toScriptPath(entrypoint: string): string {
@@ -156,6 +159,7 @@ export default function (userOptions?: Options) {
     mode,
     assetBasePath,
     cssPath: options.webawesome?.cssPath ?? `${assetBasePath}/styles/webawesome.css`,
+    customPropertiesCssPath: options.webawesome?.customPropertiesCssPath,
     loaderPath: options.webawesome?.loaderPath ?? `${assetBasePath}/webawesome.loader.js`,
     splitPanelPath: options.webawesome?.splitPanelPath ?? `${assetBasePath}/components/split-panel/split-panel.js`,
   }
@@ -221,6 +225,10 @@ export default function (userOptions?: Options) {
       .add(options.componentEntrypoint ?? 'components/index.ts')
       // .copy("npm:@awesome.me/webawesome@^3.1.0/dist/styles/**/*.css", "styles/webawesome")
       .copy('lib', 'lib')
+
+    if (webawesome.customPropertiesCssPath && !absoluteUrlPattern.test(webawesome.customPropertiesCssPath)) {
+      site.add(webawesome.customPropertiesCssPath.replace(/^\//, ''))
+    }
 
     for (const entrypoint of options.additionalComponentEntrypoints ?? []) {
       site.add(entrypoint)
