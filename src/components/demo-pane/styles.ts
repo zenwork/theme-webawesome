@@ -129,8 +129,8 @@ export const styles: CSSResultGroup = css`
     .editor-split {
       --divider-width: 12px;
       --divider-hit-area: 24px;
-      block-size: 180px;
-      min-block-size: 180px;
+      block-size: var(--demo-editor-height, 180px);
+      min-block-size: 120px;
       background: var(--demo-editor-bg);
       border-radius: var(--wa-border-radius-small);
       overflow: hidden;
@@ -208,6 +208,33 @@ export const styles: CSSResultGroup = css`
       padding: 0;
     }
 
+    .editor-resizer {
+      block-size: 12px;
+      margin-top: 0.5rem;
+      border-top: 1px dotted rgba(148, 163, 184, 0.7);
+      cursor: ns-resize;
+      touch-action: none;
+      position: relative;
+    }
+
+    .editor-resizer::before {
+      content: "";
+      position: absolute;
+      inset-inline: 50%;
+      top: 4px;
+      transform: translateX(-50%);
+      inline-size: 2.5rem;
+      block-size: 4px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--wa-color-neutral-500) 70%, transparent);
+      transition: background-color 0.16s ease;
+    }
+
+    .editor-resizer:hover::before,
+    .editor-resizer.is-active::before {
+      background: color-mix(in srgb, var(--wa-color-brand-border-loud) 70%, transparent);
+    }
+
     .editable-layout {
       display: grid;
       grid-template-rows: auto minmax(320px, 1fr);
@@ -280,8 +307,7 @@ export const styles: CSSResultGroup = css`
       }
 
       .editor-split {
-        block-size: 140px;
-        min-block-size: 140px;
+        min-block-size: 120px;
       }
 
       .tabs-toolbar {

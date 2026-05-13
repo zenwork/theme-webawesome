@@ -12,8 +12,19 @@ import DOMPurify from 'dompurify'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-json.js'
 import 'prismjs/components/prism-markup.js'
+import '../code-example.ts'
 import { styles } from './styles.ts'
 import { formatHtmlTemplate, parseJSON, renderTemplate, TemplateData } from './template-renderer.ts'
+
+const editableAttributeConverter = {
+  fromAttribute: (value: string | null): boolean => {
+    if (value === null) {
+      return true
+    }
+    return value.trim().toLowerCase() !== 'false'
+  },
+  toAttribute: (value: boolean): string => (value ? '' : 'false'),
+}
 
 /**
  * A 3-pane demo component for showcasing web components
@@ -31,8 +42,11 @@ class DemoPane extends LitElement {
   @property({ type: String })
   imports = '[]'
 
-  @property({ type: Boolean, reflect: true })
+  @property({ reflect: true, converter: editableAttributeConverter })
   editable = true
+
+  @property({ type: Boolean, attribute: 'readonly', reflect: true })
+  readOnly = false
 
   @property({ type: String })
   layout: 'horizontal' | 'tabs' = 'horizontal'
@@ -88,12 +102,20 @@ class DemoPane extends LitElement {
   @state()
   private _outputVersion = 0
 
+  @state()
+  private _editorHeight = 180
+
+  @state()
+  private _isResizingEditors = false
+
   private _mediaQuery: MediaQueryList | null = null
   private readonly _loadedModules = new Set<string>()
   private _jsonEditor: EditorView | null = null
   private _templateEditor: EditorView | null = null
   private _syncingEditors = false
   private _didFormatInitialContent = false
+  private _editorResizeStartY = 0
+  private _editorResizeStartHeight = 180
 
   override connectedCallback(): void {
     super.connectedCallback()
@@ -114,6 +136,9 @@ class DemoPane extends LitElement {
   override disconnectedCallback(): void {
     this._mediaQuery?.removeEventListener('change', this.handleMediaChange)
     this._mediaQuery = null
+    globalThis.removeEventListener('pointermove', this.handleEditorResizeMove)
+    globalThis.removeEventListener('pointerup', this.handleEditorResizeEnd)
+    globalThis.removeEventListener('pointercancel', this.handleEditorResizeEnd)
     this._jsonEditor?.destroy()
     this._templateEditor?.destroy()
     this._jsonEditor = null
@@ -144,14 +169,23 @@ class DemoPane extends LitElement {
       this.syncEditorsFromDraft()
       this.processData()
     }
-    if (_changedProperties.has('editable') && this.editable) {
+    if (_changedProperties.has('editable') || _changedProperties.has('readOnly')) {
+      if (!this.canEdit) {
+        this.destroyEditors()
+      }
+    }
+    if ((_changedProperties.has('editable') || _changedProperties.has('readOnly')) && this.canEdit) {
       this.initEditors()
     }
-    if (_changedProperties.has('editorOpen') && this.editorOpen) {
+    if (_changedProperties.has('editorOpen') && this.editorOpen && this.canEdit) {
       this.initEditors()
       this.syncEditorsFromDraft()
       this.refreshEditorLayout()
     }
+  }
+
+  private get canEdit(): boolean {
+    return this.editable && !this.readOnly
   }
 
   private processData(): void {
@@ -214,7 +248,7 @@ class DemoPane extends LitElement {
   }
 
   private initEditors(): void {
-    if (!this.editable) {
+    if (!this.canEdit) {
       return
     }
 
@@ -274,6 +308,62 @@ class DemoPane extends LitElement {
       ],
     })
     return new EditorView({ state, parent })
+  }
+
+  private destroyEditors(): void {
+    this._jsonEditor?.destroy()
+    this._templateEditor?.destroy()
+    this._jsonEditor = null
+    this._templateEditor = null
+  }
+
+  private handleEditorResizeStart = (event: PointerEvent): void => {
+    event.preventDefault()
+    this._isResizingEditors = true
+    this._editorResizeStartY = event.clientY
+    this._editorResizeStartHeight = this._editorHeight
+    this.requestUpdate()
+    globalThis.addEventListener('pointermove', this.handleEditorResizeMove)
+    globalThis.addEventListener('pointerup', this.handleEditorResizeEnd)
+    globalThis.addEventListener('pointercancel', this.handleEditorResizeEnd)
+  }
+
+  private handleEditorEdgeResizeStart = (event: PointerEvent): void => {
+    const target = event.currentTarget
+    if (!(target instanceof HTMLElement)) {
+      return
+    }
+    const rect = target.getBoundingClientRect()
+    const edgeDistance = rect.bottom - event.clientY
+    if (edgeDistance < 0 || edgeDistance > 12) {
+      return
+    }
+    this.handleEditorResizeStart(event)
+  }
+
+  private handleEditorResizeMove = (event: PointerEvent): void => {
+    if (!this._isResizingEditors) {
+      return
+    }
+    const deltaY = event.clientY - this._editorResizeStartY
+    this._editorHeight = Math.max(120, Math.min(640, this._editorResizeStartHeight + deltaY))
+    const nextHeight = `${this._editorHeight}px`
+    for (const panel of this.renderRoot.querySelectorAll<HTMLElement>('.editor-panel-content')) {
+      panel.style.setProperty('--demo-editor-height', nextHeight)
+    }
+    this.requestUpdate()
+    this.refreshEditorLayout()
+  }
+
+  private handleEditorResizeEnd = (): void => {
+    if (!this._isResizingEditors) {
+      return
+    }
+    this._isResizingEditors = false
+    this.requestUpdate()
+    globalThis.removeEventListener('pointermove', this.handleEditorResizeMove)
+    globalThis.removeEventListener('pointerup', this.handleEditorResizeEnd)
+    globalThis.removeEventListener('pointercancel', this.handleEditorResizeEnd)
   }
 
   private refreshEditorLayout(): void {
@@ -357,6 +447,9 @@ class DemoPane extends LitElement {
   }
 
   private runDemo(): void {
+    if (!this.canEdit) {
+      return
+    }
     if (this._jsonEditor) {
       this._draftData = this._jsonEditor.state.doc.toString()
     }
@@ -381,6 +474,9 @@ class DemoPane extends LitElement {
   }
 
   private resetDemo(): void {
+    if (!this.canEdit) {
+      return
+    }
     this._draftData = this.data
     this._draftTemplate = this.template
     this._draftImports = this.imports
@@ -397,6 +493,9 @@ class DemoPane extends LitElement {
   }
 
   private formatJson(): void {
+    if (!this.canEdit) {
+      return
+    }
     if (this._jsonEditor) {
       this._draftData = this._jsonEditor.state.doc.toString()
     }
@@ -412,6 +511,9 @@ class DemoPane extends LitElement {
   }
 
   private formatHtml(): void {
+    if (!this.canEdit) {
+      return
+    }
     if (this._templateEditor) {
       this._draftTemplate = this._templateEditor.state.doc.toString()
     }
@@ -422,12 +524,13 @@ class DemoPane extends LitElement {
   }
 
   private renderEditor(): unknown {
-    if (!this.editable) {
+    if (!this.canEdit) {
       return null
     }
 
     const dataLabel = this.dataLabel.trim()
     const templateLabel = this.templateLabel.trim()
+    const editorContentStyle = `--demo-editor-height: ${this._editorHeight}px`
 
     return html`
       <wa-details
@@ -438,8 +541,13 @@ class DemoPane extends LitElement {
         @wa-hide="${() => (this.editorOpen = false)}"
       >
         <span slot="summary">Data & template</span>
-        <div class="editor-panel-content">
-          <wa-split-panel class="editor-split" position="50" ?vertical="${this._isCompact}">
+        <div class="editor-panel-content" style="${editorContentStyle}">
+          <wa-split-panel
+            class="editor-split"
+            position="50"
+            ?vertical="${this._isCompact}"
+            @pointerdown="${this.handleEditorEdgeResizeStart}"
+          >
             <label class="editor-field" slot="start">
               ${dataLabel
                 ? html`
@@ -500,6 +608,14 @@ class DemoPane extends LitElement {
               <wa-icon name="arrows-rotate" label="Reset demo"></wa-icon>
             </wa-button>
           </div>
+          <div
+            class="editor-resizer ${this._isResizingEditors ? 'is-active' : ''}"
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Resize editors"
+            @pointerdown="${this.handleEditorResizeStart}"
+          >
+          </div>
         </div>
       </wa-details>
     `
@@ -520,8 +636,13 @@ class DemoPane extends LitElement {
     })
   }
 
-  private renderPane(content: string, type: 'json' | 'html', buttonId: string): unknown {
-    const copyText = type === 'json' ? this.data : this._renderedHtml
+  private renderPane(
+    content: string,
+    type: 'json' | 'html',
+    buttonId: string,
+    copyTextOverride?: string,
+  ): unknown {
+    const copyText = copyTextOverride ?? (type === 'json' ? this.data : this._renderedHtml)
     return html`
       <div class="pane">
         <div class="pane-toolbar">
@@ -540,6 +661,23 @@ class DemoPane extends LitElement {
           <pre><code class="language-${type}">${unsafeHTML(content)}</code></pre>
         </div>
       </div>
+    `
+  }
+
+  private getFormattedJsonSource(): string {
+    const parsed = parseJSON(this._draftData)
+    if (!parsed) {
+      return this._draftData
+    }
+    return JSON.stringify(parsed, null, 2)
+  }
+
+  private renderCodeMirrorPane(
+    source: string,
+    language: 'json' | 'html',
+  ): unknown {
+    return html`
+      <code-example .code="${source}" .language="${language}"></code-example>
     `
   }
 
@@ -564,7 +702,7 @@ class DemoPane extends LitElement {
   private renderTabs(): unknown {
     const tabs: Array<{ key: 'data' | 'markup' | 'output'; label: string }> = [
       { key: 'data', label: 'Data' },
-      { key: 'markup', label: 'Markup' },
+      { key: 'markup', label: 'Template' },
       { key: 'output', label: 'Output' },
     ]
 
@@ -572,7 +710,7 @@ class DemoPane extends LitElement {
     if (this._activeTab === 'data') {
       tabContent = this.renderPane(this._highlightedJson, 'json', 'copy-json')
     } else if (this._activeTab === 'markup') {
-      tabContent = this.renderPane(this._highlightedHtml, 'html', 'copy-html')
+      tabContent = this.renderPane(this._highlightedTemplate, 'html', 'copy-html', this._draftTemplate)
     }
 
     return html`
@@ -603,6 +741,53 @@ class DemoPane extends LitElement {
     `
   }
 
+  private renderReadOnlyEditor(): unknown {
+    const dataLabel = this.dataLabel.trim() || 'Data'
+    const templateLabel = this.templateLabel.trim() || 'Template'
+    const formattedJson = this.getFormattedJsonSource()
+    const editorContentStyle = `--demo-editor-height: ${this._editorHeight}px`
+
+    return html`
+      <wa-details class="editor-panel" appearance="plain" open>
+        <span slot="summary">Data & template</span>
+        <div class="editor-panel-content" style="${editorContentStyle}">
+          <wa-split-panel
+            class="editor-split"
+            position="50"
+            ?vertical="${this._isCompact}"
+            @pointerdown="${this.handleEditorEdgeResizeStart}"
+          >
+            <section class="editor-field" slot="start">
+              <span>${dataLabel}</span>
+              ${this.renderCodeMirrorPane(formattedJson, 'json')}
+            </section>
+            <section class="editor-field" slot="end">
+              <span>${templateLabel}</span>
+              ${this.renderCodeMirrorPane(this._draftTemplate, 'html')}
+            </section>
+          </wa-split-panel>
+          <div
+            class="editor-resizer ${this._isResizingEditors ? 'is-active' : ''}"
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Resize editors"
+            @pointerdown="${this.handleEditorResizeStart}"
+          >
+          </div>
+        </div>
+      </wa-details>
+    `
+  }
+
+  private renderReadOnlyPreview(): unknown {
+    return html`
+      <div class="editable-layout">
+        ${this.renderReadOnlyEditor()}
+        <div class="editable-preview">${this.renderOutputPane()}</div>
+      </div>
+    `
+  }
+
   protected override render(): unknown {
     if (this._error && !this._parsedData) {
       return html`
@@ -610,26 +795,10 @@ class DemoPane extends LitElement {
       `
     }
 
-    if (this.editable) {
+    if (this.canEdit) {
       return this.renderEditablePreview()
     }
-
-    if (this.layout === 'tabs' || this._isCompact) {
-      return html`
-        ${this.renderTabs()}
-      `
-    }
-
-    return html`
-      <wa-split-panel class="pane-split" position="33">
-        <div slot="start">${this.renderPane(this._highlightedJson, 'json', 'copy-json')}</div>
-
-        <wa-split-panel class="pane-split" slot="end" position="50">
-          <div slot="start">${this.renderPane(this._highlightedHtml, 'html', 'copy-html')}</div>
-          <div slot="end">${this.renderOutputPane()}</div>
-        </wa-split-panel>
-      </wa-split-panel>
-    `
+    return this.renderReadOnlyPreview()
   }
 }
 

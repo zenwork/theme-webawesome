@@ -12,7 +12,7 @@ export interface TemplateData {
  */
 export function renderTemplate(template: string, data: TemplateData): string {
   const normalized = normalizeTemplateSyntax(template)
-  const escaped = normalized.replaceAll('\\', '\\\\').replaceAll('`', '\\`')
+  const escaped = normalized.replaceAll('\\', '\\\\')
   const evaluator = new Function(
     'props',
     `with (props) { return \`${escaped}\`; }`,

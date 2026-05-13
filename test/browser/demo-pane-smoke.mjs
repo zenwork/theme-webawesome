@@ -147,6 +147,18 @@ async function run() {
     const listOutput = await getOutputText(host)
     assert(listOutput.includes('Alpha') && listOutput.includes('Beta'), `Array expression failed: ${listOutput}`)
 
+    await setTemplate(
+      host,
+      `<ul>\${items.map((item) => \`<li>\${item}</li>\`).join('')}</ul>`,
+    )
+    await host.locator('wa-button:has-text("Run")').click()
+    await delay(250)
+    const nestedTemplateOutput = await getOutputText(host)
+    assert(
+      nestedTemplateOutput.includes('Alpha') && nestedTemplateOutput.includes('Beta'),
+      `Nested template-literal expression failed: ${nestedTemplateOutput}`,
+    )
+
     await page.close()
     console.log('demo-pane smoke tests passed')
   } finally {
