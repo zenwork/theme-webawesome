@@ -3,6 +3,10 @@ import theme from 'theme/mod.ts'
 
 const site = lume()
 
-site.use(theme())
+site.use(theme({
+  webawesome: {
+    customPropertiesCssPath: '/styles/webawesome-theme.css',
+  },
+}))
 
 export default site
