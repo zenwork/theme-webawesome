@@ -1,0 +1,41 @@
+---
+layout: layouts/base.vto
+title: Theme Configuration
+---
+<section class="docs-stack">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      The theme defaults to free WebAwesome assets and exposes overrides for Pro setups and custom component
+      entrypoints.
+    </p>
+  </header>
+
+  <section class="docs-section">
+    <h2>Default Behavior</h2>
+    <p>
+      By default, the theme uses WebAwesome free mode and loads assets from the jsDelivr
+      <code>@awesome.me/webawesome</code> distribution.
+    </p>
+  </section>
+
+  <section class="docs-section">
+    <h2>Options</h2>
+    <code-example language="typescript"
+    >site.use(theme({ webawesome: { mode: 'free', // or 'pro' assetBasePath:
+      'https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.1.0/dist-cdn', cssPath:
+      'https://.../styles/webawesome.css', loaderPath: 'https://.../webawesome.loader.js', splitPanelPath:
+      'https://.../components/split-panel/split-panel.js', }, componentEntrypoint: 'components/index.ts',
+      additionalComponentEntrypoints: ['components/custom.ts'], }))</code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Using WebAwesome Pro</h2>
+    <p>
+      Set <code>mode</code> to <code>pro</code> and provide a compatible asset path if your Pro files are not located at
+      the theme default.
+    </p>
+    <code-example language="typescript"
+    >site.use(theme({ webawesome: { mode: 'pro', assetBasePath: '/lib/webawesome-pro/dist-cdn', }, }))</code-example>
+  </section>
+</section>

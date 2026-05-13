@@ -2,13 +2,13 @@ name: Release Please
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ['main']
     paths-ignore:
-      - "**/*.md"
-      - "assets/**"
-      - ".run/**"
-      - ".aiassistant/**"
-      - ".github/**/*.md"
+      - '**/*.md'
+      - 'assets/**'
+      - '.run/**'
+      - '.aiassistant/**'
+      - '.github/**/*.md'
   workflow_dispatch:
 
 permissions:

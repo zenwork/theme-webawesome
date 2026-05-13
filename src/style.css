@@ -1,4 +1,4 @@
-@import "css/reset.css";
+@import 'css/reset.css';
 
 body {
   margin: 0;
@@ -58,6 +58,16 @@ a {
   gap: 1rem;
 }
 
+.docs-section {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.docs-section h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1.1rem;
+}
+
 .lead {
   color: var(--wa-color-neutral-700);
   max-width: 70ch;
@@ -85,6 +95,24 @@ a {
   margin: 0;
   font-size: 0.875rem;
   color: var(--wa-color-neutral-700);
+}
+
+ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+pre {
+  margin: 0;
+  border: 1px solid var(--wa-color-neutral-300);
+  border-radius: var(--wa-border-radius-medium);
+  padding: 0.75rem;
+  background: var(--wa-color-neutral-50);
+  overflow-x: auto;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 }
 
 @media (max-width: 768px) {

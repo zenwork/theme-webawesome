@@ -111,7 +111,7 @@ async function generatePackageJson() {
         console.log(`  ${name}@${version}`)
       }
     }
-  } catch (error:Error|unknown) {
+  } catch (error: Error | unknown) {
     console.error('❌ Error generating package.json:', error instanceof Error ? error.message : String(error))
     Deno.exit(1)
   }

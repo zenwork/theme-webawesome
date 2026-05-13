@@ -73,11 +73,13 @@ import './my-playground.ts'
 
 ```ts
 // components/my-card.ts
-import { LitElement, html } from 'lit'
+import { html, LitElement } from 'lit'
 
 class MyCard extends LitElement {
   protected override render() {
-    return html`<p>My custom Lit component</p>`
+    return html`
+      <p>My custom Lit component</p>
+    `
   }
 }
 

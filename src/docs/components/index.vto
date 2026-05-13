@@ -1,0 +1,58 @@
+---
+layout: layouts/base.vto
+title: Theme Components
+---
+<section class="docs-stack">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      This theme uses Lit components for interactive documentation and exposes a simple path for adding project-specific
+      components.
+    </p>
+  </header>
+
+  <section class="docs-section">
+    <h2>Component Summary</h2>
+    <ul>
+      <li>
+        <code>&lt;demo-pane&gt;</code>: interactive code example surface with JSON data, template, and output tabs
+      </li>
+      <li><code>&lt;code-example&gt;</code>: read-only CodeMirror block for documentation snippets</li>
+      <li>
+        <code>&lt;my-hello&gt;</code> and <code>&lt;my-bye&gt;</code>: small reference components for extension tests
+      </li>
+    </ul>
+    <p>Use <code>src/components/index.ts</code> as the default registration/export surface.</p>
+  </section>
+
+  <section class="docs-section">
+    <h2>Using Code Examples</h2>
+    <p>Use <code>&lt;code-example&gt;</code> when you want static snippets with theme-consistent syntax styling.</p>
+    <code-example language="html"
+    >&lt;code-example language="typescript"&gt;import theme from
+      'theme-webawesome/mod.ts'&lt;/code-example&gt;</code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Runnable Docs with Demo Pane</h2>
+    <p>
+      Use <code>&lt;demo-pane&gt;</code> when readers should modify data or templates and see immediate output.
+    </p>
+    <demo-pane
+      data='{"label":"Deploy","variant":"brand","size":"small"}'
+      template='<wa-button variant="${variant}" size="${size}">${label}</wa-button>'
+      imports='["button"]'
+      default-tab="output"
+    >
+    </demo-pane>
+  </section>
+
+  <section class="docs-section">
+    <h2>Adding Project Components</h2>
+    <p>Register your own Lit bundles with extra entrypoints:</p>
+    <code-example language="typescript"
+    >site.use(theme({ componentEntrypoint: 'components/index.ts', additionalComponentEntrypoints:
+      ['components/product-docs.ts'], }))</code-example>
+    <p>Each entrypoint is emitted as an ES module script and loaded by the theme layout.</p>
+  </section>
+</section>

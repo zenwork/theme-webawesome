@@ -9,8 +9,12 @@
     <link rel="canonical" href="{{ url |> url(true) }}">
     {{# WEBAWESOME COMPONENT LIBRARY #}}
     <link rel="stylesheet" href="{{ webawesome.cssPath }}" />
-    <script type="module" src="{{ webawesome.loaderPath }}" data-webawesome="{{ webawesome.assetBasePath }}" ></script>
-    <script type="module" src="{{ webawesome.splitPanelPath }}" data-webawesome="{{ webawesome.assetBasePath }}" ></script>
+    <script type="module" src="{{ webawesome.loaderPath }}" data-webawesome="{{ webawesome.assetBasePath }}"></script>
+    <script
+      type="module"
+      src="{{ webawesome.splitPanelPath }}"
+      data-webawesome="{{ webawesome.assetBasePath }}"
+    ></script>
     {{# CUSTOM COMPONENTS #}}
     <script type="module" src="{{ themeComponents.primaryScript }}"></script>
   </head>
@@ -18,10 +22,11 @@
     <header class="site-header">
       <nav class="site-nav" aria-label="Primary">
         <a href="/">Overview</a>
-        <a href="/examples/buttons/">Buttons</a>
-        <a href="/examples/forms/">Forms</a>
+        <a href="/docs/getting-started/">Getting Started</a>
+        <a href="/docs/configuration/">Configuration</a>
+        <a href="/docs/components/">Components</a>
       </nav>
-      {{ include "../theme-toggle.vto" }}
+      {{ include '../theme-toggle.vto' }}
     </header>
     <main class="docs-shell">
       {{ content }}

@@ -9,8 +9,10 @@ Guidance for coding agents working in this repository.
 - Distribution goal: the theme should focus on the **free WebAwesome library** by default.
 - Compatibility goal: using **WebAwesome Pro** should remain possible via project/user configuration.
 - Core implementation library: **Lit** for authoring web components.
-- Content focus: pages should emphasize **coding examples** and **runnable code snippets** (see `src/components/demo-pane/`).
-- Architectural focus: prefer **web components** and keep the client stack lightweight; do **not** introduce large frontend frameworks.
+- Content focus: pages should emphasize **coding examples** and **runnable code snippets** (see
+  `src/components/demo-pane/`).
+- Architectural focus: prefer **web components** and keep the client stack lightweight; do **not** introduce large
+  frontend frameworks.
 - Extensibility goal: make it straightforward for theme users to inject and use their own **Lit-based web components**.
 - It provides:
   - a site source under `src/`
@@ -100,8 +102,10 @@ Related docs for this project:
 - Do not introduce large frontend frameworks (for example React/Vue/Angular/Svelte) unless explicitly requested.
 - Prefer standards-based web components and small utilities over framework-centric abstractions.
 - For custom interactive UI, default to **Lit-based web components** to match existing project patterns.
-- Preserve and improve extension points (component registration/import surfaces) so downstream users can plug in their own Lit components with minimal setup.
-- Keep WebAwesome integration configuration-driven where possible, so free vs Pro consumption can be switched without structural rewrites.
+- Preserve and improve extension points (component registration/import surfaces) so downstream users can plug in their
+  own Lit components with minimal setup.
+- Keep WebAwesome integration configuration-driven where possible, so free vs Pro consumption can be switched without
+  structural rewrites.
 - Preserve existing plugin order in `plugins.ts` unless the change explicitly requires it.
 - If adding npm-based imports, ensure `deno.json` imports are updated and run `deno task npm`.
 - Keep exports coherent:

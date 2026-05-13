@@ -110,8 +110,8 @@ export default function (userOptions?: Options) {
       }))
       .add('style.css')
       .add(options.componentEntrypoint ?? 'components/index.ts')
-      // .copy("npm:@awesome.me/webawesome@^3.1.0/dist/styles/**/*.css", "styles/webawesome")
-      // .copy("lib", "lib")
+    // .copy("npm:@awesome.me/webawesome@^3.1.0/dist/styles/**/*.css", "styles/webawesome")
+    // .copy("lib", "lib")
 
     for (const entrypoint of options.additionalComponentEntrypoints ?? []) {
       site.add(entrypoint)

@@ -3,10 +3,10 @@ import { property, state } from 'lit/decorators.js'
 import { unsafeHTML } from 'lit/directives/unsafe-html.js'
 import { EditorState } from '@codemirror/state'
 import { EditorView, keymap, lineNumbers } from '@codemirror/view'
-import { history, defaultKeymap, historyKeymap } from '@codemirror/commands'
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { json as jsonLanguage } from '@codemirror/lang-json'
 import { html as htmlLanguage } from '@codemirror/lang-html'
-import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
+import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { oneDark } from '@codemirror/theme-one-dark'
 import DOMPurify from 'dompurify'
 import Prism from 'prismjs'
@@ -160,7 +160,8 @@ class DemoPane extends LitElement {
       FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseenter', 'onfocus', 'style'],
       CUSTOM_ELEMENT_HANDLING: {
         tagNameCheck: /^wa-/,
-        attributeNameCheck: /^(aria-.*|data-.*|id|class|slot|part|exportparts|name|label|value|variant|size|appearance|type|checked|disabled|readonly|placeholder|for)$/i,
+        attributeNameCheck:
+          /^(aria-.*|data-.*|id|class|slot|part|exportparts|name|label|value|variant|size|appearance|type|checked|disabled|readonly|placeholder|for)$/i,
         allowCustomizedBuiltInElements: false,
       },
       ALLOW_DATA_ATTR: true,
@@ -373,10 +374,10 @@ class DemoPane extends LitElement {
           </label>
         </div>
         <div class="editor-actions">
-          <wa-button size="small" variant="brand" @click=${this.runDemo}>Run</wa-button>
-          <wa-button size="small" variant="neutral" @click=${this.formatJson}>Format JSON</wa-button>
-          <wa-button size="small" variant="neutral" @click=${this.formatHtml}>Format HTML</wa-button>
-          <wa-button size="small" variant="neutral" appearance="plain" @click=${this.resetDemo}>Reset</wa-button>
+          <wa-button size="small" variant="brand" @click="${this.runDemo}">Run</wa-button>
+          <wa-button size="small" variant="neutral" @click="${this.formatJson}">Format JSON</wa-button>
+          <wa-button size="small" variant="neutral" @click="${this.formatHtml}">Format HTML</wa-button>
+          <wa-button size="small" variant="neutral" appearance="plain" @click="${this.resetDemo}">Reset</wa-button>
         </div>
       </div>
     `
@@ -433,7 +434,9 @@ class DemoPane extends LitElement {
               <div class="error">${this._error}</div>
             `
             : html`
-              <div class="output-container" data-version=${this._outputVersion}>${unsafeHTML(this._sanitizedHtml)}</div>
+              <div class="output-container" data-version="${this._outputVersion}">${unsafeHTML(
+                this._sanitizedHtml,
+              )}</div>
             `}
         </div>
       </div>
@@ -456,16 +459,18 @@ class DemoPane extends LitElement {
 
     return html`
       <div class="tabs-toolbar" role="tablist" aria-label="Demo pane sections">
-        ${tabs.map((tab) => html`
-          <button
-            class="tab-btn ${this._activeTab === tab.key ? 'is-active' : ''}"
-            role="tab"
-            aria-selected="${this._activeTab === tab.key}"
-            @click="${() => (this._activeTab = tab.key)}"
-          >
-            ${tab.label}
-          </button>
-        `)}
+        ${tabs.map((tab) =>
+          html`
+            <button
+              class="tab-btn ${this._activeTab === tab.key ? 'is-active' : ''}"
+              role="tab"
+              aria-selected="${this._activeTab === tab.key}"
+              @click="${() => (this._activeTab = tab.key)}"
+            >
+              ${tab.label}
+            </button>
+          `
+        )}
       </div>
       ${tabContent}
     `
