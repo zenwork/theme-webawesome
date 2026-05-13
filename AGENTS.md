@@ -98,6 +98,13 @@ Related docs for this project:
 3. If theme behavior changed, run `deno task build` (or `serve`) in `test/` as well.
 4. For component changes, verify rendering in pages that use `src/components/index.ts`.
 
+### Docs update checklist
+
+- If options, defaults, or component APIs changed, update docs pages under `src/docs/` in the same change.
+- Keep `<code-example>` snippets multiline and valid; use `<!-- deno-fmt-ignore -->` where formatter would reflow
+  snippet bodies.
+- Verify `test/docs/smoke/` still renders key surfaces (`code-example`, editable/read-only `demo-pane`, page TOC).
+
 ## Editing Rules for Agents
 
 - Keep changes scoped; do not refactor unrelated files.
@@ -113,6 +120,11 @@ Related docs for this project:
 - Keep exports coherent:
   - component exports in `src/components/index.ts`
   - theme API in `mod.ts` / `plugins.ts`.
+- In `.vto` and HTML-like docs content, do not let `deno fmt` collapse snippet bodies inside tags such as
+  `<code-example>`.
+  - Preserve multiline snippet content exactly as authored.
+  - Use `<!-- deno-fmt-ignore -->` before affected blocks when needed to prevent reflow.
+  - After formatting, re-check rendered docs pages to confirm snippets remain multiline and syntactically valid.
 - Avoid committing generated `_site/` output unless explicitly requested.
 
 ## Release Notes Context
@@ -120,6 +132,8 @@ Related docs for this project:
 - Release automation uses `release-please` (`.github/workflows/release-please.yml` + `release-please-config.json`).
 - Conventional commit types map to changelog sections (`feat`, `fix`, `refactor`, `test`, `chore`).
 - `deno.json` is listed as an extra file for release version updates.
+- Before shipping a release with new options/components, confirm related docs and examples are updated (`README.md` +
+  relevant `src/docs/*` pages).
 
 ## Known Caveats
 
