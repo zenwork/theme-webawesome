@@ -46,6 +46,9 @@ class DemoPane extends LitElement {
   @property({ type: String, attribute: 'template-label' })
   templateLabel = ''
 
+  @property({ type: Boolean, attribute: 'editor-open', reflect: true })
+  editorOpen = false
+
   @state()
   private _parsedData: TemplateData | null = null
 
@@ -120,7 +123,11 @@ class DemoPane extends LitElement {
 
   protected override firstUpdated(_changedProperties: PropertyValueMap<DemoPane>): void {
     super.firstUpdated(_changedProperties)
-    this.initEditors()
+    if (this.editorOpen) {
+      this.initEditors()
+      this.syncEditorsFromDraft()
+      this.refreshEditorLayout()
+    }
   }
 
   private handleMediaChange = (event: MediaQueryListEvent): void => {
@@ -139,6 +146,11 @@ class DemoPane extends LitElement {
     }
     if (_changedProperties.has('editable') && this.editable) {
       this.initEditors()
+    }
+    if (_changedProperties.has('editorOpen') && this.editorOpen) {
+      this.initEditors()
+      this.syncEditorsFromDraft()
+      this.refreshEditorLayout()
     }
   }
 
@@ -240,7 +252,17 @@ class DemoPane extends LitElement {
       extensions: [
         lineNumbers(),
         history(),
-        keymap.of([...defaultKeymap, ...historyKeymap]),
+        keymap.of([
+          {
+            key: 'Mod-Enter',
+            run: () => {
+              this.runDemo()
+              return true
+            },
+          },
+          ...defaultKeymap,
+          ...historyKeymap,
+        ]),
         languageExtension as never,
         oneDark,
         syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
@@ -252,6 +274,13 @@ class DemoPane extends LitElement {
       ],
     })
     return new EditorView({ state, parent })
+  }
+
+  private refreshEditorLayout(): void {
+    requestAnimationFrame(() => {
+      this._jsonEditor?.requestMeasure()
+      this._templateEditor?.requestMeasure()
+    })
   }
 
   private syncEditorsFromDraft(): void {
@@ -280,20 +309,27 @@ class DemoPane extends LitElement {
 
   private async loadImports(): Promise<void> {
     try {
+      const required = ['button', 'icon', 'split-panel', 'details']
       const explicit = this.parseImportList(this._draftImports)
       const autoDetected = this.detectWebAwesomeComponents(this._renderedHtml)
-      const componentNames = new Set<string>([...explicit, ...autoDetected])
+      const componentNames = new Set<string>([...required, ...explicit, ...autoDetected])
       const modulesToLoad = [...componentNames].filter((name) => !this._loadedModules.has(name))
 
       await Promise.all(
         modulesToLoad.map(async (componentName) => {
-          await import(`webawesome/components/${componentName}/${componentName}.js`)
+          await import(this.getWebAwesomeComponentUrl(componentName))
           this._loadedModules.add(componentName)
         }),
       )
     } catch (e) {
       console.warn('Failed to load imports:', e)
     }
+  }
+
+  private getWebAwesomeComponentUrl(componentName: string): string {
+    const loaderScript = document.querySelector<HTMLScriptElement>('script[data-webawesome]')
+    const assetBasePath = loaderScript?.dataset.webawesome?.replace(/\/$/, '') || '/lib/webawesome/dist-cdn'
+    return `${assetBasePath}/components/${componentName}/${componentName}.js`
   }
 
   private parseImportList(raw: string): string[] {
@@ -348,6 +384,13 @@ class DemoPane extends LitElement {
     this._draftData = this.data
     this._draftTemplate = this.template
     this._draftImports = this.imports
+
+    const parsed = parseJSON(this._draftData)
+    if (parsed) {
+      this._draftData = JSON.stringify(parsed, null, 2)
+    }
+    this._draftTemplate = formatHtmlTemplate(this._draftTemplate)
+
     this.syncEditorsFromDraft()
     this.updateEditorHighlighting()
     this.processData()
@@ -387,69 +430,78 @@ class DemoPane extends LitElement {
     const templateLabel = this.templateLabel.trim()
 
     return html`
-      <div class="editor-panel">
-        <div class="editor-grid">
-          <label class="editor-field">
-            ${dataLabel
-              ? html`
-                <span>${dataLabel}</span>
-              `
-              : null}
-            <div id="json-editor" class="editor-host"></div>
-          </label>
+      <wa-details
+        class="editor-panel"
+        appearance="plain"
+        ?open="${this.editorOpen}"
+        @wa-show="${() => (this.editorOpen = true)}"
+        @wa-hide="${() => (this.editorOpen = false)}"
+      >
+        <span slot="summary">Data & template</span>
+        <div class="editor-panel-content">
+          <wa-split-panel class="editor-split" position="50" ?vertical="${this._isCompact}">
+            <label class="editor-field" slot="start">
+              ${dataLabel
+                ? html`
+                  <span>${dataLabel}</span>
+                `
+                : null}
+              <div id="json-editor" class="editor-host"></div>
+            </label>
 
-          <label class="editor-field">
-            ${templateLabel
-              ? html`
-                <span>${templateLabel}</span>
-              `
-              : null}
-            <div id="template-editor" class="editor-host"></div>
-          </label>
+            <label class="editor-field" slot="end">
+              ${templateLabel
+                ? html`
+                  <span>${templateLabel}</span>
+                `
+                : null}
+              <div id="template-editor" class="editor-host"></div>
+            </label>
+          </wa-split-panel>
+          <div class="editor-actions">
+            <wa-button
+              size="small"
+              variant="brand"
+              appearance="plain"
+              aria-label="Run demo"
+              title="Run demo"
+              @click="${this.runDemo}"
+            >
+              <wa-icon name="play" label="Run demo"></wa-icon>
+            </wa-button>
+            <wa-button
+              size="small"
+              variant="neutral"
+              appearance="plain"
+              aria-label="Format JSON"
+              title="Format JSON"
+              @click="${this.formatJson}"
+            >
+              <wa-icon name="code" label="Format JSON"></wa-icon>
+            </wa-button>
+            <wa-button
+              size="small"
+              variant="neutral"
+              appearance="plain"
+              aria-label="Format HTML"
+              title="Format HTML"
+              @click="${this.formatHtml}"
+            >
+              <wa-icon name="file-code" label="Format HTML"></wa-icon>
+            </wa-button>
+            <wa-button
+              size="small"
+              variant="neutral"
+              appearance="plain"
+              aria-label="Reset demo"
+              title="Reset demo"
+              @click="${this.resetDemo}"
+            >
+              <wa-icon name="arrows-rotate" label="Reset demo"></wa-icon>
+            </wa-button>
+          </div>
         </div>
-        <div class="editor-actions">
-          <wa-button
-            size="small"
-            variant="brand"
-            appearance="plain"
-            aria-label="Run demo"
-            title="Run demo"
-            @click="${this.runDemo}"
-          >
-            <wa-icon name="play" label="Run demo"></wa-icon>
-          </wa-button>
-          <wa-button
-            size="small"
-            variant="neutral"
-            appearance="plain"
-            aria-label="Format JSON"
-            title="Format JSON"
-            @click="${this.formatJson}"
-          >
-            <wa-icon name="code" label="Format JSON"></wa-icon>
-          </wa-button>
-          <wa-button
-            size="small"
-            variant="neutral"
-            appearance="plain"
-            aria-label="Format HTML"
-            title="Format HTML"
-            @click="${this.formatHtml}"
-          >
-            <wa-icon name="file-code" label="Format HTML"></wa-icon>
-          </wa-button>
-          <wa-button
-            size="small"
-            variant="neutral"
-            appearance="plain"
-            aria-label="Reset demo"
-            title="Reset demo"
-            @click="${this.resetDemo}"
-          >
-            <wa-icon name="arrows-rotate" label="Reset demo"></wa-icon>
-          </wa-button>
-        </div>
-      </div>
+      </wa-details>
     `
   }
 
@@ -569,10 +621,10 @@ class DemoPane extends LitElement {
     }
 
     return html`
-      <wa-split-panel position="33">
+      <wa-split-panel class="pane-split" position="33">
         <div slot="start">${this.renderPane(this._highlightedJson, 'json', 'copy-json')}</div>
 
-        <wa-split-panel slot="end" position="50">
+        <wa-split-panel class="pane-split" slot="end" position="50">
           <div slot="start">${this.renderPane(this._highlightedHtml, 'html', 'copy-html')}</div>
           <div slot="end">${this.renderOutputPane()}</div>
         </wa-split-panel>
