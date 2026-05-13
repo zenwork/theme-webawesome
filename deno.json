@@ -2,7 +2,11 @@
     "version": "0.1.0",
     "imports": {
         "webawesome": "./lib/webawesome/dist/",
-        "lit": "npm:lit@^3.3.2",
+        "lit": "npm:lit@3.3.2",
+        "lit/": "npm:lit@3.3.2/",
+        "lit/decorators.js": "npm:lit@3.3.2/decorators.js",
+        "lit/directives/unsafe-html.js": "npm:lit@3.3.2/directives/unsafe-html.js",
+        
         "prismjs": "npm:prismjs@^1.29.0",
         "lume/": "https://cdn.jsdelivr.net/gh/lumeland/lume@3.1.0/",
         "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.13.0/",
