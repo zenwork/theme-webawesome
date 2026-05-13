@@ -20,6 +20,8 @@ Guidance for coding agents working in this repository.
   - theme export in `mod.ts`
   - a local test site under `test/`
 - UI components are built with **Lit** and use **WebAwesome** components.
+- this theme is largely inspired by the https://github.com/lumeland/theme-simple-wiki theme and uses some of the same
+  architecture
 
 ## Stack and Conventions
 

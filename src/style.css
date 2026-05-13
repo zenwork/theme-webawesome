@@ -102,8 +102,7 @@ a {
   gap: 0.5rem;
 }
 
-.site-toc-nav wa-tree,
-.page-toc-shell wa-tree {
+.site-toc-nav wa-tree {
   width: 100%;
 }
 
@@ -113,6 +112,19 @@ a {
 
 .page-toc-panel {
   display: none;
+  overscroll-behavior: contain;
+}
+
+.page-toc-list {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.page-toc-list .page-toc-list {
+  margin-top: 0.4rem;
+  padding-left: 0.85rem;
 }
 
 .toc-link {
@@ -231,5 +243,7 @@ code {
     position: sticky;
     top: 4.5rem;
     align-self: start;
+    max-height: calc(100vh - 5.5rem);
+    overflow-y: auto;
   }
 }

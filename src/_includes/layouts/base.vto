@@ -22,6 +22,10 @@
       wa-tree-item:not(:defined) {
         display: none;
       }
+
+      site-toc-tree:defined:not([data-ready]) {
+        visibility: hidden;
+      }
     </style>
     <link rel="preload" href="{{ webawesome.cssPath }}" as="style">
     <link rel="preload" href="{{ webawesome.loaderPath }}" as="script">
@@ -65,20 +69,22 @@
           <section class="page-toc-shell">
             <h2>On this page</h2>
             <nav aria-label="Page table of contents">
-              <wa-tree>
+              <ol class="page-toc-list">
                 {{ for item of toc }}
-                  <wa-tree-item {{ if item.children.length }}expanded{{ /if }}>
-                    <a href="#{{ item.slug }}" class="toc-link">{{ item.text }}</a>
+                  <li>
+                    <a href="{{ item.url || `#${item.slug}` }}" class="toc-link">{{ item.text }}</a>
                     {{ if item.children.length }}
-                      {{ for child of item.children }}
-                        <wa-tree-item>
-                          <a href="#{{ child.slug }}" class="toc-link">{{ child.text }}</a>
-                        </wa-tree-item>
-                      {{ /for }}
+                      <ul class="page-toc-list">
+                        {{ for child of item.children }}
+                          <li>
+                            <a href="{{ child.url || `#${child.slug}` }}" class="toc-link">{{ child.text }}</a>
+                          </li>
+                        {{ /for }}
+                      </ul>
                     {{ /if }}
-                  </wa-tree-item>
+                  </li>
                 {{ /for }}
-              </wa-tree>
+              </ol>
             </nav>
           </section>
         </aside>

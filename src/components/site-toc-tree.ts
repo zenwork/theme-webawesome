@@ -12,6 +12,7 @@ class SiteTocTree extends LitElement {
 
   override connectedCallback(): void {
     super.connectedCallback()
+    this.removeAttribute('data-ready')
     queueMicrotask(() => {
       this.applyPersistedState()
       this.syncSelectedItem()
@@ -19,9 +20,8 @@ class SiteTocTree extends LitElement {
       this.addEventListener('wa-collapse', this.handleTreeChange as EventListener)
       this.addEventListener('wa-selection-change', this.handleSelectionChange as EventListener)
       this.addEventListener('click', this.handleClick)
-      requestAnimationFrame(() => {
-        this.isHydrating = false
-      })
+      this.isHydrating = false
+      this.setAttribute('data-ready', '')
     })
   }
 

@@ -40,6 +40,12 @@ class DemoPane extends LitElement {
   @property({ type: String, attribute: 'default-tab' })
   defaultTab: 'data' | 'markup' | 'output' = 'output'
 
+  @property({ type: String, attribute: 'data-label' })
+  dataLabel = ''
+
+  @property({ type: String, attribute: 'template-label' })
+  templateLabel = ''
+
   @state()
   private _parsedData: TemplateData | null = null
 
@@ -84,6 +90,7 @@ class DemoPane extends LitElement {
   private _jsonEditor: EditorView | null = null
   private _templateEditor: EditorView | null = null
   private _syncingEditors = false
+  private _didFormatInitialContent = false
 
   override connectedCallback(): void {
     super.connectedCallback()
@@ -94,6 +101,7 @@ class DemoPane extends LitElement {
     this._draftData = this.data
     this._draftTemplate = this.template
     this._draftImports = this.imports
+    this.formatInitialDrafts()
     if (this.data || this.template || this.imports) {
       this.processData()
       this.requestUpdate()
@@ -125,6 +133,7 @@ class DemoPane extends LitElement {
       this._draftData = this.data
       this._draftTemplate = this.template
       this._draftImports = this.imports
+      this.formatInitialDrafts()
       this.syncEditorsFromDraft()
       this.processData()
     }
@@ -321,6 +330,20 @@ class DemoPane extends LitElement {
     this.processData()
   }
 
+  private formatInitialDrafts(): void {
+    if (this._didFormatInitialContent) {
+      return
+    }
+
+    const parsed = parseJSON(this._draftData)
+    if (parsed) {
+      this._draftData = JSON.stringify(parsed, null, 2)
+    }
+
+    this._draftTemplate = formatHtmlTemplate(this._draftTemplate)
+    this._didFormatInitialContent = true
+  }
+
   private resetDemo(): void {
     this._draftData = this.data
     this._draftTemplate = this.template
@@ -360,24 +383,71 @@ class DemoPane extends LitElement {
       return null
     }
 
+    const dataLabel = this.dataLabel.trim()
+    const templateLabel = this.templateLabel.trim()
+
     return html`
       <div class="editor-panel">
         <div class="editor-grid">
           <label class="editor-field">
-            <span>Data (JSON)</span>
+            ${dataLabel
+              ? html`
+                <span>${dataLabel}</span>
+              `
+              : null}
             <div id="json-editor" class="editor-host"></div>
           </label>
 
           <label class="editor-field">
-            <span>Template (HTML)</span>
+            ${templateLabel
+              ? html`
+                <span>${templateLabel}</span>
+              `
+              : null}
             <div id="template-editor" class="editor-host"></div>
           </label>
         </div>
         <div class="editor-actions">
-          <wa-button size="small" variant="brand" @click="${this.runDemo}">Run</wa-button>
-          <wa-button size="small" variant="neutral" @click="${this.formatJson}">Format JSON</wa-button>
-          <wa-button size="small" variant="neutral" @click="${this.formatHtml}">Format HTML</wa-button>
-          <wa-button size="small" variant="neutral" appearance="plain" @click="${this.resetDemo}">Reset</wa-button>
+          <wa-button
+            size="small"
+            variant="brand"
+            appearance="plain"
+            aria-label="Run demo"
+            title="Run demo"
+            @click="${this.runDemo}"
+          >
+            <wa-icon name="play" label="Run demo"></wa-icon>
+          </wa-button>
+          <wa-button
+            size="small"
+            variant="neutral"
+            appearance="plain"
+            aria-label="Format JSON"
+            title="Format JSON"
+            @click="${this.formatJson}"
+          >
+            <wa-icon name="code" label="Format JSON"></wa-icon>
+          </wa-button>
+          <wa-button
+            size="small"
+            variant="neutral"
+            appearance="plain"
+            aria-label="Format HTML"
+            title="Format HTML"
+            @click="${this.formatHtml}"
+          >
+            <wa-icon name="file-code" label="Format HTML"></wa-icon>
+          </wa-button>
+          <wa-button
+            size="small"
+            variant="neutral"
+            appearance="plain"
+            aria-label="Reset demo"
+            title="Reset demo"
+            @click="${this.resetDemo}"
+          >
+            <wa-icon name="arrows-rotate" label="Reset demo"></wa-icon>
+          </wa-button>
         </div>
       </div>
     `
@@ -398,12 +468,11 @@ class DemoPane extends LitElement {
     })
   }
 
-  private renderPane(title: string, content: string, type: 'json' | 'html', buttonId: string): unknown {
+  private renderPane(content: string, type: 'json' | 'html', buttonId: string): unknown {
     const copyText = type === 'json' ? this.data : this._renderedHtml
     return html`
       <div class="pane">
-        <div class="pane-header">
-          <span>${title}</span>
+        <div class="pane-toolbar">
           <wa-button
             id="${buttonId}"
             class="copy-button"
@@ -425,9 +494,6 @@ class DemoPane extends LitElement {
   private renderOutputPane(): unknown {
     return html`
       <div class="pane">
-        <div class="pane-header">
-          <span>Rendered Output</span>
-        </div>
         <div class="pane-content">
           ${this._error
             ? html`
@@ -452,9 +518,9 @@ class DemoPane extends LitElement {
 
     let tabContent: unknown = this.renderOutputPane()
     if (this._activeTab === 'data') {
-      tabContent = this.renderPane('JSON Data', this._highlightedJson, 'json', 'copy-json')
+      tabContent = this.renderPane(this._highlightedJson, 'json', 'copy-json')
     } else if (this._activeTab === 'markup') {
-      tabContent = this.renderPane('HTML Markup', this._highlightedHtml, 'html', 'copy-html')
+      tabContent = this.renderPane(this._highlightedHtml, 'html', 'copy-html')
     }
 
     return html`
@@ -504,10 +570,10 @@ class DemoPane extends LitElement {
 
     return html`
       <wa-split-panel position="33">
-        <div slot="start">${this.renderPane('JSON Data', this._highlightedJson, 'json', 'copy-json')}</div>
+        <div slot="start">${this.renderPane(this._highlightedJson, 'json', 'copy-json')}</div>
 
         <wa-split-panel slot="end" position="50">
-          <div slot="start">${this.renderPane('HTML Markup', this._highlightedHtml, 'html', 'copy-html')}</div>
+          <div slot="start">${this.renderPane(this._highlightedHtml, 'html', 'copy-html')}</div>
           <div slot="end">${this.renderOutputPane()}</div>
         </wa-split-panel>
       </wa-split-panel>
