@@ -71,9 +71,11 @@
       </section>
     </wa-drawer>
     <header class="site-header">
-      <wa-button class="site-toc-trigger" variant="neutral" size="small" id="site-toc-trigger">Docs</wa-button>
-      <a class="site-title" href="/">{{ metas.site }}</a>
-      {{ include '../theme-toggle.vto' }}
+      <div class="site-header-inner">
+        <wa-button class="site-toc-trigger" variant="neutral" size="small" id="site-toc-trigger">Docs</wa-button>
+        <a class="site-title" href="/">{{ metas.site }}</a>
+        {{ include '../theme-toggle.vto' }}
+      </div>
     </header>
     <main class="docs-shell">
       <aside class="site-toc-panel">
@@ -118,7 +120,25 @@
         const trigger = document.getElementById('site-toc-trigger')
         const drawer = document.getElementById('site-toc-drawer')
         if (trigger && drawer) {
-          trigger.addEventListener('click', () => drawer.show())
+          let openedAt = 0
+          const stopEvent = (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+
+          trigger.addEventListener('pointerdown', stopEvent, { capture: true })
+          trigger.addEventListener('pointerup', stopEvent, { capture: true })
+          trigger.addEventListener('click', (event) => {
+            stopEvent(event)
+            openedAt = Date.now()
+            window.setTimeout(() => drawer.show(), 0)
+          }, { capture: true })
+
+          drawer.addEventListener('wa-hide', (event) => {
+            if (Date.now() - openedAt < 400) {
+              event.preventDefault()
+            }
+          })
         }
 
         const header = document.querySelector('.site-header')
