@@ -108,11 +108,143 @@
       {{ /if }}
     </main>
     <script>
-      const trigger = document.getElementById('site-toc-trigger')
-      const drawer = document.getElementById('site-toc-drawer')
-      if (trigger && drawer) {
-        trigger.addEventListener('click', () => drawer.show())
-      }
+      ;(() => {
+        const trigger = document.getElementById('site-toc-trigger')
+        const drawer = document.getElementById('site-toc-drawer')
+        if (trigger && drawer) {
+          trigger.addEventListener('click', () => drawer.show())
+        }
+
+        const header = document.querySelector('.site-header')
+        const pageToc = document.querySelector('.page-toc-panel')
+        if (!pageToc) {
+          return
+        }
+
+        const tocLinks = Array.from(pageToc.querySelectorAll('a.toc-link[href^="#"]'))
+        if (!tocLinks.length) {
+          return
+        }
+
+        const parseHashId = (hash) => {
+          if (!hash || hash[0] !== '#') {
+            return ''
+          }
+          const raw = hash.slice(1)
+          try {
+            return decodeURIComponent(raw)
+          } catch {
+            return raw
+          }
+        }
+
+        const getHeaderOffset = () => {
+          const headerHeight = header?.getBoundingClientRect().height ?? 0
+          return Math.round(headerHeight + 12)
+        }
+
+        const syncHeaderOffsetVar = () => {
+          document.documentElement.style.setProperty('--site-header-scroll-offset', `${getHeaderOffset()}px`)
+        }
+
+        const tocItems = tocLinks
+          .map((link) => {
+            const id = parseHashId(link.hash)
+            if (!id) {
+              return null
+            }
+            const target = document.getElementById(id)
+            if (!target) {
+              return null
+            }
+            return { id, link, target }
+          })
+          .filter((item) => item !== null)
+
+        if (!tocItems.length) {
+          return
+        }
+
+        const setActiveToc = (activeId) => {
+          for (const { id, link } of tocItems) {
+            link.classList.toggle('is-active', id === activeId)
+            if (id === activeId) {
+              link.setAttribute('aria-current', 'location')
+            } else {
+              link.removeAttribute('aria-current')
+            }
+          }
+        }
+
+        const scrollToHeading = (id, behavior = 'smooth') => {
+          const item = tocItems.find((entry) => entry.id === id)
+          if (!item) {
+            return
+          }
+          const targetTop = item.target.getBoundingClientRect().top + window.scrollY - getHeaderOffset()
+          window.scrollTo({ top: Math.max(0, targetTop), behavior })
+        }
+
+        const updateActiveFromScroll = () => {
+          const offset = getHeaderOffset()
+          const activationOffset = offset + 24
+          const viewportHeight = window.innerHeight || 0
+          const atPageBottom = window.scrollY + viewportHeight >= document.documentElement.scrollHeight - 2
+
+          if (atPageBottom) {
+            setActiveToc(tocItems[tocItems.length - 1].id)
+            return
+          }
+
+          let activeId = tocItems[0].id
+          for (const { id, target } of tocItems) {
+            if (target.getBoundingClientRect().top <= activationOffset) {
+              activeId = id
+            } else {
+              break
+            }
+          }
+          setActiveToc(activeId)
+        }
+
+        for (const { id, link } of tocItems) {
+          link.addEventListener('click', (event) => {
+            event.preventDefault()
+            scrollToHeading(id, 'smooth')
+            history.pushState(null, '', `#${encodeURIComponent(id)}`)
+            setActiveToc(id)
+          })
+        }
+
+        const hashId = parseHashId(window.location.hash)
+        syncHeaderOffsetVar()
+        if (hashId) {
+          const item = tocItems.find((entry) => entry.id === hashId)
+          if (item) {
+            requestAnimationFrame(() => scrollToHeading(hashId, 'auto'))
+            setActiveToc(hashId)
+          } else {
+            updateActiveFromScroll()
+          }
+        } else {
+          updateActiveFromScroll()
+        }
+
+        window.addEventListener('scroll', updateActiveFromScroll, { passive: true })
+        window.addEventListener('resize', () => {
+          syncHeaderOffsetVar()
+          updateActiveFromScroll()
+        })
+        window.addEventListener('hashchange', () => {
+          const nextId = parseHashId(window.location.hash)
+          if (!nextId) {
+            updateActiveFromScroll()
+            return
+          }
+          scrollToHeading(nextId, 'auto')
+          setActiveToc(nextId)
+        })
+      })()
     </script>
   </body>
 </html>

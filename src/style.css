@@ -4,6 +4,10 @@ html {
   scrollbar-gutter: stable;
 }
 
+:root {
+  --site-header-scroll-offset: 72px;
+}
+
 @supports not (scrollbar-gutter: stable) {
   html {
     overflow-y: scroll;
@@ -110,6 +114,10 @@ a {
   min-width: 0;
 }
 
+.docs-content :is(h2, h3, h4, h5, h6) {
+  scroll-margin-top: var(--site-header-scroll-offset);
+}
+
 .page-toc-panel {
   display: none;
   overscroll-behavior: contain;
@@ -145,7 +153,7 @@ a {
 }
 
 .toc-link.is-active {
-  color: var(--wa-color-brand-text-loud);
+  color: var(--wa-color-brand-fill-loud);
   font-weight: 600;
 }
 
