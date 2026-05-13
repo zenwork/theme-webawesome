@@ -49,7 +49,7 @@ export const defaults: Options = {
   },
   webawesome: {
     mode: 'free',
-    assetBasePath: 'https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.1.0/dist-cdn',
+    assetBasePath: '/lib/webawesome/dist-cdn',
   },
   componentEntrypoint: 'components/index.ts',
   additionalComponentEntrypoints: [],
@@ -146,7 +146,7 @@ function buildHtmlToc(content: string, pageUrl: string | undefined, minLevel = 2
 export default function (userOptions?: Options) {
   const options = merge(defaults, userOptions)
   const basePathByMode: Record<'free' | 'pro', string> = {
-    free: 'https://cdn.jsdelivr.net/npm/@awesome.me/webawesome@3.1.0/dist-cdn',
+    free: '/lib/webawesome/dist-cdn',
     pro: '/lib/webawesome-pro/dist-cdn',
   }
 
@@ -219,8 +219,8 @@ export default function (userOptions?: Options) {
       }))
       .add('style.css')
       .add(options.componentEntrypoint ?? 'components/index.ts')
-    // .copy("npm:@awesome.me/webawesome@^3.1.0/dist/styles/**/*.css", "styles/webawesome")
-    // .copy("lib", "lib")
+      // .copy("npm:@awesome.me/webawesome@^3.1.0/dist/styles/**/*.css", "styles/webawesome")
+      .copy('lib', 'lib')
 
     for (const entrypoint of options.additionalComponentEntrypoints ?? []) {
       site.add(entrypoint)
