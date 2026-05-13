@@ -1,10 +1,10 @@
 ---
 layout: layouts/base.vto
-title: Introduction
+title: Design
 order: 20
 ---
 
-# Introduction
+# Design
 
 This theme is built for technical documentation sites that need code-first content, lightweight client behavior, and
 reliable composition points.

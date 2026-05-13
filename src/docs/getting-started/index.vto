@@ -15,12 +15,16 @@ order: 30
   <section class="docs-section">
     <h2>Install and Import</h2>
     <p>In your Lume site config, import the theme and use it as a site plugin:</p>
+    <!-- deno-fmt-ignore -->
     <code-example language="typescript">
-      import lume from 'lume/mod.ts'
-      import theme from 'theme-webawesome/mod.ts'; const site = lume()
+import lume from 'lume/mod.ts'
+import theme from 'theme-webawesome/mod.ts'
 
-      site.use(theme())
-      export default site
+const site = lume()
+
+site.use(theme())
+
+export default site
     </code-example>
   </section>
 

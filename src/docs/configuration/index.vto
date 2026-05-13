@@ -22,19 +22,21 @@ order: 40
 
   <section class="docs-section">
     <h2>Options</h2>
+    <!-- deno-fmt-ignore -->
     <code-example language="typescript">
-      site.use(
-        theme({
-                webawesome: {
-                  mode: 'free',
-                  assetBasePath: '/lib/webawesome/dist-cdn',
-                  cssPath: '/lib/webawesome/dist-cdn/styles/webawesome.css',
-                  loaderPath: '/lib/webawesome/dist-cdn/webawesome.loader.js',
-                  splitPanelPath: '/lib/webawesome/dist-cdn/components/split-panel/split-panel.js',
-                },
-                componntEntrypoint: 'components/index.ts',
-                additionalComponentEntrypoints: ['components/custom.ts'],
-              }))
+site.use(
+  theme({
+    webawesome: {
+      mode: 'free',
+      assetBasePath: '/lib/webawesome/dist-cdn',
+      cssPath: '/lib/webawesome/dist-cdn/styles/webawesome.css',
+      loaderPath: '/lib/webawesome/dist-cdn/webawesome.loader.js',
+      splitPanelPath: '/lib/webawesome/dist-cdn/components/split-panel/split-panel.js',
+    },
+    componentEntrypoint: 'components/index.ts',
+    additionalComponentEntrypoints: ['components/custom.ts'],
+  }),
+)
     </code-example>
   </section>
 
@@ -44,14 +46,19 @@ order: 40
       Set <code>mode</code> to <code>pro</code> and provide a compatible asset path if your Pro files are not located at
       the theme default.
     </p>
+    <!-- deno-fmt-ignore -->
     <code-example language="typescript">
-      site.use(
-        theme({
-                webawesome: {
-                  mode: 'pro',
-                  assetBasePath: 'lib/webawesome-pro/dist-cd',
-                ,
-             }));
+site.use(
+  theme({
+    webawesome: {
+      mode: 'pro',
+      assetBasePath: '/lib/webawesome-pro/dist-cdn',
+      cssPath: '/lib/webawesome-pro/dist-cdn/styles/webawesome.css',
+      loaderPath: '/lib/webawesome-pro/dist-cdn/webawesome.loader.js',
+      splitPanelPath: '/lib/webawesome-pro/dist-cdn/components/split-panel/split-panel.js',
+    },
+  }),
+)
     </code-example>
   </section>
 

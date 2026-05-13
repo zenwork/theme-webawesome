@@ -29,10 +29,11 @@ order: 50
       The component wraps a <code>wa-tree</code>, persists expanded <code>wa-tree-item</code> keys to local storage, and
       restores them on load. It also syncs the selected tree item from the current pathname.
     </p>
+    <!-- deno-fmt-ignore -->
     <code-example language="html">
-      &lt;site-toc-tree storage-key="site-toc-expanded-v1"&gt;
-        &lt;wa-tree&gt;...&lt;/wa-tree&gt;
-      &lt;/site-toc-tree&gt;
+&lt;site-toc-tree storage-key="site-toc-expanded-v1"&gt;
+  &lt;wa-tree&gt;...&lt;/wa-tree&gt;
+&lt;/site-toc-tree&gt;
     </code-example>
   </section>
 
@@ -47,8 +48,13 @@ order: 50
   <section class="docs-section">
     <h2>Controlling Sidebar Entries</h2>
     <p>Use page front matter to shape sidebar discovery:</p>
-    <code-example language="yaml">
-      --- title: API Reference order: 70 hide_menu: true ---
+    <!-- deno-fmt-ignore -->
+    <code-example language="text">
+---
+title: API Reference
+order: 70
+hide_menu: true
+---
     </code-example>
     <ul>
       <li><code>title</code>: sidebar label</li>
