@@ -30,7 +30,7 @@ It combines:
 - [Theme Configuration](/docs/configuration/): free vs Pro asset paths and entrypoints
 - [Theme Components](/docs/components/): built-in component surfaces
 - [Navigation and TOC](/docs/navigation-and-toc/): site/sidebar/page TOC behavior
-- [Extending Components](/docs/extending-components/): loading your own Lit bundles
+- [Registering Components](/docs/extending-components/): loading your own Lit bundles
 
 ## Scope
 
