@@ -1,5 +1,40 @@
 @import 'css/reset.css';
 
+html {
+  scrollbar-gutter: stable;
+}
+
+@supports not (scrollbar-gutter: stable) {
+  html {
+    overflow-y: scroll;
+  }
+}
+
+.site-header wa-button:not(:defined) {
+  visibility: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+#site-toc-trigger:not(:defined) {
+  min-block-size: 38px;
+  padding-inline: 0.75rem;
+  border: 1px solid transparent;
+}
+
+wa-button.theme-button:not(:defined) {
+  inline-size: 43px;
+  block-size: 43px;
+}
+
+wa-icon.theme-button:not(:defined) {
+  display: inline-block;
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
 body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
