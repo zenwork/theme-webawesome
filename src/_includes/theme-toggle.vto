@@ -1,37 +1,28 @@
 <script type="module">
   const lightTheme = 'wa-light'
   const darkTheme = 'wa-dark'
-  let current = window.localStorage.getItem('theme')
+  const html = document.documentElement
+  const button = document.querySelector('wa-button.theme-button')
+  const icon = document.querySelector('wa-icon.theme-button')
 
-  function set(toggle) {
-    const current = window.localStorage.getItem('theme')
-
-    let next = current
-    if (toggle) {
-      next = current === darkTheme ? lightTheme : darkTheme
-    }
-
-    const button = document.querySelector('wa-icon.theme-button')
-
-    // toggle button icon
-    if (next === darkTheme) button.setAttribute('name', 'sun')
-    else button.setAttribute('name', 'moon')
-
-    // store opposite state
-    window.localStorage.setItem('theme', next)
-
-    // set page theme
-    const html = document.documentElement
-    html.classList.remove(current)
-    html.classList.add(next)
-    if (current === darkTheme) html.setAttribute('checked', '')
+  function syncIcon() {
+    if (!icon) return
+    icon.setAttribute('name', html.classList.contains(darkTheme) ? 'sun' : 'moon')
   }
 
-  set(false)
-  document.querySelector('wa-button.theme-button').addEventListener('click', (_) => {
-    let current = window.localStorage.getItem('theme')
-    set(current === darkTheme ? lightTheme : darkTheme)
-  })
+  function toggleTheme() {
+    const next = html.classList.contains(darkTheme) ? lightTheme : darkTheme
+    html.classList.remove(lightTheme, darkTheme)
+    html.classList.add(next)
+    window.localStorage.setItem('theme', next)
+    syncIcon()
+  }
+
+  if (button) {
+    button.addEventListener('click', toggleTheme)
+  }
+
+  syncIcon()
 </script>
 <wa-button class="theme-button" variant="neutral" appearance="plain" style="font-size: 1rem">
   <wa-icon class="theme-button" name="sun" label="Home"></wa-icon>
