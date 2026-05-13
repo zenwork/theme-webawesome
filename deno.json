@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "1.0.0",
   "imports": {
     "webawesome": "./lib/webawesome/dist/",
     "lit": "npm:lit@3.3.2",
