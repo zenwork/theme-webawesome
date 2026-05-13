@@ -1,46 +1,32 @@
-/**
- * Simple mustache-style template renderer
- * Replaces {{key}} placeholders with values from data object
- * Supports nested properties like {{props.variant}}
- */
+import Handlebars from 'handlebars'
 
 export interface TemplateData {
-  [key: string]: string | number | boolean | TemplateData | Array<string | number | boolean | TemplateData>
+  [key: string]: unknown
 }
 
 /**
- * Renders a template string with mustache-style placeholders
- * @param template - Template string with {{placeholder}} syntax
+ * Renders a template string with Handlebars syntax.
+ * Supports conditionals, loops, and nested property access.
+ * Also supports legacy [[key]] placeholders by converting them to {{key}}.
+ *
+ * @param template - Template string with Handlebars syntax
  * @param data - Data object with values to replace
  * @returns Rendered string
  */
 export function renderTemplate(template: string, data: TemplateData): string {
-  return template.replace(/\{\{([^}]+)\}\}|\[\[([^\]]+)\]\]/g, (match, moustachePath, bracketPath) => {
-    const path = (moustachePath ?? bracketPath).trim()
-    const value = getNestedValue(data, path.trim())
-    return value !== undefined ? String(value) : match
+  const normalized = normalizeTemplateSyntax(template)
+  const compiled = Handlebars.compile(normalized, {
+    noEscape: false,
+    strict: true,
   })
+  return compiled(data)
 }
 
 /**
- * Gets a nested value from an object using dot notation
- * @param obj - Source object
- * @param path - Dot-separated path (e.g., "props.variant")
- * @returns The value at the path or undefined
+ * Converts legacy [[key]] placeholders to Handlebars {{key}} placeholders.
  */
-function getNestedValue(obj: TemplateData, path: string): string | number | boolean | undefined {
-  const keys = path.split('.')
-  let current: TemplateData | string | number | boolean | Array<string | number | boolean | TemplateData> = obj
-
-  for (const key of keys) {
-    if (current && typeof current === 'object' && !Array.isArray(current)) {
-      current = current[key]
-    } else {
-      return undefined
-    }
-  }
-
-  return typeof current === 'object' ? undefined : current
+function normalizeTemplateSyntax(template: string): string {
+  return template.replace(/\[\[\s*([^[\]]+?)\s*\]\]/g, '{{$1}}')
 }
 
 /**
@@ -61,7 +47,11 @@ export function escapeHtml(str: string): string {
  */
 export function parseJSON(str: string): TemplateData | null {
   try {
-    return JSON.parse(str)
+    const parsed = JSON.parse(str)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return null
+    }
+    return parsed as TemplateData
   } catch {
     return null
   }

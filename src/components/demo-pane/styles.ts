@@ -84,6 +84,59 @@ export const styles: CSSResultGroup = css`
     opacity: 1;
   }
 
+  .editor-panel {
+    border-bottom: 1px solid var(--wa-color-neutral-200);
+    background: var(--wa-color-neutral-50);
+    padding: 0.75rem;
+  }
+
+  .editor-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .editor-field {
+    display: grid;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--wa-color-neutral-700);
+  }
+
+  .editor-host {
+    min-height: 180px;
+    border: 1px solid #374151;
+    border-radius: var(--wa-border-radius-small);
+    overflow: hidden;
+  }
+
+  .editor-host .cm-editor {
+    height: 180px;
+    font-size: 0.8rem;
+  }
+
+  .editor-host .cm-scroller {
+    font-family: Monaco, Menlo, Ubuntu Mono, monospace;
+    line-height: 1.4;
+  }
+
+  .editor-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .editable-layout {
+    display: grid;
+    grid-template-rows: auto minmax(260px, 1fr);
+    min-height: 560px;
+  }
+
+  .editable-preview {
+    min-height: 260px;
+  }
+
   .tabs-toolbar {
     display: flex;
     gap: 0.5rem;
@@ -114,6 +167,15 @@ export const styles: CSSResultGroup = css`
   @media (max-width: 768px) {
     :host {
       min-height: 460px;
+    }
+
+    .editor-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .editable-layout {
+      min-height: 460px;
+      grid-template-rows: auto minmax(220px, 1fr);
     }
 
     .pane {

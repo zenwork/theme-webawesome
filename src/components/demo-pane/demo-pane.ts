@@ -1,6 +1,14 @@
 import { html, LitElement, PropertyValueMap } from 'lit'
 import { property, state } from 'lit/decorators.js'
 import { unsafeHTML } from 'lit/directives/unsafe-html.js'
+import { EditorState } from '@codemirror/state'
+import { EditorView, keymap, lineNumbers } from '@codemirror/view'
+import { history, defaultKeymap, historyKeymap } from '@codemirror/commands'
+import { json as jsonLanguage } from '@codemirror/lang-json'
+import { html as htmlLanguage } from '@codemirror/lang-html'
+import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
+import { oneDark } from '@codemirror/theme-one-dark'
+import DOMPurify from 'dompurify'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-json.js'
 import 'prismjs/components/prism-markup.js'
@@ -23,6 +31,9 @@ class DemoPane extends LitElement {
   @property({ type: String })
   imports = '[]'
 
+  @property({ type: Boolean, reflect: true })
+  editable = true
+
   @property({ type: String })
   layout: 'horizontal' | 'tabs' = 'horizontal'
 
@@ -36,6 +47,9 @@ class DemoPane extends LitElement {
   private _renderedHtml = ''
 
   @state()
+  private _sanitizedHtml = ''
+
+  @state()
   private _error: string | null = null
 
   @state()
@@ -45,12 +59,31 @@ class DemoPane extends LitElement {
   private _highlightedHtml = ''
 
   @state()
+  private _highlightedTemplate = ''
+
+  @state()
   private _activeTab: 'data' | 'markup' | 'output' = 'output'
 
   @state()
   private _isCompact = false
 
+  @state()
+  private _draftData = '{}'
+
+  @state()
+  private _draftTemplate = ''
+
+  @state()
+  private _draftImports = '[]'
+
+  @state()
+  private _outputVersion = 0
+
   private _mediaQuery: MediaQueryList | null = null
+  private readonly _loadedModules = new Set<string>()
+  private _jsonEditor: EditorView | null = null
+  private _templateEditor: EditorView | null = null
+  private _syncingEditors = false
 
   override connectedCallback(): void {
     super.connectedCallback()
@@ -58,6 +91,9 @@ class DemoPane extends LitElement {
     this._mediaQuery = globalThis.matchMedia('(max-width: 768px)')
     this._isCompact = this._mediaQuery.matches
     this._mediaQuery.addEventListener('change', this.handleMediaChange)
+    this._draftData = this.data
+    this._draftTemplate = this.template
+    this._draftImports = this.imports
     if (this.data || this.template || this.imports) {
       this.processData()
       this.requestUpdate()
@@ -67,7 +103,16 @@ class DemoPane extends LitElement {
   override disconnectedCallback(): void {
     this._mediaQuery?.removeEventListener('change', this.handleMediaChange)
     this._mediaQuery = null
+    this._jsonEditor?.destroy()
+    this._templateEditor?.destroy()
+    this._jsonEditor = null
+    this._templateEditor = null
     super.disconnectedCallback()
+  }
+
+  protected override firstUpdated(_changedProperties: PropertyValueMap<DemoPane>): void {
+    super.firstUpdated(_changedProperties)
+    this.initEditors()
   }
 
   private handleMediaChange = (event: MediaQueryListEvent): void => {
@@ -77,7 +122,14 @@ class DemoPane extends LitElement {
   protected override updated(_changedProperties: PropertyValueMap<DemoPane>): void {
     super.updated(_changedProperties)
     if (_changedProperties.has('data') || _changedProperties.has('template') || _changedProperties.has('imports')) {
+      this._draftData = this.data
+      this._draftTemplate = this.template
+      this._draftImports = this.imports
+      this.syncEditorsFromDraft()
       this.processData()
+    }
+    if (_changedProperties.has('editable') && this.editable) {
+      this.initEditors()
     }
   }
 
@@ -85,43 +137,235 @@ class DemoPane extends LitElement {
     this._error = null
 
     // Parse JSON data
-    const parsed = parseJSON(this.data)
+    const parsed = parseJSON(this._draftData)
     if (!parsed) {
       this._error = 'Invalid JSON data'
+      this.requestUpdate()
       return
     }
     this._parsedData = parsed
 
     // Render template with data
     try {
-      this._renderedHtml = renderTemplate(this.template, parsed)
+      this._renderedHtml = renderTemplate(this._draftTemplate, parsed)
     } catch (e) {
       this._error = `Template rendering error: ${e}`
+      this.requestUpdate()
       return
     }
+
+    this._sanitizedHtml = DOMPurify.sanitize(this._renderedHtml, {
+      USE_PROFILES: { html: true },
+      FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form'],
+      FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseenter', 'onfocus', 'style'],
+      CUSTOM_ELEMENT_HANDLING: {
+        tagNameCheck: /^wa-/,
+        attributeNameCheck: /^(aria-.*|data-.*|id|class|slot|part|exportparts|name|label|value|variant|size|appearance|type|checked|disabled|readonly|placeholder|for)$/i,
+        allowCustomizedBuiltInElements: false,
+      },
+      ALLOW_DATA_ATTR: true,
+      ALLOW_ARIA_ATTR: true,
+    })
+    this._outputVersion += 1
 
     // Format and highlight JSON
     const formattedJson = JSON.stringify(parsed, null, 2)
     this._highlightedJson = Prism.highlight(formattedJson, Prism.languages.json, 'json')
 
-    // Highlight HTML
+    // Highlight rendered HTML for diagnostics panes
     this._highlightedHtml = Prism.highlight(this._renderedHtml, Prism.languages.markup, 'markup')
+    this._highlightedTemplate = Prism.highlight(this._draftTemplate, Prism.languages.markup, 'markup')
 
     void this.loadImports()
+    this.requestUpdate()
+  }
+
+  private updateEditorHighlighting(): void {
+    const parsed = parseJSON(this._draftData)
+    if (parsed) {
+      const formattedJson = JSON.stringify(parsed, null, 2)
+      this._highlightedJson = Prism.highlight(formattedJson, Prism.languages.json, 'json')
+    } else {
+      this._highlightedJson = Prism.highlight(this._draftData, Prism.languages.json, 'json')
+    }
+    this._highlightedTemplate = Prism.highlight(this._draftTemplate, Prism.languages.markup, 'markup')
+  }
+
+  private initEditors(): void {
+    if (!this.editable) {
+      return
+    }
+
+    const jsonHost = this.renderRoot.querySelector<HTMLElement>('#json-editor')
+    const templateHost = this.renderRoot.querySelector<HTMLElement>('#template-editor')
+    if (!jsonHost || !templateHost) {
+      return
+    }
+
+    if (!this._jsonEditor) {
+      this._jsonEditor = this.createEditor(jsonHost, this._draftData, jsonLanguage(), (value) => {
+        if (this._syncingEditors) return
+        this._draftData = value
+        this.updateEditorHighlighting()
+      })
+    }
+
+    if (!this._templateEditor) {
+      this._templateEditor = this.createEditor(templateHost, this._draftTemplate, htmlLanguage(), (value) => {
+        if (this._syncingEditors) return
+        this._draftTemplate = value
+        this.updateEditorHighlighting()
+      })
+    }
+  }
+
+  private createEditor(
+    parent: HTMLElement,
+    doc: string,
+    languageExtension: unknown,
+    onChange: (value: string) => void,
+  ): EditorView {
+    const state = EditorState.create({
+      doc,
+      extensions: [
+        lineNumbers(),
+        history(),
+        keymap.of([...defaultKeymap, ...historyKeymap]),
+        languageExtension as never,
+        oneDark,
+        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            onChange(update.state.doc.toString())
+          }
+        }),
+      ],
+    })
+    return new EditorView({ state, parent })
+  }
+
+  private syncEditorsFromDraft(): void {
+    this._syncingEditors = true
+    try {
+      if (this._jsonEditor) {
+        const current = this._jsonEditor.state.doc.toString()
+        if (current !== this._draftData) {
+          this._jsonEditor.dispatch({
+            changes: { from: 0, to: current.length, insert: this._draftData },
+          })
+        }
+      }
+      if (this._templateEditor) {
+        const current = this._templateEditor.state.doc.toString()
+        if (current !== this._draftTemplate) {
+          this._templateEditor.dispatch({
+            changes: { from: 0, to: current.length, insert: this._draftTemplate },
+          })
+        }
+      }
+    } finally {
+      this._syncingEditors = false
+    }
   }
 
   private async loadImports(): Promise<void> {
     try {
-      // Always load split-panel since it's required for the layout
-      // await import('webawesome/components/split-panel/split-panel.js')
+      const explicit = this.parseImportList(this._draftImports)
+      const autoDetected = this.detectWebAwesomeComponents(this._renderedHtml)
+      const componentNames = new Set<string>([...explicit, ...autoDetected])
+      const modulesToLoad = [...componentNames].filter((name) => !this._loadedModules.has(name))
 
-      const importList = JSON.parse(this.imports) as string[]
-      for (const componentName of importList) {
-        await import(`webawesome/components/${componentName}/${componentName}.js`)
-      }
+      await Promise.all(
+        modulesToLoad.map(async (componentName) => {
+          await import(`webawesome/components/${componentName}/${componentName}.js`)
+          this._loadedModules.add(componentName)
+        }),
+      )
     } catch (e) {
       console.warn('Failed to load imports:', e)
     }
+  }
+
+  private parseImportList(raw: string): string[] {
+    try {
+      const parsed = JSON.parse(raw)
+      if (!Array.isArray(parsed)) {
+        return []
+      }
+      return parsed.filter((item): item is string => typeof item === 'string')
+    } catch {
+      return []
+    }
+  }
+
+  private detectWebAwesomeComponents(markup: string): string[] {
+    const componentNames = new Set<string>()
+    const matches = markup.matchAll(/<\s*wa-([a-z0-9-]+)/gi)
+    for (const match of matches) {
+      const componentName = match[1]
+      if (componentName) {
+        componentNames.add(componentName)
+      }
+    }
+    return [...componentNames]
+  }
+
+  private runDemo(): void {
+    if (this._jsonEditor) {
+      this._draftData = this._jsonEditor.state.doc.toString()
+    }
+    if (this._templateEditor) {
+      this._draftTemplate = this._templateEditor.state.doc.toString()
+    }
+    this.processData()
+  }
+
+  private resetDemo(): void {
+    this._draftData = this.data
+    this._draftTemplate = this.template
+    this._draftImports = this.imports
+    this.syncEditorsFromDraft()
+    this.updateEditorHighlighting()
+    this.processData()
+  }
+
+  private formatJson(): void {
+    const parsed = parseJSON(this._draftData)
+    if (!parsed) {
+      this._error = 'Invalid JSON data'
+      return
+    }
+    this._draftData = JSON.stringify(parsed, null, 2)
+    this.syncEditorsFromDraft()
+    this.updateEditorHighlighting()
+    this.processData()
+  }
+
+  private renderEditor(): unknown {
+    if (!this.editable) {
+      return null
+    }
+
+    return html`
+      <div class="editor-panel">
+        <div class="editor-grid">
+          <label class="editor-field">
+            <span>Data (JSON)</span>
+            <div id="json-editor" class="editor-host"></div>
+          </label>
+
+          <label class="editor-field">
+            <span>Template (HTML)</span>
+            <div id="template-editor" class="editor-host"></div>
+          </label>
+        </div>
+        <div class="editor-actions">
+          <wa-button size="small" variant="brand" @click=${this.runDemo}>Run</wa-button>
+          <wa-button size="small" variant="neutral" @click=${this.formatJson}>Format JSON</wa-button>
+          <wa-button size="small" variant="neutral" appearance="plain" @click=${this.resetDemo}>Reset</wa-button>
+        </div>
+      </div>
+    `
   }
 
   private copyToClipboard(text: string, buttonId: string): void {
@@ -175,7 +419,7 @@ class DemoPane extends LitElement {
               <div class="error">${this._error}</div>
             `
             : html`
-              <div class="output-container">${unsafeHTML(this._renderedHtml)}</div>
+              <div class="output-container" data-version=${this._outputVersion}>${unsafeHTML(this._sanitizedHtml)}</div>
             `}
         </div>
       </div>
@@ -213,6 +457,15 @@ class DemoPane extends LitElement {
     `
   }
 
+  private renderEditablePreview(): unknown {
+    return html`
+      <div class="editable-layout">
+        ${this.renderEditor()}
+        <div class="editable-preview">${this.renderOutputPane()}</div>
+      </div>
+    `
+  }
+
   protected override render(): unknown {
     if (this._error && !this._parsedData) {
       return html`
@@ -220,8 +473,14 @@ class DemoPane extends LitElement {
       `
     }
 
+    if (this.editable) {
+      return this.renderEditablePreview()
+    }
+
     if (this.layout === 'tabs' || this._isCompact) {
-      return this.renderTabs()
+      return html`
+        ${this.renderTabs()}
+      `
     }
 
     return html`

@@ -8,7 +8,16 @@
     "lit/": "npm:lit@3.3.2/",
     "lit/decorators.js": "npm:lit@3.3.2/decorators.js",
     "lit/directives/unsafe-html.js": "npm:lit@3.3.2/directives/unsafe-html.js",
-    "prismjs": "npm:prismjs@^1.29.0"
+    "handlebars": "npm:handlebars@^4.7.8/dist/handlebars.js",
+    "dompurify": "npm:dompurify@^3.2.6",
+    "prismjs": "npm:prismjs@^1.29.0",
+    "@codemirror/state": "npm:@codemirror/state@^6.5.2",
+    "@codemirror/view": "npm:@codemirror/view@^6.38.6",
+    "@codemirror/commands": "npm:@codemirror/commands@^6.8.1",
+    "@codemirror/language": "npm:@codemirror/language@^6.11.3",
+    "@codemirror/lang-json": "npm:@codemirror/lang-json@^6.0.2",
+    "@codemirror/lang-html": "npm:@codemirror/lang-html@^6.4.11",
+    "@codemirror/theme-one-dark": "npm:@codemirror/theme-one-dark@^6.1.3"
   },
   "lock": false,
   "tasks": {
