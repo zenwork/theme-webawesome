@@ -59,6 +59,13 @@ function getErrorText(host) {
   })
 }
 
+function getPreviewHeight(host) {
+  return host.evaluate((el) => {
+    const preview = el.shadowRoot?.querySelector('.editable-preview')
+    return preview instanceof HTMLElement ? preview.getBoundingClientRect().height : 0
+  })
+}
+
 async function setJson(host, value) {
   const jsonEditor = host.locator('#json-editor .cm-content')
   await jsonEditor.click()
@@ -91,6 +98,40 @@ async function run() {
 
     const initial = await getOutputText(host)
     assert(initial.includes('Release v0.2.0'), `Unexpected initial output: ${initial}`)
+
+    const outputBackground = await host.evaluate((el) => {
+      const output = el.shadowRoot?.querySelector('.output-container')
+      if (!(output instanceof HTMLElement)) {
+        return null
+      }
+      const style = globalThis.getComputedStyle(output)
+      return {
+        color: style.backgroundColor,
+        image: style.backgroundImage,
+      }
+    })
+    assert(
+      outputBackground?.color && outputBackground.color !== 'rgba(0, 0, 0, 0)',
+      'Output background was not applied',
+    )
+    assert(outputBackground?.image === 'none', `Expected solid background, got: ${outputBackground?.image}`)
+
+    const previewHeightBefore = await getPreviewHeight(host)
+    await host.evaluate((el) => {
+      const handle = el.shadowRoot?.querySelector('.preview-resizer')
+      if (!(handle instanceof HTMLElement)) {
+        throw new Error('Missing preview resizer')
+      }
+      handle.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientY: 200 }))
+      globalThis.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientY: 320 }))
+      globalThis.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientY: 320 }))
+    })
+    await delay(80)
+    const previewHeightAfter = await getPreviewHeight(host)
+    assert(
+      previewHeightAfter > previewHeightBefore + 40,
+      `Preview did not resize as expected: before=${previewHeightBefore}, after=${previewHeightAfter}`,
+    )
 
     await setJson(
       host,

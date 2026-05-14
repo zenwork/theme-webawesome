@@ -5,30 +5,28 @@ title: Theme Demo Home
 <script type="module">
   class DemoStatusPill extends HTMLElement {
     connectedCallback() {
-      this.style.display = "inline-flex";
-      this.style.alignItems = "center";
-      this.style.padding = ".15rem .55rem";
-      this.style.borderRadius = "999px";
-      this.style.fontWeight = "600";
-      this.style.fontSize = ".82rem";
-      this.style.background =
-        "color-mix(in srgb, var(--wa-color-brand-fill-loud) 88%, white)";
-      this.style.color = "var(--wa-color-neutral-900)";
-      this.style.border =
-        "1px solid color-mix(in srgb, var(--wa-color-brand-border-loud) 50%, transparent)";
+      this.style.display = 'inline-flex'
+      this.style.alignItems = 'center'
+      this.style.padding = '.15rem .55rem'
+      this.style.borderRadius = '999px'
+      this.style.fontWeight = '600'
+      this.style.fontSize = '.82rem'
+      this.style.background = 'color-mix(in srgb, var(--wa-color-brand-fill-loud) 88%, white)'
+      this.style.color = 'var(--wa-color-neutral-900)'
+      this.style.border = '1px solid color-mix(in srgb, var(--wa-color-brand-border-loud) 50%, transparent)'
     }
   }
 
-  if (!customElements.get("demo-status-pill")) {
-    customElements.define("demo-status-pill", DemoStatusPill);
+  if (!customElements.get('demo-status-pill')) {
+    customElements.define('demo-status-pill', DemoStatusPill)
   }
 </script>
 <section class="docs-stack">
   <header>
     <h1>{{ title }}</h1>
     <p class="lead">
-      Interactive playground for validating the theme in a consumer site,
-      including runnable component recipes and long-page TOC behavior.
+      Interactive playground for validating the theme in a consumer site, including runnable component recipes and
+      long-page TOC behavior.
     </p>
   </header>
 
@@ -39,8 +37,7 @@ title: Theme Demo Home
         <a href="/guides/smoke/">Guides Smoke page (included in sidebar)</a>
       </li>
       <li>
-        <a href="/docs/smoke/"
-        >Docs Smoke page (control, excluded from sidebar)</a>
+        <a href="/docs/smoke/">Docs Smoke page (control, excluded from sidebar)</a>
       </li>
       <li>
         <a href="/404.html">404 page</a>
@@ -84,6 +81,7 @@ if (!customElements.get('release-callout')) {
       data='{"title":"Release v0.2.0","state":"Ready","items":["Navigation offsets","TOC active state","Resizable editors"]}'
       template='<wa-card><strong>${title}</strong><div style="margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap"><wa-badge variant="success">${state}</wa-badge></div><ul style="margin:.75rem 0 0 1rem">${items.map((item) => html`<li>${item}</li>`)}</ul></wa-card>'
       imports='["card","badge"]'
+      output-background="var(--wa-color-neutral-50)"
       editor-open
     >
     </demo-pane>
@@ -124,16 +122,14 @@ if (!customElements.get('release-callout')) {
   <section class="docs-section">
     <h2>TOC Behavior Check</h2>
     <p>
-      Use this section to validate sticky-header offset and active state in the
-      page TOC.
+      Use this section to validate sticky-header offset and active state in the page TOC.
     </p>
   </section>
 
   <section class="docs-section">
     <h2>Long-scroll Anchor</h2>
     <p>
-      This heading helps validate active section changes while scrolling through
-      the page.
+      This heading helps validate active section changes while scrolling through the page.
     </p>
   </section>
 </section>
