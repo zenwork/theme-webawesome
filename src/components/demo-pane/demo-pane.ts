@@ -728,19 +728,20 @@ class DemoPane extends LitElement {
               <div class="output-container" style="${outputContainerStyle}" data-version="${this._outputVersion}">
                 ${this._renderedTemplate}
               </div>
-            `} ${includeResizer
-            ? html`
-              <div
-                class="preview-resizer ${this._isResizingPreview ? 'is-active' : ''}"
-                role="separator"
-                aria-orientation="horizontal"
-                aria-label="Resize rendered output"
-                @pointerdown="${this.handlePreviewResizeStart}"
-              >
-              </div>
-            `
-            : null}
+            `}
         </div>
+        ${includeResizer
+          ? html`
+            <div
+              class="preview-resizer ${this._isResizingPreview ? 'is-active' : ''}"
+              role="separator"
+              aria-orientation="horizontal"
+              aria-label="Resize rendered output"
+              @pointerdown="${this.handlePreviewResizeStart}"
+            >
+            </div>
+          `
+          : null}
       </div>
     `
   }

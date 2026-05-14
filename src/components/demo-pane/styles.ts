@@ -210,7 +210,8 @@ export const styles: CSSResultGroup = css`
     padding: 0;
   }
 
-  .editor-resizer {
+  .editor-resizer,
+  .preview-resizer {
     block-size: 12px;
     margin-top: 0.5rem;
     border-top: 1px dotted rgba(148, 163, 184, 0.7);
@@ -219,7 +220,8 @@ export const styles: CSSResultGroup = css`
     position: relative;
   }
 
-  .editor-resizer::before {
+  .editor-resizer::before,
+  .preview-resizer::before {
     content: "";
     position: absolute;
     inset-inline: 50%;
@@ -233,43 +235,10 @@ export const styles: CSSResultGroup = css`
   }
 
   .editor-resizer:hover::before,
-  .editor-resizer.is-active::before {
-    background: color-mix(in srgb, var(--wa-color-brand-border-loud) 70%, transparent);
-  }
-
-  .preview-resizer {
-    block-size: 16px;
-    margin-top: 0.5rem;
-    border: 1px dotted rgba(148, 163, 184, 0.85);
-    border-radius: var(--wa-border-radius-small);
-    background: color-mix(in srgb, var(--wa-color-neutral-100) 70%, white);
-    cursor: ns-resize;
-    touch-action: none;
-    position: relative;
-  }
-
-  .preview-resizer::before {
-    content: "";
-    position: absolute;
-    inset-inline: 50%;
-    top: 6px;
-    transform: translateX(-50%);
-    inline-size: 2.5rem;
-    block-size: 4px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--wa-color-neutral-500) 70%, transparent);
-    transition: background-color 0.16s ease;
-  }
-
+  .editor-resizer.is-active::before,
   .preview-resizer:hover::before,
   .preview-resizer.is-active::before {
     background: color-mix(in srgb, var(--wa-color-brand-border-loud) 70%, transparent);
-  }
-
-  .preview-resizer:hover,
-  .preview-resizer.is-active {
-    border-color: color-mix(in srgb, var(--wa-color-brand-border-loud) 60%, rgba(148, 163, 184, 0.85));
-    background: color-mix(in srgb, var(--wa-color-brand-fill-loud) 8%, var(--wa-color-neutral-50));
   }
 
   .editable-layout {
