@@ -39,6 +39,7 @@ deno task serve
 ## What the theme wires up
 
 - WebAwesome CSS + loader scripts in the base layout
+- Automatic copy of free WebAwesome assets from `@awesome.me/webawesome` into `/lib/webawesome/dist-cdn` at build time
 - Theme components bundle loaded from `componentEntrypoint` (default: `components/index.ts`)
 - Site/table-of-contents navigation helpers (`nav` + markdown `toc`)
 - HTML heading preprocessing that assigns IDs and builds page TOC data from `h2`-`h6`
@@ -70,6 +71,11 @@ site.use(theme({
 
 export default site
 ```
+
+Notes:
+
+- In `mode: 'free'`, the theme fetches WebAwesome assets from `npm:@awesome.me/webawesome@^3.1.0` during build.
+- In `mode: 'pro'`, provide your own Pro asset files and paths.
 
 ## Customize WebAwesome tokens with CSS custom properties
 

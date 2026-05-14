@@ -62,6 +62,7 @@ const headingIdPattern = /\sid=(["'])(.*?)\1/i
 const stripTagsPattern = /<[^>]*>/g
 const collapseWhitespacePattern = /\s+/g
 const absoluteUrlPattern = /^(?:[a-z]+:)?\/\//i
+const freeWebAwesomeAssetSource = 'npm:@awesome.me/webawesome@^3.1.0/dist-cdn/**'
 const slugifyHeading = createSlugifier()
 
 function toScriptPath(entrypoint: string): string {
@@ -223,8 +224,10 @@ export default function (userOptions?: Options) {
       }))
       .add('style.css')
       .add(options.componentEntrypoint ?? 'components/index.ts')
-      // .copy("npm:@awesome.me/webawesome@^3.1.0/dist/styles/**/*.css", "styles/webawesome")
-      .copy('lib', 'lib')
+
+    if (webawesome.mode === 'free' && !absoluteUrlPattern.test(webawesome.assetBasePath)) {
+      site.copy(freeWebAwesomeAssetSource, webawesome.assetBasePath.replace(/^\//, ''))
+    }
 
     if (webawesome.customPropertiesCssPath && !absoluteUrlPattern.test(webawesome.customPropertiesCssPath)) {
       site.add(webawesome.customPropertiesCssPath.replace(/^\//, ''))
