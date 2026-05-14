@@ -13,7 +13,7 @@ import 'prismjs/components/prism-json.js'
 import 'prismjs/components/prism-markup.js'
 import '../code-example.ts'
 import { styles } from './styles.ts'
-import { formatHtmlTemplate, parseJSON,  RenderedTemplate,  renderTemplate, TemplateData } from './template-renderer.ts'
+import { formatHtmlTemplate, parseJSON, RenderedTemplate, renderTemplate, TemplateData } from './template-renderer.ts'
 
 const editableAttributeConverter = {
   fromAttribute: (value: string | null): boolean => {
@@ -58,6 +58,9 @@ class DemoPane extends LitElement {
 
   @property({ type: String, attribute: 'template-label' })
   templateLabel = ''
+
+  @property({ type: String, attribute: 'output-background' })
+  outputBackground = ''
 
   @property({ type: Boolean, attribute: 'editor-open', reflect: true })
   editorOpen = false
@@ -107,6 +110,12 @@ class DemoPane extends LitElement {
   @state()
   private _isResizingEditors = false
 
+  @state()
+  private _previewHeight = 320
+
+  @state()
+  private _isResizingPreview = false
+
   private _mediaQuery: MediaQueryList | null = null
   private readonly _loadedModules = new Set<string>()
   private _jsonEditor: EditorView | null = null
@@ -115,6 +124,8 @@ class DemoPane extends LitElement {
   private _didFormatInitialContent = false
   private _editorResizeStartY = 0
   private _editorResizeStartHeight = 180
+  private _previewResizeStartY = 0
+  private _previewResizeStartHeight = 320
 
   override connectedCallback(): void {
     super.connectedCallback()
@@ -138,6 +149,9 @@ class DemoPane extends LitElement {
     globalThis.removeEventListener('pointermove', this.handleEditorResizeMove)
     globalThis.removeEventListener('pointerup', this.handleEditorResizeEnd)
     globalThis.removeEventListener('pointercancel', this.handleEditorResizeEnd)
+    globalThis.removeEventListener('pointermove', this.handlePreviewResizeMove)
+    globalThis.removeEventListener('pointerup', this.handlePreviewResizeEnd)
+    globalThis.removeEventListener('pointercancel', this.handlePreviewResizeEnd)
     this._jsonEditor?.destroy()
     this._templateEditor?.destroy()
     this._jsonEditor = null
@@ -351,6 +365,37 @@ class DemoPane extends LitElement {
     globalThis.removeEventListener('pointermove', this.handleEditorResizeMove)
     globalThis.removeEventListener('pointerup', this.handleEditorResizeEnd)
     globalThis.removeEventListener('pointercancel', this.handleEditorResizeEnd)
+  }
+
+  private handlePreviewResizeStart = (event: PointerEvent): void => {
+    event.preventDefault()
+    this._isResizingPreview = true
+    this._previewResizeStartY = event.clientY
+    this._previewResizeStartHeight = this._previewHeight
+    this.requestUpdate()
+    globalThis.addEventListener('pointermove', this.handlePreviewResizeMove)
+    globalThis.addEventListener('pointerup', this.handlePreviewResizeEnd)
+    globalThis.addEventListener('pointercancel', this.handlePreviewResizeEnd)
+  }
+
+  private handlePreviewResizeMove = (event: PointerEvent): void => {
+    if (!this._isResizingPreview) {
+      return
+    }
+    const deltaY = event.clientY - this._previewResizeStartY
+    this._previewHeight = Math.max(220, Math.min(960, this._previewResizeStartHeight + deltaY))
+    this.requestUpdate()
+  }
+
+  private handlePreviewResizeEnd = (): void => {
+    if (!this._isResizingPreview) {
+      return
+    }
+    this._isResizingPreview = false
+    this.requestUpdate()
+    globalThis.removeEventListener('pointermove', this.handlePreviewResizeMove)
+    globalThis.removeEventListener('pointerup', this.handlePreviewResizeEnd)
+    globalThis.removeEventListener('pointercancel', this.handlePreviewResizeEnd)
   }
 
   private refreshEditorLayout(): void {
@@ -668,7 +713,10 @@ class DemoPane extends LitElement {
     `
   }
 
-  private renderOutputPane(): unknown {
+  private renderOutputPane(options: { includeResizer?: boolean } = {}): unknown {
+    const includeResizer = options.includeResizer ?? false
+    const outputContainerStyle = this.outputBackground.trim() ? `--demo-output-bg: ${this.outputBackground};` : ''
+
     return html`
       <div class="pane">
         <div class="pane-content">
@@ -677,8 +725,21 @@ class DemoPane extends LitElement {
               <div class="error">${this._error}</div>
             `
             : html`
-              <div class="output-container" data-version="${this._outputVersion}">${this._renderedTemplate}</div>
-            `}
+              <div class="output-container" style="${outputContainerStyle}" data-version="${this._outputVersion}">
+                ${this._renderedTemplate}
+              </div>
+            `} ${includeResizer
+            ? html`
+              <div
+                class="preview-resizer ${this._isResizingPreview ? 'is-active' : ''}"
+                role="separator"
+                aria-orientation="horizontal"
+                aria-label="Resize rendered output"
+                @pointerdown="${this.handlePreviewResizeStart}"
+              >
+              </div>
+            `
+            : null}
         </div>
       </div>
     `
@@ -719,9 +780,9 @@ class DemoPane extends LitElement {
 
   private renderEditablePreview(): unknown {
     return html`
-      <div class="editable-layout">
+      <div class="editable-layout" style="--demo-preview-height: ${this._previewHeight}px;">
         ${this.renderEditor()}
-        <div class="editable-preview">${this.renderOutputPane()}</div>
+        <div class="editable-preview">${this.renderOutputPane({ includeResizer: true })}</div>
       </div>
     `
   }
@@ -766,9 +827,9 @@ class DemoPane extends LitElement {
 
   private renderReadOnlyPreview(): unknown {
     return html`
-      <div class="editable-layout">
+      <div class="editable-layout" style="--demo-preview-height: ${this._previewHeight}px;">
         ${this.renderReadOnlyEditor()}
-        <div class="editable-preview">${this.renderOutputPane()}</div>
+        <div class="editable-preview">${this.renderOutputPane({ includeResizer: true })}</div>
       </div>
     `
   }

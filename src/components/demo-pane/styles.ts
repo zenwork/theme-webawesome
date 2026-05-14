@@ -55,273 +55,314 @@ export const styles: CSSResultGroup = css`
     margin: 0.125rem;
     border: 2px dotted rgba(148, 163, 184, 0.8);
     border-radius: var(--wa-border-radius-small);
-    background:
+    background: var(
+      --demo-output-bg,
       radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.2) 1px, transparent 0) 0 0 / 10px 10px,
+      transparent
+    );
+  }
+
+  .error {
+    color: var(--wa-color-danger-700);
+    background: color-mix(in srgb, var(--wa-color-danger-50) 75%, var(--wa-color-neutral-0));
+    border: 1px solid var(--wa-color-danger-200);
+    border-left: 3px solid var(--wa-color-danger-500);
+    padding: 0.75rem 0.875rem;
+    border-radius: var(--wa-border-radius-small);
+    font-size: 0.875rem;
+  }
+
+  .pane-split {
+    --divider-width: 3px;
+    height: 100%;
+  }
+
+  .pane-split::part(divider) {
+    background: var(--wa-color-neutral-300);
+    transition: background-color 0.16s ease;
+  }
+
+  .pane-split::part(divider):hover {
+    background: var(--wa-color-brand-border-loud);
+  }
+
+  .copy-button {
+    opacity: 0.72;
+    transition: opacity 0.16s ease;
+  }
+
+  .copy-button:hover {
+    opacity: 1;
+  }
+
+  .editor-panel {
+    border-bottom: 1px solid var(--wa-color-neutral-200);
+    background: transparent;
+  }
+
+  .editor-panel::part(header) {
+    padding-inline: 0.75rem;
+    border-bottom: 1px dotted rgba(148, 163, 184, 0.7);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .editor-panel::part(summary) {
+    color: var(--wa-color-neutral-800);
+  }
+
+  .editor-panel::part(content) {
+    padding: 0;
+  }
+
+  .editor-panel-content {
+    padding: 0.625rem 0.75rem 0.75rem;
+  }
+
+  .editor-panel-loading {
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px dotted rgba(148, 163, 184, 0.7);
+    font-size: 0.8125rem;
+    color: var(--wa-color-neutral-600);
+  }
+
+  .editor-split {
+    --divider-width: 12px;
+    --divider-hit-area: 24px;
+    block-size: var(--demo-editor-height, 180px);
+    min-block-size: 120px;
+    background: var(--demo-editor-bg);
+    border-radius: var(--wa-border-radius-small);
+    overflow: hidden;
+  }
+
+  .editor-split::part(divider) {
+    background:
+      radial-gradient(circle at center, rgba(148, 163, 184, 0.45) 1px, transparent 1.5px) center / 6px 6px repeat-y,
       transparent;
-    }
+    border-inline: 1px dotted rgba(148, 163, 184, 0.75);
+    transition: border-color 0.16s ease, background-color 0.16s ease;
+  }
 
-    .error {
-      color: var(--wa-color-danger-700);
-      background: color-mix(in srgb, var(--wa-color-danger-50) 75%, var(--wa-color-neutral-0));
-      border: 1px solid var(--wa-color-danger-200);
-      border-left: 3px solid var(--wa-color-danger-500);
-      padding: 0.75rem 0.875rem;
-      border-radius: var(--wa-border-radius-small);
-      font-size: 0.875rem;
-    }
+  .editor-split::part(divider):hover {
+    border-inline-color: color-mix(in srgb, var(--wa-color-brand-border-loud) 75%, rgba(148, 163, 184, 0.75));
+  }
 
-    .pane-split {
-      --divider-width: 3px;
-      height: 100%;
-    }
+  .editor-split::part(start),
+  .editor-split::part(end) {
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+    background: var(--demo-editor-bg);
+  }
 
-    .pane-split::part(divider) {
-      background: var(--wa-color-neutral-300);
-      transition: background-color 0.16s ease;
-    }
+  .editor-split [slot="start"],
+  .editor-split [slot="end"] {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
 
-    .pane-split::part(divider):hover {
-      background: var(--wa-color-brand-border-loud);
-    }
+  .editor-field {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0.375rem;
+    min-height: 0;
+    block-size: 100%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--wa-color-neutral-700);
+  }
 
-    .copy-button {
-      opacity: 0.72;
-      transition: opacity 0.16s ease;
-    }
+  .editor-host {
+    min-height: 0;
+    block-size: 100%;
+    border: 1px solid var(--wa-color-neutral-300);
+    border-radius: var(--wa-border-radius-small);
+    overflow: hidden;
+    background: var(--demo-editor-bg);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #ffffff 6%, transparent);
+  }
 
-    .copy-button:hover {
-      opacity: 1;
-    }
+  .editor-host .cm-editor {
+    block-size: 100%;
+    font-size: 0.8rem;
+  }
 
-    .editor-panel {
-      border-bottom: 1px solid var(--wa-color-neutral-200);
-      background: transparent;
-    }
+  .editor-host .cm-scroller {
+    font-family: Monaco, Menlo, "Ubuntu Mono", monospace;
+    line-height: 1.4;
+  }
 
-    .editor-panel::part(header) {
-      padding-inline: 0.75rem;
-      border-bottom: 1px dotted rgba(148, 163, 184, 0.7);
-      font-size: 0.8125rem;
-      font-weight: 600;
-      background: transparent;
-      cursor: pointer;
-    }
+  .editor-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.625rem;
+  }
 
-    .editor-panel::part(summary) {
-      color: var(--wa-color-neutral-800);
-    }
+  .editor-actions wa-button::part(base),
+  .pane-toolbar wa-button::part(base) {
+    inline-size: 2rem;
+    min-inline-size: 2rem;
+    block-size: 2rem;
+    padding: 0;
+  }
 
-    .editor-panel::part(content) {
-      padding: 0;
-    }
+  .editor-resizer {
+    block-size: 12px;
+    margin-top: 0.5rem;
+    border-top: 1px dotted rgba(148, 163, 184, 0.7);
+    cursor: ns-resize;
+    touch-action: none;
+    position: relative;
+  }
 
-    .editor-panel-content {
-      padding: 0.625rem 0.75rem 0.75rem;
-    }
+  .editor-resizer::before {
+    content: "";
+    position: absolute;
+    inset-inline: 50%;
+    top: 4px;
+    transform: translateX(-50%);
+    inline-size: 2.5rem;
+    block-size: 4px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--wa-color-neutral-500) 70%, transparent);
+    transition: background-color 0.16s ease;
+  }
 
-    .editor-panel-loading {
-      padding: 0.625rem 0.75rem;
-      border-bottom: 1px dotted rgba(148, 163, 184, 0.7);
-      font-size: 0.8125rem;
-      color: var(--wa-color-neutral-600);
-    }
+  .editor-resizer:hover::before,
+  .editor-resizer.is-active::before {
+    background: color-mix(in srgb, var(--wa-color-brand-border-loud) 70%, transparent);
+  }
 
-    .editor-split {
-      --divider-width: 12px;
-      --divider-hit-area: 24px;
-      block-size: var(--demo-editor-height, 180px);
-      min-block-size: 120px;
-      background: var(--demo-editor-bg);
-      border-radius: var(--wa-border-radius-small);
-      overflow: hidden;
-    }
+  .preview-resizer {
+    block-size: 16px;
+    margin-top: 0.5rem;
+    border: 1px dotted rgba(148, 163, 184, 0.85);
+    border-radius: var(--wa-border-radius-small);
+    background: color-mix(in srgb, var(--wa-color-neutral-100) 70%, white);
+    cursor: ns-resize;
+    touch-action: none;
+    position: relative;
+  }
 
-    .editor-split::part(divider) {
-      background:
-        radial-gradient(circle at center, rgba(148, 163, 184, 0.45) 1px, transparent 1.5px) center / 6px 6px repeat-y,
-        transparent;
-      border-inline: 1px dotted rgba(148, 163, 184, 0.75);
-      transition: border-color 0.16s ease, background-color 0.16s ease;
-    }
+  .preview-resizer::before {
+    content: "";
+    position: absolute;
+    inset-inline: 50%;
+    top: 6px;
+    transform: translateX(-50%);
+    inline-size: 2.5rem;
+    block-size: 4px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--wa-color-neutral-500) 70%, transparent);
+    transition: background-color 0.16s ease;
+  }
 
-    .editor-split::part(divider):hover {
-      border-inline-color: color-mix(in srgb, var(--wa-color-brand-border-loud) 75%, rgba(148, 163, 184, 0.75));
-    }
+  .preview-resizer:hover::before,
+  .preview-resizer.is-active::before {
+    background: color-mix(in srgb, var(--wa-color-brand-border-loud) 70%, transparent);
+  }
 
-    .editor-split::part(start),
-    .editor-split::part(end) {
-      display: flex;
-      align-items: stretch;
-      overflow: hidden;
-      background: var(--demo-editor-bg);
-    }
+  .preview-resizer:hover,
+  .preview-resizer.is-active {
+    border-color: color-mix(in srgb, var(--wa-color-brand-border-loud) 60%, rgba(148, 163, 184, 0.85));
+    background: color-mix(in srgb, var(--wa-color-brand-fill-loud) 8%, var(--wa-color-neutral-50));
+  }
 
-    .editor-split [slot="start"],
-    .editor-split [slot="end"] {
-      flex: 1 1 auto;
-      min-height: 0;
-    }
+  .editable-layout {
+    display: grid;
+    grid-template-rows: auto auto;
+    min-height: 560px;
+  }
 
-    .editor-field {
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr);
-      gap: 0.375rem;
-      min-height: 0;
-      block-size: 100%;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--wa-color-neutral-700);
-    }
+  .editable-preview {
+    min-height: 220px;
+    min-width: 0;
+    block-size: var(--demo-preview-height, 320px);
+  }
 
-    .editor-host {
-      min-height: 0;
-      block-size: 100%;
-      border: 1px solid var(--wa-color-neutral-300);
-      border-radius: var(--wa-border-radius-small);
-      overflow: hidden;
-      background: var(--demo-editor-bg);
-      box-shadow: inset 0 0 0 1px color-mix(in srgb, #ffffff 6%, transparent);
-    }
+  .editable-preview .pane {
+    min-height: 0;
+  }
 
-    .editor-host .cm-editor {
-      block-size: 100%;
-      font-size: 0.8rem;
-    }
+  .tabs-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 0.625rem;
+    border-bottom: 1px solid var(--wa-color-neutral-200);
+    background: var(--wa-color-neutral-50);
+  }
 
-    .editor-host .cm-scroller {
-      font-family: Monaco, Menlo, "Ubuntu Mono", monospace;
-      line-height: 1.4;
-    }
+  .tab-btn {
+    appearance: none;
+    border: 1px solid var(--wa-color-neutral-300);
+    background: var(--wa-color-neutral-0);
+    color: var(--wa-color-neutral-800);
+    border-radius: var(--wa-border-radius-small);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.4375rem 0.625rem;
+    cursor: pointer;
+    transition: border-color 0.16s ease, color 0.16s ease, background-color 0.16s ease;
+  }
 
-    .editor-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 0.625rem;
-    }
+  .tab-btn:hover {
+    border-color: var(--wa-color-neutral-400);
+    color: var(--wa-color-neutral-900);
+  }
 
-    .editor-actions wa-button::part(base),
-    .pane-toolbar wa-button::part(base) {
-      inline-size: 2rem;
-      min-inline-size: 2rem;
-      block-size: 2rem;
-      padding: 0;
-    }
+  .tab-btn:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--wa-color-brand-border-loud) 55%, transparent);
+    outline-offset: 1px;
+  }
 
-    .editor-resizer {
-      block-size: 12px;
-      margin-top: 0.5rem;
-      border-top: 1px dotted rgba(148, 163, 184, 0.7);
-      cursor: ns-resize;
-      touch-action: none;
-      position: relative;
-    }
+  .tab-btn.is-active {
+    background: color-mix(in srgb, var(--wa-color-brand-fill-loud) 15%, var(--wa-color-neutral-0));
+    border-color: color-mix(in srgb, var(--wa-color-brand-border-loud) 70%, var(--wa-color-neutral-300));
+    color: var(--wa-color-brand-text-loud);
+  }
 
-    .editor-resizer::before {
-      content: "";
-      position: absolute;
-      inset-inline: 50%;
-      top: 4px;
-      transform: translateX(-50%);
-      inline-size: 2.5rem;
-      block-size: 4px;
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--wa-color-neutral-500) 70%, transparent);
-      transition: background-color 0.16s ease;
-    }
-
-    .editor-resizer:hover::before,
-    .editor-resizer.is-active::before {
-      background: color-mix(in srgb, var(--wa-color-brand-border-loud) 70%, transparent);
+  @media (max-width: 768px) {
+    :host {
+      min-height: 460px;
     }
 
     .editable-layout {
-      display: grid;
-      grid-template-rows: auto minmax(320px, 1fr);
-      min-height: 560px;
+      min-height: 460px;
     }
 
-    .editable-preview {
-      min-height: 320px;
-      min-width: 0;
+    .pane {
+      min-height: 300px;
+    }
+
+    .pane-split {
+      display: none;
+    }
+
+    .editor-panel-content {
+      padding: 0.5rem 0.625rem 0.625rem;
+    }
+
+    .editor-split {
+      min-block-size: 120px;
     }
 
     .tabs-toolbar {
-      display: flex;
-      gap: 0.5rem;
-      padding: 0.5rem 0.625rem;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.375rem;
+      padding: 0.5rem;
       border-bottom: 1px solid var(--wa-color-neutral-200);
       background: var(--wa-color-neutral-50);
     }
 
     .tab-btn {
-      appearance: none;
-      border: 1px solid var(--wa-color-neutral-300);
-      background: var(--wa-color-neutral-0);
-      color: var(--wa-color-neutral-800);
-      border-radius: var(--wa-border-radius-small);
-      font: inherit;
       font-size: 0.8rem;
-      font-weight: 600;
-      padding: 0.4375rem 0.625rem;
-      cursor: pointer;
-      transition: border-color 0.16s ease, color 0.16s ease, background-color 0.16s ease;
+      padding: 0.4375rem 0.5rem;
     }
-
-    .tab-btn:hover {
-      border-color: var(--wa-color-neutral-400);
-      color: var(--wa-color-neutral-900);
-    }
-
-    .tab-btn:focus-visible {
-      outline: 2px solid color-mix(in srgb, var(--wa-color-brand-border-loud) 55%, transparent);
-      outline-offset: 1px;
-    }
-
-    .tab-btn.is-active {
-      background: color-mix(in srgb, var(--wa-color-brand-fill-loud) 15%, var(--wa-color-neutral-0));
-      border-color: color-mix(in srgb, var(--wa-color-brand-border-loud) 70%, var(--wa-color-neutral-300));
-      color: var(--wa-color-brand-text-loud);
-    }
-
-    @media (max-width: 768px) {
-      :host {
-        min-height: 460px;
-      }
-
-      .editable-layout {
-        min-height: 460px;
-        grid-template-rows: auto minmax(240px, 1fr);
-      }
-
-      .pane {
-        min-height: 300px;
-      }
-
-      .pane-split {
-        display: none;
-      }
-
-      .editor-panel-content {
-        padding: 0.5rem 0.625rem 0.625rem;
-      }
-
-      .editor-split {
-        min-block-size: 120px;
-      }
-
-      .tabs-toolbar {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.375rem;
-        padding: 0.5rem;
-        border-bottom: 1px solid var(--wa-color-neutral-200);
-        background: var(--wa-color-neutral-50);
-      }
-
-      .tab-btn {
-        font-size: 0.8rem;
-        padding: 0.4375rem 0.5rem;
-      }
-    }
-  `
+  }
+`
