@@ -8,15 +8,12 @@ import { json as jsonLanguage } from '@codemirror/lang-json'
 import { html as htmlLanguage } from '@codemirror/lang-html'
 import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { oneDark } from '@codemirror/theme-one-dark'
-import DOMPurify from 'dompurify'
 import Prism from 'prismjs'
 import 'prismjs/components/prism-json.js'
 import 'prismjs/components/prism-markup.js'
 import '../code-example.ts'
 import { styles } from './styles.ts'
-import { formatHtmlTemplate, parseJSON, renderTemplate, TemplateData } from './template-renderer.ts'
-
-const customElementTagPattern = /^[a-z][.0-9_a-z-]*-[.0-9_a-z-]*$/i
+import { formatHtmlTemplate, parseJSON,  RenderedTemplate,  renderTemplate, TemplateData } from './template-renderer.ts'
 
 const editableAttributeConverter = {
   fromAttribute: (value: string | null): boolean => {
@@ -72,7 +69,7 @@ class DemoPane extends LitElement {
   private _renderedHtml = ''
 
   @state()
-  private _sanitizedHtml = ''
+  private _renderedTemplate: RenderedTemplate['template'] | null = null
 
   @state()
   private _error: string | null = null
@@ -204,27 +201,14 @@ class DemoPane extends LitElement {
 
     // Render template with data
     try {
-      this._renderedHtml = renderTemplate(this._draftTemplate, parsed)
+      const rendered = renderTemplate(this._draftTemplate, parsed)
+      this._renderedTemplate = rendered.template
+      this._renderedHtml = rendered.source
     } catch (e) {
       this._error = `Template rendering error: ${e}`
       this.requestUpdate()
       return
     }
-
-    this._sanitizedHtml = DOMPurify.sanitize(this._renderedHtml, {
-      USE_PROFILES: { html: true },
-      FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form'],
-      FORBID_ATTR: ['style'],
-      CUSTOM_ELEMENT_HANDLING: {
-        // Allow any standards-compliant custom element name (must include a hyphen).
-        tagNameCheck: customElementTagPattern,
-        // Allow custom-element attributes broadly, but reject inline event handlers.
-        attributeNameCheck: /^(?!on)[^\s"'<>/=`]+$/i,
-        allowCustomizedBuiltInElements: false,
-      },
-      ALLOW_DATA_ATTR: true,
-      ALLOW_ARIA_ATTR: true,
-    })
     this._outputVersion += 1
 
     // Format and highlight JSON
@@ -404,7 +388,7 @@ class DemoPane extends LitElement {
     try {
       const required = ['button', 'icon', 'split-panel', 'details']
       const explicit = this.parseImportList(this._draftImports)
-      const autoDetected = this.detectWebAwesomeComponents(this._renderedHtml)
+      const autoDetected = this.detectWebAwesomeComponents(this._draftTemplate)
       const componentNames = new Set<string>([...required, ...explicit, ...autoDetected])
       const modulesToLoad = [...componentNames].filter((name) => !this._loadedModules.has(name))
 
@@ -693,9 +677,7 @@ class DemoPane extends LitElement {
               <div class="error">${this._error}</div>
             `
             : html`
-              <div class="output-container" data-version="${this._outputVersion}">${unsafeHTML(
-                this._sanitizedHtml,
-              )}</div>
+              <div class="output-container" data-version="${this._outputVersion}">${this._renderedTemplate}</div>
             `}
         </div>
       </div>

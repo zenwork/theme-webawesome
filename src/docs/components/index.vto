@@ -7,8 +7,8 @@ order: 45
   <header>
     <h1>{{ title }}</h1>
     <p class="lead">
-      This theme uses Lit components for interactive documentation and exposes a simple path for adding project-specific
-      components.
+      This theme uses Lit components for interactive documentation and exposes a
+      simple path for adding project-specific components.
     </p>
   </header>
 
@@ -16,17 +16,30 @@ order: 45
     <h2>Component Summary</h2>
     <ul>
       <li>
-        <code>&lt;demo-pane&gt;</code>: interactive code example surface with JSON data, template, and output tabs
+        <code>&lt;demo-pane&gt;</code>: interactive code example surface with
+        JSON data, template, and output tabs
       </li>
-      <li><code>&lt;code-example&gt;</code>: read-only CodeMirror block for documentation snippets</li>
-      <li><code>&lt;site-toc-tree&gt;</code>: persists sidebar tree expansion state and selected page behavior</li>
+      <li>
+        <code>&lt;code-example&gt;</code>: read-only CodeMirror block for
+        documentation snippets
+      </li>
+      <li>
+        <code>&lt;site-toc-tree&gt;</code>: persists sidebar tree expansion
+        state and selected page behavior
+      </li>
     </ul>
-    <p>Use <code>src/components/index.ts</code> as the default registration/export surface.</p>
+    <p>
+      Use <code>src/components/index.ts</code> as the default
+      registration/export surface.
+    </p>
   </section>
 
   <section class="docs-section">
     <h2>Using Code Examples</h2>
-    <p>Use <code>&lt;code-example&gt;</code> when you want static snippets with theme-consistent syntax styling.</p>
+    <p>
+      Use <code>&lt;code-example&gt;</code> when you want static snippets with
+      theme-consistent syntax styling.
+    </p>
     <!-- deno-fmt-ignore -->
     <code-example language="html">
 &lt;code-example language="typescript"&gt;
@@ -38,7 +51,8 @@ order: 45
   <section class="docs-section">
     <h2>Runnable Docs with Demo Pane</h2>
     <p>
-      Use <code>&lt;demo-pane&gt;</code> when readers should modify data or templates and see immediate output.
+      Use <code>&lt;demo-pane&gt;</code> when readers should modify data or
+      templates and see immediate output.
     </p>
     <demo-pane
       data='{"label":"Deploy","variant":"brand","size":"small"}'
@@ -53,8 +67,8 @@ order: 45
   <section class="docs-section">
     <h2>Recipe: Status Row (Explicit Imports)</h2>
     <p>
-      Use explicit imports when you want predictable module loading for components that may not already be loaded in the
-      page.
+      Use explicit imports when you want predictable module loading for
+      components that may not already be loaded in the page.
     </p>
     <demo-pane
       data='{"status":"Stable","build":"Passing","version":"v0.1.0"}'
@@ -68,12 +82,12 @@ order: 45
   <section class="docs-section">
     <h2>Recipe: Release Notes Summary (Auto Detection)</h2>
     <p>
-      Omit <code>imports</code> when your template already contains <code>wa-*</code> tags and you want the demo pane to
-      load them automatically.
+      Omit <code>imports</code> when your template already contains <code
+      >wa-*</code> tags and you want the demo pane to load them automatically.
     </p>
     <demo-pane
       data='{"title":"Release 0.2.0","items":["Navigation persistence","Page TOC fixes","Docs API references"]}'
-      template='<section><h3>${title}</h3><ul>${items.map((item) => `<li><wa-badge variant="brand">${item}</wa-badge></li>`).join("")}</ul></section>'
+      template='<wa-card><h3>${title}</h3><ul>${items.map((item) => html`<li><wa-badge variant="brand">${item}</wa-badge></li>`)}</ul></wa-card>'
       editor-open
     >
     </demo-pane>
@@ -82,7 +96,8 @@ order: 45
   <section class="docs-section">
     <h2>Recipe: Static Preview (Non-Editable)</h2>
     <p>
-      This example disables editing while keeping the full data/template/output preview visible.
+      This example disables editing while keeping the full data/template/output
+      preview visible.
     </p>
     <demo-pane
       id="tabs-static-preview"
@@ -97,29 +112,48 @@ order: 45
   <section class="docs-section">
     <h2><code>demo-pane</code> API</h2>
     <ul>
-      <li><code>data</code> (string, default <code>{}</code>): JSON object string used as template scope</li>
-      <li><code>template</code> (string, default empty): HTML template with <code>${...}</code> expressions</li>
       <li>
-        <code>imports</code> (string, default <code>[]</code>): JSON array of WebAwesome component names to import
+        <code>data</code> (string, default <code>{}</code>): JSON object string
+        used as template scope
       </li>
       <li>
-        <code>editable</code> (boolean, default <code>true</code>): enables editors and run/format/reset actions. Set
+        <code>template</code> (string, default empty): HTML template with <code
+        >${...}</code> expressions
+      </li>
+      <li>
+        <code>imports</code> (string, default <code>[]</code>): JSON array of
+        WebAwesome component names to import
+      </li>
+      <li>
+        <code>editable</code> (boolean, default <code>true</code>): enables
+        editors and run/format/reset actions. Set
         <code>editable="false"</code> for read-only tabs/split previews.
       </li>
       <li>
-        <code>layout</code> (<code>horizontal</code> | <code>tabs</code>, default <code>horizontal</code>): non-editable
-        previews always show data/template/output together.
+        <code>layout</code> (<code>horizontal</code> | <code>tabs</code>,
+        default <code>horizontal</code>): non-editable previews always show
+        data/template/output together.
       </li>
       <li>
-        <code>default-tab</code> (<code>data</code> | <code>markup</code> | <code>output</code>, default
+        <code>default-tab</code> (<code>data</code> | <code>markup</code> |
+        <code>output</code>, default
         <code>output</code>)
       </li>
-      <li><code>editor-open</code> (boolean, default <code>false</code>): opens the editor details panel on load</li>
-      <li><code>data-label</code> / <code>template-label</code> (string, default empty): editor field labels</li>
+      <li>
+        <code>editor-open</code> (boolean, default <code>false</code>): opens
+        the editor details panel on load
+      </li>
+      <li>
+        <code>data-label</code> / <code>template-label</code> (string, default
+        empty): editor field labels
+      </li>
     </ul>
     <p>
-      Notes: JSON must parse to an object. The component sanitizes rendered output while allowing valid custom elements,
-      auto-detects <code>wa-*</code> tags for imports, and supports <code>Mod+Enter</code> to run from editors.
+      Notes: JSON must parse to an object. The component sanitizes rendered
+      output while allowing valid custom elements, supports Lit-style bindings
+      in templates (for example <code>.prop</code>, <code>?attr</code>, and
+      <code>@event</code>), auto-detects <code>wa-*</code> tags for imports, and
+      supports <code>Mod+Enter</code> to run from editors.
     </p>
   </section>
 
@@ -127,15 +161,17 @@ order: 45
     <h2><code>code-example</code> API</h2>
     <ul>
       <li>
-        <code>language</code> (<code>json</code> | <code>html</code> | <code>javascript</code> |
+        <code>language</code> (<code>json</code> | <code>html</code> | <code
+        >javascript</code> |
         <code>typescript</code> | <code>text</code>, default <code>text</code>)
       </li>
       <li><code>line-numbers</code> (boolean, default <code>true</code>)</li>
       <li><code>code</code> (string, default empty): explicit snippet text</li>
     </ul>
     <p>
-      If <code>code</code> is not provided, content is read from the element slot, normalized for indentation, and then
-      rendered in a read-only CodeMirror view.
+      If <code>code</code> is not provided, content is read from the element
+      slot, normalized for indentation, and then rendered in a read-only
+      CodeMirror view.
     </p>
   </section>
 
@@ -152,8 +188,9 @@ site.use(
 )
     </code-example>
     <p>
-      The base layout auto-loads only the primary script from <code>componentEntrypoint</code>. Import additional
-      entrypoints from that file, or load them in a custom layout.
+      The base layout auto-loads only the primary script from <code
+      >componentEntrypoint</code>. Import additional entrypoints from that file,
+      or load them in a custom layout.
     </p>
   </section>
 </section>

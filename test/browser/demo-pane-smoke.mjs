@@ -159,6 +159,47 @@ async function run() {
       `Nested template-literal expression failed: ${nestedTemplateOutput}`,
     )
 
+    await setJson(
+      host,
+      `{
+  "label": "Lit binding button",
+  "disabled": true,
+  "title": "Bound via .title"
+}`,
+    )
+    await setTemplate(
+      host,
+      `<wa-button ?disabled=\${disabled} .title=\${title} @click=\${(event) => event.currentTarget.setAttribute('data-clicked', 'yes')}>\${label}</wa-button>`,
+    )
+    await host.locator('wa-button:has-text("Run")').click()
+    await delay(250)
+    const litBindingState = await host.evaluate((el) => {
+      const button = el.shadowRoot?.querySelector('.output-container wa-button')
+      if (!(button instanceof HTMLElement)) {
+        return null
+      }
+      return {
+        disabled: button.disabled === true,
+        title: button.title,
+      }
+    })
+    assert(litBindingState?.disabled, `Boolean Lit binding did not apply: ${JSON.stringify(litBindingState)}`)
+    assert(
+      litBindingState?.title === 'Bound via .title',
+      `Property Lit binding did not apply: ${JSON.stringify(litBindingState)}`,
+    )
+    await host.evaluate((el) => {
+      const button = el.shadowRoot?.querySelector('.output-container wa-button')
+      if (button instanceof HTMLElement) {
+        button.click()
+      }
+    })
+    const clickedState = await host.evaluate((el) => {
+      const button = el.shadowRoot?.querySelector('.output-container wa-button')
+      return button instanceof HTMLElement ? button.getAttribute('data-clicked') : null
+    })
+    assert(clickedState === 'yes', `Event Lit binding did not apply: ${clickedState}`)
+
     const customElementDemo = page.locator('demo-pane').nth(2)
     await customElementDemo.waitFor()
     const customOutputHtml = await customElementDemo.evaluate((el) => {

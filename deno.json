@@ -23,7 +23,7 @@
   "tasks": {
     "lume": {
       "description": "Run Lume command",
-      "command": "deno run -P=lume lume/cli.ts"
+      "command": "deno run -P=lume lume/cli.ts --config _config.ts --src src"
     },
     "build": {
       "description": "Build the site for production",
