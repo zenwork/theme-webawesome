@@ -1,7 +1,8 @@
+{{ set siteTocFilter = themeNavigation?.siteTocFilter || 'hide_menu!=true url^=/docs/' }}
 {{
   set siteMenu = nav.menu(
     '/',
-    'hide_menu!=true url^=/docs/',
+    siteTocFilter,
     'order=asc title=asc-locale basename=asc-locale',
   )?.children || []
 }}

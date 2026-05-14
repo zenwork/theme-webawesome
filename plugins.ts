@@ -20,10 +20,16 @@ export interface WebAwesomeOptions {
   splitPanelPath?: string
 }
 
+export interface SiteTocOptions {
+  includeUrlPrefix?: string
+  filter?: string
+}
+
 export interface Options {
   sitemap?: Partial<SitemapOptions>
   favicon?: Partial<FaviconOptions>
   webawesome?: WebAwesomeOptions
+  siteToc?: SiteTocOptions
   componentEntrypoint?: string
   additionalComponentEntrypoints?: string[]
 }
@@ -52,6 +58,9 @@ export const defaults: Options = {
   webawesome: {
     mode: 'free',
     assetBasePath: '/lib/webawesome/dist-cdn',
+  },
+  siteToc: {
+    includeUrlPrefix: '/docs/',
   },
   componentEntrypoint: 'components/index.ts',
   additionalComponentEntrypoints: [],
@@ -94,6 +103,17 @@ function getUniqueSlug(slug: string, used: Set<string>): string {
 
   used.add(next)
   return next
+}
+
+function normalizeUrlPrefix(prefix: string): string {
+  const trimmed = prefix.trim()
+
+  if (!trimmed) {
+    return '/docs/'
+  }
+
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`
 }
 
 function buildHtmlToc(content: string, minLevel = 2): { content: string; toc: TocNode[] } {
@@ -169,6 +189,9 @@ export default function (userOptions?: Options) {
     ...(options.additionalComponentEntrypoints ?? []),
   ]
   const componentScripts = componentEntrypoints.map(toScriptPath)
+  const siteTocFilter = options.siteToc?.filter?.trim()
+    ? options.siteToc.filter.trim()
+    : `hide_menu!=true url^=${normalizeUrlPrefix(options.siteToc?.includeUrlPrefix ?? '/docs/')}`
 
   return (site: Lume.Site) => {
     site.preprocess(['.html'], (pages) => {
@@ -195,6 +218,9 @@ export default function (userOptions?: Options) {
       entrypoints: componentEntrypoints,
       scripts: componentScripts,
       primaryScript: componentScripts[0],
+    })
+    site.data('themeNavigation', {
+      siteTocFilter,
     })
 
     site

@@ -54,6 +54,11 @@ import theme from 'theme/mod.ts'
 const site = lume()
 
 site.use(theme({
+  siteToc: {
+    includeUrlPrefix: '/docs/',
+    // Or provide a full nav filter string:
+    // filter: 'hide_menu!=true url^=/guides/',
+  },
   webawesome: {
     mode: 'free', // or 'pro'
     // Free default:
@@ -146,6 +151,7 @@ Notes:
   layout.
 - Always register custom elements with a guard:
   - `if (!customElements.get('my-tag')) customElements.define('my-tag', MyEl)`
+- Sidebar navigation uses `siteToc.includeUrlPrefix` by default (`/docs/`). For advanced matching, use `siteToc.filter`.
 
 ## Local development and test-site workflow
 

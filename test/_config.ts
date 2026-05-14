@@ -1,12 +1,15 @@
-import lume from 'lume/mod.ts'
-import theme from 'theme/mod.ts'
+import lume from "lume/mod.ts";
+import theme from "theme/mod.ts";
 
-const site = lume()
+const site = lume();
 
 site.use(theme({
-  webawesome: {
-    customPropertiesCssPath: '/styles/webawesome-theme.css',
+  siteToc: {
+    includeUrlPrefix: "/guides/",
   },
-}))
+  webawesome: {
+    customPropertiesCssPath: "/styles/webawesome-theme.css",
+  },
+}));
 
-export default site
+export default site;

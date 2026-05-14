@@ -30,6 +30,10 @@ order: 40
     <code-example language="typescript">
 site.use(
   theme({
+    siteToc: {
+      includeUrlPrefix: '/docs/',
+      // or filter: 'hide_menu!=true url^=/guides/',
+    },
     webawesome: {
       mode: 'free',
       assetBasePath: '/lib/webawesome/dist-cdn',
@@ -40,6 +44,25 @@ site.use(
     },
     componentEntrypoint: 'components/index.ts',
     additionalComponentEntrypoints: ['components/custom.ts'],
+  }),
+)
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Site TOC Scope</h2>
+    <p>
+      Sidebar page discovery is configurable. Use <code>siteToc.includeUrlPrefix</code> for simple path scoping, or pass
+      a full nav query in <code>siteToc.filter</code> for advanced control.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+site.use(
+  theme({
+    siteToc: {
+      includeUrlPrefix: '/guides/',
+      // filter: 'hide_menu!=true url^=/guides/',
+    },
   }),
 )
     </code-example>
