@@ -81,16 +81,16 @@ async function run() {
   const server = startServer()
   let browser
   try {
-    await waitForServer(`${BASE_URL}/examples/buttons/`)
+    await waitForServer(`${BASE_URL}/`)
     browser = await chromium.launch({ headless: true })
     const page = await browser.newPage()
-    await page.goto(`${BASE_URL}/examples/buttons/?t=${Date.now()}`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE_URL}/?t=${Date.now()}`, { waitUntil: 'networkidle' })
 
     const host = page.locator('demo-pane').first()
     await host.waitFor()
 
     const initial = await getOutputText(host)
-    assert(initial.includes('Save changes'), `Unexpected initial output: ${initial}`)
+    assert(initial.includes('Release v0.2.0'), `Unexpected initial output: ${initial}`)
 
     await setJson(
       host,
@@ -157,6 +157,17 @@ async function run() {
     assert(
       nestedTemplateOutput.includes('Alpha') && nestedTemplateOutput.includes('Beta'),
       `Nested template-literal expression failed: ${nestedTemplateOutput}`,
+    )
+
+    const customElementDemo = page.locator('demo-pane').nth(2)
+    await customElementDemo.waitFor()
+    const customOutputHtml = await customElementDemo.evaluate((el) => {
+      const output = el.shadowRoot?.querySelector('.output-container')
+      return output?.innerHTML ?? ''
+    })
+    assert(
+      customOutputHtml.includes('<demo-status-pill') && customOutputHtml.includes('Custom element renders'),
+      `Custom element was stripped by sanitizer: ${customOutputHtml}`,
     )
 
     await page.close()

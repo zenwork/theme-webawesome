@@ -16,6 +16,8 @@ import '../code-example.ts'
 import { styles } from './styles.ts'
 import { formatHtmlTemplate, parseJSON, renderTemplate, TemplateData } from './template-renderer.ts'
 
+const customElementTagPattern = /^[a-z][.0-9_a-z-]*-[.0-9_a-z-]*$/i
+
 const editableAttributeConverter = {
   fromAttribute: (value: string | null): boolean => {
     if (value === null) {
@@ -212,11 +214,12 @@ class DemoPane extends LitElement {
     this._sanitizedHtml = DOMPurify.sanitize(this._renderedHtml, {
       USE_PROFILES: { html: true },
       FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form'],
-      FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseenter', 'onfocus', 'style'],
+      FORBID_ATTR: ['style'],
       CUSTOM_ELEMENT_HANDLING: {
-        tagNameCheck: /^wa-/,
-        attributeNameCheck:
-          /^(aria-.*|data-.*|id|class|slot|part|exportparts|name|label|value|variant|size|appearance|type|checked|disabled|readonly|placeholder|for)$/i,
+        // Allow any standards-compliant custom element name (must include a hyphen).
+        tagNameCheck: customElementTagPattern,
+        // Allow custom-element attributes broadly, but reject inline event handlers.
+        attributeNameCheck: /^(?!on)[^\s"'<>/=`]+$/i,
         allowCustomizedBuiltInElements: false,
       },
       ALLOW_DATA_ATTR: true,
