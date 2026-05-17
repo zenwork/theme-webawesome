@@ -153,7 +153,9 @@ Notes:
 - Always register custom elements with a guard:
   - `if (!customElements.get('my-tag')) customElements.define('my-tag', MyEl)`
 - Sidebar navigation uses `siteToc.includeUrlPrefix` by default (`/docs/`). For advanced matching, use `siteToc.filter`.
-- The root (`/`) item label in the sidebar defaults to `Overview`; override it with `siteToc.rootLabel`.
+- `siteToc.rootLabel` supports both modes:
+  - `string`: label for the root (`/`) sidebar item (default `Overview`)
+  - `string[]`: section labels for section index mode (`sectionsFromRoot: true`), applied by section order
 
 ## Local development and test-site workflow
 

@@ -6,8 +6,8 @@ const site = lume()
 site.use(theme({
   siteToc: {
     sectionsFromRoot: true,
-    rootLabel: 'Start',
-    sectionOrder: ['platform', 'reference', 'docs', 'guides'],
+    rootLabel: ['Platform', 'Reference', 'Foo', 'Guides'],
+    sectionOrder: ['docs','guides', 'reference','platform', ],
   },
   webawesome: {
     customPropertiesCssPath: '/styles/webawesome-theme.css',

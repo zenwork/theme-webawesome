@@ -71,18 +71,10 @@
     {{ set activeSection = sectionChoices.find((section) => section.key === currentSectionKey) || sectionChoices[0] }}
     {{ set siteNavigationHeading = sectionNavigation ? (activeSection?.title || 'Documentation') : 'Documentation' }}
 
-    <wa-drawer id="site-toc-drawer" label="Documentation" placement="start">
-      <section class="site-toc-shell">
-        <h2>{{ siteNavigationHeading }}</h2>
-        {{ include '../site-toc.vto' }}
-      </section>
-    </wa-drawer>
-    <header class="site-header">
-      <div class="site-header-inner">
-        <wa-button class="site-toc-trigger" variant="neutral" size="small" id="site-toc-trigger">Docs</wa-button>
-        <a class="site-title" href="/">{{ metas.site }}</a>
+    <wa-drawer id="site-toc-drawer" label="Menu" placement="start">
+      <section>
         {{ if sectionChoices.length }}
-          <nav class="site-section-nav" aria-label="Documentation sections">
+          <nav class="site-section-drawer" aria-label="Sections">
             {{ for section of sectionChoices }}
               <a
                 href="{{ section.url }}"
@@ -93,14 +85,44 @@
             {{ /for }}
           </nav>
         {{ /if }}
-        {{ include '../theme-toggle.vto' }}
+      </section>
+      <section class="site-toc-shell">
+        {{ if sectionNavigation }}
+          {{ include "../section-toc.vto" }}
+        {{ else }}
+          {{ include "../site-toc.vto" }}
+        {{ /if }}
+      </section>
+    </wa-drawer>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <wa-button class="site-toc-trigger" appearance="outlined" variant="brand" size="small" id="site-toc-trigger"><wa-icon name="bars" label="bars"></wa-icon></wa-button>
+        <a class="site-title" href="/">{{ metas.site }}</a>
+        <span class="site-section-drawer">{{ activeSection.title }}</span>
+        {{ if sectionChoices.length }}
+          <nav class="site-section-nav" aria-label="Sections">
+            {{ for section of sectionChoices }}
+              <a
+                href="{{ section.url }}"
+                class="site-section-link {{ if activeSection?.key === section.key }}is-active{{ /if }}"
+              >
+                {{ section.title }}
+              </a>
+            {{ /for }}
+          </nav>
+        {{ /if }}
+        {{ include "../theme-toggle.vto" }}
       </div>
     </header>
     <main class="docs-shell">
       <aside class="site-toc-panel">
         <section class="site-toc-shell">
-          <h2>{{ siteNavigationHeading }}</h2>
-          {{ include '../site-toc.vto' }}
+<!--          <h2>{{ siteNavigationHeading }}</h2>-->
+          {{ if sectionNavigation }}
+            {{ include "../section-toc.vto" }}
+          {{ else }}
+            {{ include "../site-toc.vto" }}
+          {{ /if }}
         </section>
       </aside>
       <article class="docs-content">

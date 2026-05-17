@@ -23,7 +23,7 @@ export interface WebAwesomeOptions {
 export interface SiteTocOptions {
   includeUrlPrefix?: string
   filter?: string
-  rootLabel?: string
+  rootLabel?: string | string[]
   sectionsFromRoot?: boolean
   sectionOrder?: string[]
 }
@@ -57,6 +57,7 @@ interface TocNode {
 interface ThemeSectionLink {
   key: string
   title: string
+  indexTitle: string
   url: string
 }
 
@@ -69,7 +70,7 @@ export const defaults: Options = {
     assetBasePath: '/lib/webawesome/dist-cdn',
   },
   siteToc: {
-    includeUrlPrefix: '/docs/',
+    includeUrlPrefix: '/',
     rootLabel: 'Overview',
     sectionsFromRoot: false,
   },
@@ -120,7 +121,7 @@ function normalizeUrlPrefix(prefix: string): string {
   const trimmed = prefix.trim()
 
   if (!trimmed) {
-    return '/docs/'
+    return '/'
   }
 
   const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
@@ -216,8 +217,9 @@ export default function (userOptions?: Options) {
   const componentScripts = componentEntrypoints.map(toScriptPath)
   const siteTocFilter = options.siteToc?.filter?.trim()
     ? options.siteToc.filter.trim()
-    : `hide_menu!=true url^=${normalizeUrlPrefix(options.siteToc?.includeUrlPrefix ?? '/docs/')}`
-  const siteTocRootLabel = options.siteToc?.rootLabel?.trim() || 'Overview'
+    : `hide_menu!=true url^=${normalizeUrlPrefix(options.siteToc?.includeUrlPrefix ?? '/')}`
+  const configuredRootLabel = options.siteToc?.rootLabel
+  const siteTocRootLabel = (typeof configuredRootLabel === 'string' ? configuredRootLabel.trim() : '') || 'Overview'
   const sectionsFromRoot = options.siteToc?.sectionsFromRoot === true
   const configuredSectionOrder = (options.siteToc?.sectionOrder ?? [])
     .map(normalizeSectionKey)
@@ -249,7 +251,7 @@ export default function (userOptions?: Options) {
   function buildThemeSections(pages: Lume.Data[]): ThemeSectionLink[] {
     const candidatesBySection = new Map<
       string,
-      Array<{ url: string; order: number; secondLevel: string }>
+      Array<{ url: string; order: number; secondLevel: string; title: string }>
     >()
 
     for (const page of pages) {
@@ -280,6 +282,7 @@ export default function (userOptions?: Options) {
         url: normalizedUrl,
         order: typeof page.data.order === 'number' ? page.data.order : Number.POSITIVE_INFINITY,
         secondLevel: segments[1] || '',
+        title: typeof page.data.title === 'string' ? page.data.title.trim() : '',
       })
       candidatesBySection.set(sectionKey, sectionCandidates)
     }
@@ -301,6 +304,7 @@ export default function (userOptions?: Options) {
         return {
           key,
           title: getSectionTitle(key),
+          indexTitle: entrypoint?.title || getSectionTitle(key),
           url: entrypoint?.url || '/',
           order: entrypoint?.order ?? Number.POSITIVE_INFINITY,
           sectionRank: sectionOrderIndex.get(key) ?? Number.POSITIVE_INFINITY,
@@ -317,9 +321,10 @@ export default function (userOptions?: Options) {
 
         return a.title.localeCompare(b.title)
       })
-      .map(({ key, title, url }) => ({
+      .map(({ key, title, indexTitle, url }) => ({
         key,
         title,
+        indexTitle,
         url,
       }))
   }

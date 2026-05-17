@@ -87,6 +87,10 @@ a {
   gap: 0.25rem;
 }
 
+.site-section-drawer {
+  display: inline-flex;
+}
+
 .site-section-link {
   display: inline-flex;
   align-items: center;
@@ -271,6 +275,12 @@ code {
 @media (min-width: 1024px) {
   .site-section-nav {
     display: inline-flex;
+  }
+
+  .site-section-drawer {
+    display: none;
+    align-items: center;
+    gap: 0.25rem;
   }
 
   .site-toc-trigger {

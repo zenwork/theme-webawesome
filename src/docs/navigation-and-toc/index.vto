@@ -14,14 +14,18 @@ order: 50
   <section class="docs-section">
     <h2>Site Navigation</h2>
     <p>
-      The left sidebar tree is rendered in <code>src/_includes/site-toc.vto</code>. By default it includes pages under
-      <code>/docs/</code>, and this scope can be changed with <code>siteToc.includeUrlPrefix</code> or
-      <code>siteToc.filter</code>. Tree expansion state is persisted by <code>site-toc-tree</code> using local storage.
+      In standard mode, the left sidebar tree is rendered by <code>src/_includes/site-toc.vto</code>. By default it
+      includes pages under <code>/docs/</code>, and this scope can be changed with
+      <code>siteToc.includeUrlPrefix</code> or <code>siteToc.filter</code>. Tree expansion state is persisted by
+      <code>site-toc-tree</code> using local storage.
     </p>
     <p>
       Optional section mode is enabled with <code>siteToc.sectionsFromRoot</code>. In that mode, first-level folders
-      become header section choices and the site TOC starts at second-level entries for the active section. The section
-      sequence can be configured with <code>siteToc.sectionOrder</code>.
+      become header section choices and the sidebar is rendered by <code>src/_includes/section-toc.vto</code>. The
+      section TOC starts at the active first-level folder, includes the section root index page when one exists, does
+      not render a synthetic <code>/</code> item, and treats the section entry page as a normal page. The section
+      sequence can be configured with
+      <code>siteToc.sectionOrder</code>.
     </p>
   </section>
 
@@ -45,8 +49,9 @@ order: 50
   <section class="docs-section">
     <h2>Page TOC</h2>
     <p>
-      During preprocess, headings <code>h2</code> to <code>h6</code> receive IDs and are converted into page TOC data.
-      The right panel in <code>layouts/base.vto</code> renders this TOC when headings exist.
+      The theme uses the Lume Markdown TOC plugin for page-level heading data. During preprocess, headings
+      <code>h2</code> to <code>h6</code> receive IDs and are converted into page TOC data. The right panel in
+      <code>layouts/base.vto</code> renders this TOC when headings exist.
     </p>
   </section>
 

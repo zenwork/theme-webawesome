@@ -59,8 +59,8 @@ order: 40
       a full nav query in <code>siteToc.filter</code> for advanced control.
     </p>
     <p>
-      The root <code>/</code> sidebar entry label defaults to <code>Overview</code> and can be changed with <code
-      >siteToc.rootLabel</code>.
+      In standard mode, the root <code>/</code> sidebar entry label defaults to <code>Overview</code> and can be changed
+      with <code>siteToc.rootLabel</code> as a string.
     </p>
     <p>
       Set <code>siteToc.sectionsFromRoot</code> to build section tabs in the header from first-level folders. When
@@ -70,6 +70,10 @@ order: 40
       Use <code>siteToc.sectionOrder</code> to control the header section sequence. Provide first-level folder keys (for
       example <code>['platform', 'reference']</code>). Any missing sections are appended using default ordering.
     </p>
+    <p>
+      In section mode, pass <code>siteToc.rootLabel</code> as a string array to set the section labels used by the
+      section index tabs.
+    </p>
     <!-- deno-fmt-ignore -->
     <code-example language="typescript">
 site.use(
@@ -77,7 +81,7 @@ site.use(
     siteToc: {
       sectionsFromRoot: true,
       sectionOrder: ['platform', 'reference', 'docs'],
-      rootLabel: 'Start Here',
+      rootLabel: ['Platform', 'Reference', 'Docs'],
     },
   }),
 )
