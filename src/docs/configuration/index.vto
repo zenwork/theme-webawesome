@@ -32,6 +32,7 @@ site.use(
   theme({
     siteToc: {
       includeUrlPrefix: '/docs/',
+      rootLabel: 'Overview',
       // or filter: 'hide_menu!=true url^=/guides/',
     },
     webawesome: {
@@ -55,12 +56,17 @@ site.use(
       Sidebar page discovery is configurable. Use <code>siteToc.includeUrlPrefix</code> for simple path scoping, or pass
       a full nav query in <code>siteToc.filter</code> for advanced control.
     </p>
+    <p>
+      The root <code>/</code> sidebar entry label defaults to <code>Overview</code> and can be changed with <code
+      >siteToc.rootLabel</code>.
+    </p>
     <!-- deno-fmt-ignore -->
     <code-example language="typescript">
 site.use(
   theme({
     siteToc: {
       includeUrlPrefix: '/guides/',
+      rootLabel: 'Start Here',
       // filter: 'hide_menu!=true url^=/guides/',
     },
   }),

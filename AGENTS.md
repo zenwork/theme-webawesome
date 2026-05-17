@@ -101,6 +101,7 @@ Related docs for this project:
 ### Docs update checklist
 
 - If options, defaults, or component APIs changed, update docs pages under `src/docs/` in the same change.
+- Every configurable theme feature must be showcased in the `test/` integration site with at least one concrete usage.
 - Keep `<code-example>` snippets multiline and valid; use `<!-- deno-fmt-ignore -->` where formatter would reflow
   snippet bodies.
 - Verify `test/docs/smoke/` still renders key surfaces (`code-example`, editable/read-only `demo-pane`, page TOC).

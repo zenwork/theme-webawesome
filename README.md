@@ -56,6 +56,7 @@ const site = lume()
 site.use(theme({
   siteToc: {
     includeUrlPrefix: '/docs/',
+    rootLabel: 'Overview',
     // Or provide a full nav filter string:
     // filter: 'hide_menu!=true url^=/guides/',
   },
@@ -152,6 +153,7 @@ Notes:
 - Always register custom elements with a guard:
   - `if (!customElements.get('my-tag')) customElements.define('my-tag', MyEl)`
 - Sidebar navigation uses `siteToc.includeUrlPrefix` by default (`/docs/`). For advanced matching, use `siteToc.filter`.
+- The root (`/`) item label in the sidebar defaults to `Overview`; override it with `siteToc.rootLabel`.
 
 ## Local development and test-site workflow
 

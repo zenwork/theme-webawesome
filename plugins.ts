@@ -23,6 +23,7 @@ export interface WebAwesomeOptions {
 export interface SiteTocOptions {
   includeUrlPrefix?: string
   filter?: string
+  rootLabel?: string
 }
 
 export interface Options {
@@ -61,6 +62,7 @@ export const defaults: Options = {
   },
   siteToc: {
     includeUrlPrefix: '/docs/',
+    rootLabel: 'Overview',
   },
   componentEntrypoint: 'components/index.ts',
   additionalComponentEntrypoints: [],
@@ -192,6 +194,7 @@ export default function (userOptions?: Options) {
   const siteTocFilter = options.siteToc?.filter?.trim()
     ? options.siteToc.filter.trim()
     : `hide_menu!=true url^=${normalizeUrlPrefix(options.siteToc?.includeUrlPrefix ?? '/docs/')}`
+  const siteTocRootLabel = options.siteToc?.rootLabel?.trim() || 'Overview'
 
   return (site: Lume.Site) => {
     site.preprocess(['.html'], (pages) => {
@@ -221,6 +224,7 @@ export default function (userOptions?: Options) {
     })
     site.data('themeNavigation', {
       siteTocFilter,
+      siteTocRootLabel,
     })
 
     site

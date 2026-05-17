@@ -1,4 +1,5 @@
 {{ set siteTocFilter = themeNavigation?.siteTocFilter || 'hide_menu!=true url^=/docs/' }}
+{{ set siteTocRootLabel = themeNavigation?.siteTocRootLabel || 'Section Home' }}
 {{
   set siteMenu = nav.menu(
     '/',
@@ -11,7 +12,7 @@
   <site-toc-tree storage-key="site-toc-expanded-v1">
     <wa-tree>
       <wa-tree-item expanded data-node-key="overview">
-        <a href="/" class="toc-link {{ if url === '/' }}is-active{{ /if }}">Overview</a>
+        <a href="/" class="toc-link {{ if url === '/' }}is-active{{ /if }}">{{ siteTocRootLabel }}</a>
       </wa-tree-item>
       {{ for item of siteMenu }}
         {{ if item.data.url !== '/' }}
