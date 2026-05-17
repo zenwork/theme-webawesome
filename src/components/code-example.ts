@@ -47,6 +47,30 @@ class CodeExample extends LitElement {
 
   private _editor: EditorView | null = null
 
+  get contentHeight(): number {
+    const editor = this._editor
+    if (!editor) {
+      return 0
+    }
+    const contentDOMHeight = Math.max(
+      Math.ceil(editor.contentDOM.getBoundingClientRect().height),
+      editor.contentDOM.scrollHeight,
+    )
+    if (contentDOMHeight > 0) {
+      return contentDOMHeight
+    }
+    // @ts-ignore: contentHeight is a valid property of EditorView in CM6
+    const measured = editor.contentHeight
+    if (typeof measured === 'number' && measured > 0) {
+      return measured
+    }
+    return editor.scrollDOM.scrollHeight
+  }
+
+  get contentDOM(): HTMLElement | null {
+    return this._editor?.contentDOM ?? null
+  }
+
   override disconnectedCallback(): void {
     this._editor?.destroy()
     this._editor = null
