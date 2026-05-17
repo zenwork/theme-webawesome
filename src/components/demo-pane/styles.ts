@@ -3,6 +3,7 @@ import { css, CSSResultGroup } from 'lit'
 export const styles: CSSResultGroup = css`
   :host {
     --demo-editor-bg: #282c34;
+    --demo-editor-min-height: 120px;
     display: block;
     margin-block-end: 0.875rem;
     border: 1px solid var(--wa-color-neutral-200);
@@ -10,6 +11,10 @@ export const styles: CSSResultGroup = css`
     overflow: hidden;
     background: var(--wa-color-neutral-0);
     box-shadow: 0 1px 2px color-mix(in srgb, var(--wa-color-neutral-900) 8%, transparent);
+  }
+
+  :host([fit-content]) {
+    --demo-editor-min-height: 0px;
   }
 
   :host(:last-child) {
@@ -135,7 +140,7 @@ export const styles: CSSResultGroup = css`
 
   .editor-panel-content {
     display: grid;
-    grid-template-rows: minmax(120px, 1fr) auto auto;
+    grid-template-rows: minmax(var(--demo-editor-min-height), 1fr) auto auto;
     gap: 0.625rem;
     box-sizing: border-box;
     padding: 0.625rem 0.75rem 0.75rem;
@@ -153,7 +158,7 @@ export const styles: CSSResultGroup = css`
     --divider-width: 12px;
     --divider-hit-area: 24px;
     block-size: auto;
-    min-block-size: 120px;
+    min-block-size: var(--demo-editor-min-height);
     background: var(--demo-editor-bg);
     border-radius: var(--wa-border-radius-small);
     overflow: hidden;
