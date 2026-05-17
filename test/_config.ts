@@ -5,8 +5,9 @@ const site = lume()
 
 site.use(theme({
   siteToc: {
-    includeUrlPrefix: '/guides/',
+    sectionsFromRoot: true,
     rootLabel: 'Start',
+    sectionOrder: ['platform', 'reference', 'docs', 'guides'],
   },
   webawesome: {
     customPropertiesCssPath: '/styles/webawesome-theme.css',

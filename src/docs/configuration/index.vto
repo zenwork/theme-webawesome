@@ -28,13 +28,15 @@ order: 40
     <h2>Options</h2>
     <!-- deno-fmt-ignore -->
     <code-example language="typescript">
-site.use(
-  theme({
-    siteToc: {
-      includeUrlPrefix: '/docs/',
-      rootLabel: 'Overview',
-      // or filter: 'hide_menu!=true url^=/guides/',
-    },
+    site.use(
+      theme({
+        siteToc: {
+          includeUrlPrefix: '/docs/',
+          rootLabel: 'Overview',
+          sectionsFromRoot: false,
+          sectionOrder: ['platform', 'reference'],
+          // or filter: 'hide_menu!=true url^=/guides/',
+        },
     webawesome: {
       mode: 'free',
       assetBasePath: '/lib/webawesome/dist-cdn',
@@ -60,14 +62,22 @@ site.use(
       The root <code>/</code> sidebar entry label defaults to <code>Overview</code> and can be changed with <code
       >siteToc.rootLabel</code>.
     </p>
+    <p>
+      Set <code>siteToc.sectionsFromRoot</code> to build section tabs in the header from first-level folders. When
+      enabled, each section’s sidebar starts from the second-level entries under that folder.
+    </p>
+    <p>
+      Use <code>siteToc.sectionOrder</code> to control the header section sequence. Provide first-level folder keys (for
+      example <code>['platform', 'reference']</code>). Any missing sections are appended using default ordering.
+    </p>
     <!-- deno-fmt-ignore -->
     <code-example language="typescript">
 site.use(
   theme({
     siteToc: {
-      includeUrlPrefix: '/guides/',
+      sectionsFromRoot: true,
+      sectionOrder: ['platform', 'reference', 'docs'],
       rootLabel: 'Start Here',
-      // filter: 'hide_menu!=true url^=/guides/',
     },
   }),
 )

@@ -64,9 +64,16 @@
     <script type="module" src="{{ themeComponents.primaryScript }}"></script>
   </head>
   <body>
+    {{ set currentPathParts = (url || '/').split('/').filter((part) => part.length > 0) }}
+    {{ set currentSectionKey = currentPathParts[0] || '' }}
+    {{ set sectionNavigation = themeNavigation?.sectionsFromRoot === true }}
+    {{ set sectionChoices = sectionNavigation ? (themeNavigation?.sections || []) : [] }}
+    {{ set activeSection = sectionChoices.find((section) => section.key === currentSectionKey) || sectionChoices[0] }}
+    {{ set siteNavigationHeading = sectionNavigation ? (activeSection?.title || 'Documentation') : 'Documentation' }}
+
     <wa-drawer id="site-toc-drawer" label="Documentation" placement="start">
       <section class="site-toc-shell">
-        <h2>Documentation</h2>
+        <h2>{{ siteNavigationHeading }}</h2>
         {{ include '../site-toc.vto' }}
       </section>
     </wa-drawer>
@@ -74,13 +81,25 @@
       <div class="site-header-inner">
         <wa-button class="site-toc-trigger" variant="neutral" size="small" id="site-toc-trigger">Docs</wa-button>
         <a class="site-title" href="/">{{ metas.site }}</a>
+        {{ if sectionChoices.length }}
+          <nav class="site-section-nav" aria-label="Documentation sections">
+            {{ for section of sectionChoices }}
+              <a
+                href="{{ section.url }}"
+                class="site-section-link {{ if activeSection?.key === section.key }}is-active{{ /if }}"
+              >
+                {{ section.title }}
+              </a>
+            {{ /for }}
+          </nav>
+        {{ /if }}
         {{ include '../theme-toggle.vto' }}
       </div>
     </header>
     <main class="docs-shell">
       <aside class="site-toc-panel">
         <section class="site-toc-shell">
-          <h2>Documentation</h2>
+          <h2>{{ siteNavigationHeading }}</h2>
           {{ include '../site-toc.vto' }}
         </section>
       </aside>

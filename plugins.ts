@@ -24,6 +24,8 @@ export interface SiteTocOptions {
   includeUrlPrefix?: string
   filter?: string
   rootLabel?: string
+  sectionsFromRoot?: boolean
+  sectionOrder?: string[]
 }
 
 export interface Options {
@@ -52,6 +54,12 @@ interface TocNode {
   children: TocNode[]
 }
 
+interface ThemeSectionLink {
+  key: string
+  title: string
+  url: string
+}
+
 export const defaults: Options = {
   favicon: {
     input: 'uploads/favicon.svg',
@@ -63,6 +71,7 @@ export const defaults: Options = {
   siteToc: {
     includeUrlPrefix: '/docs/',
     rootLabel: 'Overview',
+    sectionsFromRoot: false,
   },
   componentEntrypoint: 'components/index.ts',
   additionalComponentEntrypoints: [],
@@ -116,6 +125,20 @@ function normalizeUrlPrefix(prefix: string): string {
 
   const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
   return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`
+}
+
+function normalizeSectionKey(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return ''
+  }
+
+  const firstSegment = trimmed
+    .replace(/^\/+/, '')
+    .split('/')
+    .filter(Boolean)[0]
+
+  return firstSegment || ''
 }
 
 function buildHtmlToc(content: string, minLevel = 2): { content: string; toc: TocNode[] } {
@@ -195,6 +218,120 @@ export default function (userOptions?: Options) {
     ? options.siteToc.filter.trim()
     : `hide_menu!=true url^=${normalizeUrlPrefix(options.siteToc?.includeUrlPrefix ?? '/docs/')}`
   const siteTocRootLabel = options.siteToc?.rootLabel?.trim() || 'Overview'
+  const sectionsFromRoot = options.siteToc?.sectionsFromRoot === true
+  const configuredSectionOrder = (options.siteToc?.sectionOrder ?? [])
+    .map(normalizeSectionKey)
+    .filter(Boolean)
+  const sectionOrderIndex = new Map(
+    configuredSectionOrder.map((key, index) => [key, index]),
+  )
+  const themeSections: ThemeSectionLink[] = []
+
+  function getSectionTitle(sectionKey: string): string {
+    if (!sectionKey) {
+      return ''
+    }
+
+    return sectionKey
+      .split('-')
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ')
+  }
+
+  function normalizeSectionPageUrl(url: string): string {
+    const withLeadingSlash = url.startsWith('/') ? url : `/${url}`
+    const withoutHash = withLeadingSlash.split('#')[0]
+    const withoutQuery = withoutHash.split('?')[0]
+    return withoutQuery.endsWith('/') ? withoutQuery : `${withoutQuery}/`
+  }
+
+  function buildThemeSections(pages: Lume.Data[]): ThemeSectionLink[] {
+    const candidatesBySection = new Map<
+      string,
+      Array<{ url: string; order: number; secondLevel: string }>
+    >()
+
+    for (const page of pages) {
+      if (page.data.hide_menu === true) {
+        continue
+      }
+
+      const urlValue = page.data.url
+      if (typeof urlValue !== 'string' || !urlValue.startsWith('/')) {
+        continue
+      }
+
+      const normalizedUrl = normalizeSectionPageUrl(urlValue)
+      const segments = normalizedUrl.split('/').filter(Boolean)
+
+      // Require root/first-level/second-level to form a section + entrypoint.
+      if (segments.length < 2) {
+        continue
+      }
+
+      const [sectionKey] = segments
+      if (!sectionKey) {
+        continue
+      }
+
+      const sectionCandidates = candidatesBySection.get(sectionKey) || []
+      sectionCandidates.push({
+        url: normalizedUrl,
+        order: typeof page.data.order === 'number' ? page.data.order : Number.POSITIVE_INFINITY,
+        secondLevel: segments[1] || '',
+      })
+      candidatesBySection.set(sectionKey, sectionCandidates)
+    }
+
+    return [...candidatesBySection.entries()]
+      .map(([key, candidates]) => {
+        const [entrypoint] = [...candidates].sort((a, b) => {
+          if (a.order !== b.order) {
+            return a.order - b.order
+          }
+
+          if (a.secondLevel !== b.secondLevel) {
+            return a.secondLevel.localeCompare(b.secondLevel)
+          }
+
+          return a.url.localeCompare(b.url)
+        })
+
+        return {
+          key,
+          title: getSectionTitle(key),
+          url: entrypoint?.url || '/',
+          order: entrypoint?.order ?? Number.POSITIVE_INFINITY,
+          sectionRank: sectionOrderIndex.get(key) ?? Number.POSITIVE_INFINITY,
+        }
+      })
+      .sort((a, b) => {
+        if (a.sectionRank !== b.sectionRank) {
+          return a.sectionRank - b.sectionRank
+        }
+
+        if (a.order !== b.order) {
+          return a.order - b.order
+        }
+
+        return a.title.localeCompare(b.title)
+      })
+      .map(({ key, title, url }) => ({
+        key,
+        title,
+        url,
+      }))
+  }
+
+  function getThemeNavigationSnapshot() {
+    return {
+      siteTocFilter,
+      siteTocRootLabel,
+      sectionsFromRoot,
+      sections: [...themeSections],
+    }
+  }
 
   return (site: Lume.Site) => {
     site.preprocess(['.html'], (pages) => {
@@ -214,6 +351,15 @@ export default function (userOptions?: Options) {
         page.data.content = nextContent
         page.data.toc = htmlToc
       }
+
+      if (sectionsFromRoot) {
+        themeSections.splice(0, themeSections.length, ...buildThemeSections(pages))
+      }
+
+      const navigation = getThemeNavigationSnapshot()
+      for (const page of pages) {
+        page.data.themeNavigation = navigation
+      }
     })
 
     site.data('webawesome', webawesome)
@@ -222,10 +368,7 @@ export default function (userOptions?: Options) {
       scripts: componentScripts,
       primaryScript: componentScripts[0],
     })
-    site.data('themeNavigation', {
-      siteTocFilter,
-      siteTocRootLabel,
-    })
+    site.data('themeNavigation', getThemeNavigationSnapshot())
 
     site
       .use(lightningcss())
