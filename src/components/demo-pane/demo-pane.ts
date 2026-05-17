@@ -62,6 +62,9 @@ class DemoPane extends LitElement {
   @property({ type: String, attribute: 'output-background' })
   outputBackground = ''
 
+  @property({ type: Boolean, attribute: 'fit-content', reflect: true })
+  fitContent = false
+
   @property({ type: Boolean, attribute: 'editor-open', reflect: true })
   editorOpen = false
 
@@ -201,13 +204,50 @@ class DemoPane extends LitElement {
     return this.editable && !this.readOnly
   }
 
+  private parseDraftData(): { parsed: TemplateData | null; error: string | null } {
+    const source = this._draftData.trim()
+    if (!source) {
+      return {
+        parsed: null,
+        error: 'Data is empty. Provide a JSON object like {"key":"value"}.',
+      }
+    }
+
+    try {
+      const parsed = JSON.parse(source)
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        const kind = Array.isArray(parsed) ? 'array' : parsed === null ? 'null' : typeof parsed
+        return {
+          parsed: null,
+          error: `Data must be a JSON object. Received ${kind}.`,
+        }
+      }
+      return { parsed: parsed as TemplateData, error: null }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      return {
+        parsed: null,
+        error: `JSON parse error: ${message}`,
+      }
+    }
+  }
+
+  private formatTemplateError(error: unknown): string {
+    if (error instanceof Error && error.message) {
+      return `Template error: ${error.message}`
+    }
+    return `Template error: ${String(error)}`
+  }
+
   private processData(): void {
     this._error = null
+    this._parsedData = null
+    this._renderedTemplate = null
+    this._renderedHtml = ''
 
-    // Parse JSON data
-    const parsed = parseJSON(this._draftData)
+    const { parsed, error } = this.parseDraftData()
     if (!parsed) {
-      this._error = 'Invalid JSON data'
+      this._error = error ?? 'Invalid JSON data'
       this.requestUpdate()
       return
     }
@@ -219,7 +259,7 @@ class DemoPane extends LitElement {
       this._renderedTemplate = rendered.template
       this._renderedHtml = rendered.source
     } catch (e) {
-      this._error = `Template rendering error: ${e}`
+      this._error = this.formatTemplateError(e)
       this.requestUpdate()
       return
     }
@@ -320,6 +360,12 @@ class DemoPane extends LitElement {
 
   private handleEditorResizeStart = (event: PointerEvent): void => {
     event.preventDefault()
+    const panelContent = this.shadowRoot?.querySelector<HTMLElement>('.editor-panel-content')
+    const measuredHeight = panelContent ? Math.round(panelContent.getBoundingClientRect().height) : this._editorHeight
+    this._editorHeight = Math.max(120, Math.min(640, measuredHeight))
+    if (this.fitContent) {
+      this.fitContent = false
+    }
     this._isResizingEditors = true
     this._editorResizeStartY = event.clientY
     this._editorResizeStartHeight = this._editorHeight
@@ -501,7 +547,9 @@ class DemoPane extends LitElement {
       this._draftData = JSON.stringify(parsed, null, 2)
     }
 
-    this._draftTemplate = formatHtmlTemplate(this._draftTemplate)
+    this._draftTemplate = formatHtmlTemplate(this._draftTemplate, {
+      maxLineLength: this.getTemplateFormatLineLength(),
+    })
     this._didFormatInitialContent = true
   }
 
@@ -517,7 +565,9 @@ class DemoPane extends LitElement {
     if (parsed) {
       this._draftData = JSON.stringify(parsed, null, 2)
     }
-    this._draftTemplate = formatHtmlTemplate(this._draftTemplate)
+    this._draftTemplate = formatHtmlTemplate(this._draftTemplate, {
+      maxLineLength: this.getTemplateFormatLineLength(),
+    })
 
     this.syncEditorsFromDraft()
     this.updateEditorHighlighting()
@@ -531,9 +581,9 @@ class DemoPane extends LitElement {
     if (this._jsonEditor) {
       this._draftData = this._jsonEditor.state.doc.toString()
     }
-    const parsed = parseJSON(this._draftData)
+    const { parsed, error } = this.parseDraftData()
     if (!parsed) {
-      this._error = 'Invalid JSON data'
+      this._error = error ?? 'Invalid JSON data'
       return
     }
     this._draftData = JSON.stringify(parsed, null, 2)
@@ -549,10 +599,52 @@ class DemoPane extends LitElement {
     if (this._templateEditor) {
       this._draftTemplate = this._templateEditor.state.doc.toString()
     }
-    this._draftTemplate = formatHtmlTemplate(this._draftTemplate)
+    this._draftTemplate = formatHtmlTemplate(this._draftTemplate, {
+      maxLineLength: this.getTemplateFormatLineLength(),
+    })
     this.syncEditorsFromDraft()
     this.updateEditorHighlighting()
     this.processData()
+  }
+
+  private getFitContentEditorHeight(): number {
+    const dataLineCount = Math.max(1, this._draftData.split('\n').length)
+    const templateForSizing = this.getFormattedTemplateForSizing(this._draftTemplate)
+    const templateLineCount = Math.max(1, templateForSizing.split('\n').length)
+    const maxLineCount = Math.max(dataLineCount, templateLineCount, 4)
+    const baseHeight = this.canEdit ? 92 : 62
+    const lineHeight = 16
+    const preferred = Math.round(baseHeight + maxLineCount * lineHeight)
+    return Math.max(140, Math.min(640, preferred))
+  }
+
+  private getFormattedTemplateForSizing(template: string): string {
+    try {
+      return formatHtmlTemplate(template, {
+        maxLineLength: this.getTemplateFormatLineLength(),
+      })
+    } catch {
+      return template
+    }
+  }
+
+  private getTemplateFormatLineLength(): number {
+    if (this._templateEditor) {
+      const viewportWidth = this._templateEditor.scrollDOM.clientWidth || this._templateEditor.dom.clientWidth
+      const charWidth = Math.max(6, this._templateEditor.defaultCharacterWidth || 8)
+      const chars = Math.floor((viewportWidth - 24) / charWidth)
+      return Math.max(48, Math.min(140, chars))
+    }
+
+    const fallbackWidth = this.renderRoot.querySelector<HTMLElement>('#template-editor')?.clientWidth ??
+      this.renderRoot.querySelector<HTMLElement>('.editor-field[slot="end"]')?.clientWidth
+
+    if (fallbackWidth && Number.isFinite(fallbackWidth)) {
+      const chars = Math.floor((fallbackWidth - 24) / 8)
+      return Math.max(48, Math.min(140, chars))
+    }
+
+    return 80
   }
 
   private renderEditor(): unknown {
@@ -562,7 +654,8 @@ class DemoPane extends LitElement {
 
     const dataLabel = this.dataLabel.trim()
     const templateLabel = this.templateLabel.trim()
-    const editorContentStyle = `--demo-editor-height: ${this._editorHeight}px`
+    const editorHeight = this.fitContent ? this.getFitContentEditorHeight() : this._editorHeight
+    const editorContentStyle = `--demo-editor-height: ${editorHeight}px`
 
     return html`
       <wa-details
@@ -780,8 +873,9 @@ class DemoPane extends LitElement {
   }
 
   private renderEditablePreview(): unknown {
+    const previewStyle = `--demo-preview-height: ${this._previewHeight}px;`
     return html`
-      <div class="editable-layout" style="--demo-preview-height: ${this._previewHeight}px;">
+      <div class="editable-layout" style="${previewStyle}">
         ${this.renderEditor()}
         <div class="editable-preview">${this.renderOutputPane({ includeResizer: true })}</div>
       </div>
@@ -792,7 +886,8 @@ class DemoPane extends LitElement {
     const dataLabel = this.dataLabel.trim() || 'Data'
     const templateLabel = this.templateLabel.trim() || 'Template'
     const formattedJson = this.getFormattedJsonSource()
-    const editorContentStyle = `--demo-editor-height: ${this._editorHeight}px`
+    const editorHeight = this.fitContent ? this.getFitContentEditorHeight() : this._editorHeight
+    const editorContentStyle = `--demo-editor-height: ${editorHeight}px`
 
     return html`
       <wa-details class="editor-panel" appearance="plain" open>
@@ -827,8 +922,9 @@ class DemoPane extends LitElement {
   }
 
   private renderReadOnlyPreview(): unknown {
+    const previewStyle = `--demo-preview-height: ${this._previewHeight}px;`
     return html`
-      <div class="editable-layout" style="--demo-preview-height: ${this._previewHeight}px;">
+      <div class="editable-layout" style="${previewStyle}">
         ${this.renderReadOnlyEditor()}
         <div class="editable-preview">${this.renderOutputPane({ includeResizer: true })}</div>
       </div>
@@ -836,12 +932,6 @@ class DemoPane extends LitElement {
   }
 
   protected override render(): unknown {
-    if (this._error && !this._parsedData) {
-      return html`
-        <div class="error">${this._error}</div>
-      `
-    }
-
     if (this.canEdit) {
       return this.renderEditablePreview()
     }

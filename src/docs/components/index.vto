@@ -99,6 +99,7 @@ order: 45
       template='<wa-button variant="${variant}">${label}</wa-button>'
       imports='["button"]'
       editable="false"
+      fit-content
     >
     </demo-pane>
   </section>
@@ -139,6 +140,10 @@ order: 45
         area (for example
         <code>#fff</code> or <code>var(--wa-color-neutral-50)</code>)
       </li>
+      <li>
+        <code>fit-content</code> (boolean, default <code>false</code>): grows/shrinks preview height to match rendered
+        output content instead of using the resizable fixed-height preview area
+      </li>
     </ul>
     <p>
       Notes: JSON must parse to an object. The component sanitizes rendered output while allowing valid custom elements,
@@ -153,7 +158,7 @@ order: 45
     <ul>
       <li>
         <code>language</code> (<code>json</code> | <code>html</code> | <code>javascript</code> |
-        <code>typescript</code> | <code>text</code>, default <code>text</code>)
+        <code>typescript</code> | <code>text</code>, default inferred from slot content or <code>text</code>)
       </li>
       <li><code>line-numbers</code> (boolean, default <code>true</code>)</li>
       <li><code>code</code> (string, default empty): explicit snippet text</li>
@@ -161,6 +166,10 @@ order: 45
     <p>
       If <code>code</code> is not provided, content is read from the element slot, normalized for indentation, and then
       rendered in a read-only CodeMirror view.
+    </p>
+    <p>
+      You can slot real HTML without escaping. If <code>language</code> is omitted, the component auto-detects from
+      slotted content (for example element nodes, <code>data-language</code>, or <code>language-*</code> classes).
     </p>
   </section>
 

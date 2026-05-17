@@ -4,7 +4,7 @@ export const styles: CSSResultGroup = css`
   :host {
     --demo-editor-bg: #282c34;
     display: block;
-    min-height: 560px;
+    margin-block-end: 0.875rem;
     border: 1px solid var(--wa-color-neutral-200);
     border-radius: var(--wa-border-radius-medium);
     overflow: hidden;
@@ -12,11 +12,15 @@ export const styles: CSSResultGroup = css`
     box-shadow: 0 1px 2px color-mix(in srgb, var(--wa-color-neutral-900) 8%, transparent);
   }
 
+  :host(:last-child) {
+    /*margin-block-end: 0;*/
+  }
+
   .pane {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    min-height: 400px;
+    height: auto;
+    min-height: 0;
   }
 
   .pane-toolbar {
@@ -52,7 +56,7 @@ export const styles: CSSResultGroup = css`
   .output-container {
     min-height: 200px;
     padding: 0.875rem;
-    margin: 0.125rem;
+    margin: 0.125rem 0.125rem 0.875rem;
     border: 2px dotted rgba(148, 163, 184, 0.8);
     border-radius: var(--wa-border-radius-small);
     background: var(
@@ -117,8 +121,25 @@ export const styles: CSSResultGroup = css`
     padding: 0;
   }
 
+  .editor-panel:not([open])::part(content) {
+    display: none;
+    padding: 0;
+    margin: 0;
+    block-size: 0;
+    min-block-size: 0;
+  }
+
+  .editor-panel:not([open])::part(header) {
+    padding-block: 0.25rem;
+  }
+
   .editor-panel-content {
+    display: grid;
+    grid-template-rows: minmax(120px, 1fr) auto auto;
+    gap: 0.625rem;
+    box-sizing: border-box;
     padding: 0.625rem 0.75rem 0.75rem;
+    block-size: var(--demo-editor-height, auto);
   }
 
   .editor-panel-loading {
@@ -131,7 +152,7 @@ export const styles: CSSResultGroup = css`
   .editor-split {
     --divider-width: 12px;
     --divider-hit-area: 24px;
-    block-size: var(--demo-editor-height, 180px);
+    block-size: auto;
     min-block-size: 120px;
     background: var(--demo-editor-bg);
     border-radius: var(--wa-border-radius-small);
@@ -199,7 +220,7 @@ export const styles: CSSResultGroup = css`
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-top: 0.625rem;
+    margin-top: 0;
   }
 
   .editor-actions wa-button::part(base),
@@ -213,11 +234,18 @@ export const styles: CSSResultGroup = css`
   .editor-resizer,
   .preview-resizer {
     block-size: 12px;
-    margin-top: 0.5rem;
     border-top: 1px dotted rgba(148, 163, 184, 0.7);
     cursor: ns-resize;
     touch-action: none;
     position: relative;
+  }
+
+  .editor-resizer {
+    margin-top: 0;
+  }
+
+  .preview-resizer {
+    margin-top: 0.5rem;
   }
 
   .editor-resizer::before,
@@ -244,17 +272,31 @@ export const styles: CSSResultGroup = css`
   .editable-layout {
     display: grid;
     grid-template-rows: auto auto;
-    min-height: 560px;
   }
 
   .editable-preview {
-    min-height: 220px;
     min-width: 0;
     block-size: var(--demo-preview-height, 320px);
+    min-block-size: 220px;
+    margin-bottom: 0.875rem;
   }
 
   .editable-preview .pane {
     min-height: 0;
+    height: auto;
+  }
+
+  :host(:not([readonly]):not([editor-open])) .editable-preview .pane-content {
+    padding-top: 0.25rem;
+  }
+
+  :host(:not([readonly]):not([editor-open])) .editable-preview .output-container,
+  :host(:not([readonly]):not([editor-open])) .editable-preview .error {
+    margin-top: 0;
+  }
+
+  :host(:not([readonly])) .editor-panel:not([open]) {
+    border-bottom: 0;
   }
 
   .tabs-toolbar {
@@ -296,18 +338,6 @@ export const styles: CSSResultGroup = css`
   }
 
   @media (max-width: 768px) {
-    :host {
-      min-height: 460px;
-    }
-
-    .editable-layout {
-      min-height: 460px;
-    }
-
-    .pane {
-      min-height: 300px;
-    }
-
     .pane-split {
       display: none;
     }

@@ -14,6 +14,11 @@ const inlineEventAttributePattern = /\son[a-z0-9-]+\s*=/i
 const javascriptUrlPattern = /\s(?:href|src)\s*=\s*["']?\s*javascript:/i
 const litBindingAttributePattern = /(?:[@.?][^\s"'<>/=]+)\s*=\s*\$\{/i
 const whitespacePattern = /\s/
+const defaultMaxLineLength = 110
+
+interface HtmlFormatOptions {
+  maxLineLength?: number
+}
 
 /**
  * Renders an HTML template string with JS template-literal interpolation.
@@ -36,16 +41,17 @@ export function renderTemplate(template: string, data: TemplateData): RenderedTe
   }
 }
 
-export function formatHtmlTemplate(template: string): string {
+export function formatHtmlTemplate(template: string, options: HtmlFormatOptions = {}): string {
   const normalized = normalizeTemplateSyntax(template).trim()
   if (!normalized) {
     return ''
   }
+  const maxLineLength = Math.max(48, options.maxLineLength ?? defaultMaxLineLength)
 
   // DOMParser normalizes away Lit binding notation (`.prop`, `?attr`, `@event`).
   // Keep authoring semantics intact and apply lightweight attribute chopping.
   if (litBindingAttributePattern.test(normalized)) {
-    return chopAttributesInSource(normalized)
+    return chopAttributesInSource(normalized, maxLineLength)
   }
 
   const doc = new DOMParser().parseFromString(`<body>${normalized}</body>`, 'text/html')
@@ -72,12 +78,12 @@ export function formatHtmlTemplate(template: string): string {
       .map((attr) => `${attr.name}="${attr.value}"`)
 
     if (!element.childNodes.length) {
-      lines.push(...formatOpeningTag(element.tagName.toLowerCase(), attrs, indent))
+      lines.push(...formatOpeningTag(element.tagName.toLowerCase(), attrs, indent, maxLineLength))
       lines.push(`${indent}</${element.tagName.toLowerCase()}>`)
       return
     }
 
-    lines.push(...formatOpeningTag(element.tagName.toLowerCase(), attrs, indent))
+    lines.push(...formatOpeningTag(element.tagName.toLowerCase(), attrs, indent, maxLineLength))
     for (const child of element.childNodes) {
       writeNode(child, depth + 1)
     }
@@ -99,9 +105,14 @@ function normalizeTemplateSyntax(template: string): string {
   return template.replace(/\[\[\s*([^[\]]+?)\s*\]\]/g, '${$1}')
 }
 
-function formatOpeningTag(tagName: string, attrs: string[], indent: string): string[] {
+function formatOpeningTag(tagName: string, attrs: string[], indent: string, maxLineLength: number): string[] {
   if (!attrs.length) {
     return [`${indent}<${tagName}>`]
+  }
+
+  const inline = `${indent}<${tagName} ${attrs.join(' ')}>`
+  if (inline.length <= maxLineLength) {
+    return [inline]
   }
 
   return [
@@ -169,7 +180,7 @@ function splitAttributes(attrsSource: string): string[] {
   return attributes
 }
 
-function chopAttributesInSource(source: string): string {
+function chopAttributesInSource(source: string, maxLineLength: number): string {
   let output = ''
   let i = 0
 
@@ -233,6 +244,14 @@ function chopAttributesInSource(source: string): string {
     const attrs = splitAttributes(attrsSource)
 
     if (!attrs.length) {
+      output += source.slice(i, end + 1)
+      i = end + 1
+      continue
+    }
+
+    const compactTag = `${indent}<${tagName}${inside}>`
+    const shouldChop = compactTag.length > maxLineLength
+    if (!shouldChop) {
       output += source.slice(i, end + 1)
       i = end + 1
       continue
