@@ -88,18 +88,26 @@
       </section>
       <section class="site-toc-shell">
         {{ if sectionNavigation }}
-          {{ include "../section-toc.vto" }}
+          {{ include '../section-toc.vto' }}
         {{ else }}
-          {{ include "../site-toc.vto" }}
+          {{ include '../site-toc.vto' }}
         {{ /if }}
       </section>
     </wa-drawer>
     <header class="site-header">
       <div class="site-header-inner">
-        <wa-button class="site-toc-trigger" appearance="outlined" variant="brand" size="small" id="site-toc-trigger"><wa-icon name="bars" label="bars"></wa-icon></wa-button>
+        <wa-button
+          class="site-toc-trigger"
+          appearance="outlined"
+          variant="brand"
+          size="small"
+          id="site-toc-trigger"
+        ><wa-icon name="bars" label="bars"></wa-icon></wa-button>
         <a class="site-title" href="/">{{ metas.site }}</a>
-        <span class="site-section-drawer">{{ activeSection.title }}</span>
-        {{ if sectionChoices.length }}
+        {{ if sectionNavigation }}
+          <span class="site-section-drawer">{{ activeSection?.title || siteNavigationHeading }}</span>
+        {{ /if }}
+        {{ if sectionChoices.length && sectionNavigation }}
           <nav class="site-section-nav" aria-label="Sections">
             {{ for section of sectionChoices }}
               <a
@@ -111,17 +119,17 @@
             {{ /for }}
           </nav>
         {{ /if }}
-        {{ include "../theme-toggle.vto" }}
+        {{ include '../theme-toggle.vto' }}
       </div>
     </header>
     <main class="docs-shell">
       <aside class="site-toc-panel">
         <section class="site-toc-shell">
-<!--          <h2>{{ siteNavigationHeading }}</h2>-->
+          <!--          <h2>{{ siteNavigationHeading }}</h2>-->
           {{ if sectionNavigation }}
-            {{ include "../section-toc.vto" }}
+            {{ include '../section-toc.vto' }}
           {{ else }}
-            {{ include "../site-toc.vto" }}
+            {{ include '../site-toc.vto' }}
           {{ /if }}
         </section>
       </aside>

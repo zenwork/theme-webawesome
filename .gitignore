@@ -4,3 +4,4 @@ _cache
 .idea
 
 /node_modules/**/*
+/out/**/*
