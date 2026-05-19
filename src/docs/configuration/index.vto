@@ -57,8 +57,9 @@ order: 40
       a full nav query in <code>siteToc.filter</code> for advanced control.
     </p>
     <p>
-      Use <code>siteToc.root</code> to define where sidebar discovery starts. The default <code>.</code> resolves to the
-      site root <code>/</code>.
+      Use <code>siteToc.root</code> to define where sidebar discovery starts in the filesystem. The default
+      <code>.</code> resolves to the site source root URL <code>/</code>. When your site uses
+      <code>src: './src'</code>, values like <code>src</code> or <code>src/docs</code> are valid.
     </p>
     <p>
       Section mode is inferred from <code>siteToc.sections</code>. With one section, the sidebar is scoped to that

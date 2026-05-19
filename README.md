@@ -152,8 +152,10 @@ Notes:
   layout.
 - Always register custom elements with a guard:
   - `if (!customElements.get('my-tag')) customElements.define('my-tag', MyEl)`
-- `siteToc.root` controls the navigation root path (`'.'` maps to `/`).
-- `siteToc.root` must be relative to the current working directory (for example `.` or `src/docs`); `/` is invalid.
+- `siteToc.root` points to the docs root directory in your workspace (relative to `cwd`).
+- `siteToc.root: '.'` maps to the site source root URL (`/`).
+- `siteToc.root` must be relative to `cwd` and inside your configured `site.src` path (for example `src` or `src/docs`
+  when `site.src` is `./src`); `/` is invalid.
 - `siteToc.sections` defines section folders, labels, and order.
 - A single section renders one scoped sidebar TOC.
 - More than one section automatically enables section tabs in header/drawer.
