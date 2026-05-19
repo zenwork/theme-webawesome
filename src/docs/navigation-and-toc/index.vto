@@ -14,18 +14,13 @@ order: 50
   <section class="docs-section">
     <h2>Site Navigation</h2>
     <p>
-      In standard mode, the left sidebar tree is rendered by <code>src/_includes/site-toc.vto</code>. By default it
-      includes pages under <code>/docs/</code>, and this scope can be changed with
-      <code>siteToc.includeUrlPrefix</code> or <code>siteToc.filter</code>. Tree expansion state is persisted by
-      <code>site-toc-tree</code> using local storage.
+      The left sidebar tree is rendered by <code>src/_includes/section-toc.vto</code>. With one configured section, that
+      section provides the TOC scope. Tree expansion state is persisted by <code>site-toc-tree</code> using local
+      storage.
     </p>
     <p>
-      Optional section mode is enabled with <code>siteToc.sectionsFromRoot</code>. In that mode, first-level folders
-      become header section choices and the sidebar is rendered by <code>src/_includes/section-toc.vto</code>. The
-      section TOC starts at the active first-level folder, includes the section root index page when one exists, does
-      not render a synthetic <code>/</code> item, and treats the section entry page as a normal page. The section
-      sequence can be configured with
-      <code>siteToc.sectionOrder</code>.
+      When more than one section is configured in <code>siteToc.sections</code>, section tabs are shown in the header
+      and drawer. Each section defines its folder, label, and order explicitly.
     </p>
   </section>
 

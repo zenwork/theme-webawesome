@@ -5,8 +5,7 @@ const site = lume({ src: './src' })
 
 site.use(theme({
   siteToc: {
-    sectionsFromRoot: false,
-    rootLabel: 'Overview',
+    root: '.',
   },
   webawesome: {
     customPropertiesCssPath: '/styles/webawesome-theme.css',

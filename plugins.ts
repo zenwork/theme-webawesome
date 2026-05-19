@@ -21,11 +21,10 @@ export interface WebAwesomeOptions {
 }
 
 export interface SiteTocOptions {
+  root: string
+  sections?: { folder: string; label: string; order: number }[]
   includeUrlPrefix?: string
   filter?: string
-  rootLabel?: string | string[]
-  sectionsFromRoot?: boolean
-  sectionOrder?: string[]
 }
 
 export interface Options {
@@ -58,7 +57,9 @@ interface ThemeSectionLink {
   key: string
   title: string
   indexTitle: string
+  baseUrl: string
   url: string
+  order: number
 }
 
 export const defaults: Options = {
@@ -69,13 +70,14 @@ export const defaults: Options = {
     mode: 'free',
     assetBasePath: '/lib/webawesome/dist-cdn',
   },
-  siteToc: {
-    includeUrlPrefix: '/',
-    rootLabel: 'Overview',
-    sectionsFromRoot: false,
-  },
   componentEntrypoint: 'components/index.ts',
   additionalComponentEntrypoints: [],
+}
+
+const siteTocDefaults: SiteTocOptions = {
+  root: '.',
+  sections: [{ folder: 'src', label: 'Home', order: 0 }],
+  includeUrlPrefix: '/',
 }
 
 const headingPattern = /<h([2-6])(\s[^>]*)?>([\s\S]*?)<\/h\1>/gi
@@ -142,6 +144,81 @@ function normalizeSectionKey(value: string): string {
   return firstSegment || ''
 }
 
+function normalizeSiteRoot(root: string): string {
+  const trimmed = root.trim()
+  if (!trimmed || trimmed === '.') {
+    return '/'
+  }
+
+  if (trimmed === '/' || trimmed.startsWith('/')) {
+    throw new Error(
+      'theme-webawesome: `siteToc.root` must be a relative path from the current working directory. Use `.` for root.',
+    )
+  }
+
+  const normalizedRelativeRoot = trimmed.replace(/\\/g, '/').replace(/^\.\//, '')
+  return normalizeUrlPrefix(normalizedRelativeRoot)
+}
+
+function normalizeFolder(folder: string): string {
+  return folder.trim().replace(/^\/+|\/+$/g, '')
+}
+
+function normalizePageUrl(url: string): string {
+  const withLeadingSlash = url.startsWith('/') ? url : `/${url}`
+  const withoutHash = withLeadingSlash.split('#')[0]
+  const withoutQuery = withoutHash.split('?')[0]
+  return withoutQuery.endsWith('/') ? withoutQuery : `${withoutQuery}/`
+}
+
+function toTitleCase(value: string): string {
+  return value
+    .split(/[-_\s/]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function resolveSiteTocOptions(config?: Partial<SiteTocOptions>): SiteTocOptions {
+  const normalizedSections = config?.sections
+    ?.map((section) => ({
+      folder: normalizeFolder(section.folder),
+      label: section.label.trim(),
+      order: section.order,
+    }))
+    .filter((section) => section.folder && section.label)
+
+  const sections = normalizedSections?.length ? normalizedSections : siteTocDefaults.sections
+  if (!sections?.length) {
+    throw new Error('theme-webawesome: `siteToc.sections` must include at least one section definition.')
+  }
+
+  return {
+    root: (config?.root || siteTocDefaults.root).trim() || siteTocDefaults.root,
+    sections,
+    includeUrlPrefix: config?.includeUrlPrefix ?? siteTocDefaults.includeUrlPrefix,
+    filter: config?.filter?.trim() || undefined,
+  }
+}
+
+function getRelativeSegmentsFromRoot(url: string, rootUrl: string): string[] | null {
+  const normalizedUrl = normalizePageUrl(url)
+  if (rootUrl !== '/' && !normalizedUrl.startsWith(rootUrl)) {
+    return null
+  }
+
+  const relative = rootUrl === '/' ? normalizedUrl : normalizedUrl.slice(rootUrl.length)
+  return relative.split('/').filter(Boolean)
+}
+
+function toSectionBaseUrl(rootUrl: string, folder: string): string {
+  const normalizedFolder = normalizeFolder(folder)
+  if (!normalizedFolder) {
+    return rootUrl
+  }
+  return rootUrl === '/' ? `/${normalizedFolder}/` : `${rootUrl}${normalizedFolder}/`
+}
+
 function buildHtmlToc(content: string, minLevel = 2): { content: string; toc: TocNode[] } {
   const root: TocNode = { level: 0, text: '', slug: '', url: '', children: [] }
   const stack: TocNode[] = [root]
@@ -195,6 +272,8 @@ function buildHtmlToc(content: string, minLevel = 2): { content: string; toc: To
 /** Configure the site */
 export default function (userOptions?: Options) {
   const options = merge(defaults, userOptions)
+  const siteTocOptions = resolveSiteTocOptions(userOptions?.siteToc)
+  const siteTocRootUrl = normalizeSiteRoot(siteTocOptions.root)
   const basePathByMode: Record<'free' | 'pro', string> = {
     free: '/lib/webawesome/dist-cdn',
     pro: '/lib/webawesome-pro/dist-cdn',
@@ -215,125 +294,92 @@ export default function (userOptions?: Options) {
     ...(options.additionalComponentEntrypoints ?? []),
   ]
   const componentScripts = componentEntrypoints.map(toScriptPath)
-  const siteTocFilter = options.siteToc?.filter?.trim()
-    ? options.siteToc.filter.trim()
-    : `hide_menu!=true url^=${normalizeUrlPrefix(options.siteToc?.includeUrlPrefix ?? '/')}`
-  const configuredRootLabel = options.siteToc?.rootLabel
-  const siteTocRootLabel = (typeof configuredRootLabel === 'string' ? configuredRootLabel.trim() : '') || 'Overview'
-  const sectionsFromRoot = options.siteToc?.sectionsFromRoot === true
-  const configuredSectionOrder = (options.siteToc?.sectionOrder ?? [])
-    .map(normalizeSectionKey)
-    .filter(Boolean)
-  const sectionOrderIndex = new Map(
-    configuredSectionOrder.map((key, index) => [key, index]),
-  )
+  const configuredSections = (siteTocOptions.sections ?? [])
+    .map((section) => ({
+      key: normalizeSectionKey(section.folder),
+      folder: normalizeFolder(section.folder),
+      title: section.label.trim(),
+      order: section.order,
+    }))
+    .filter((section) => section.key && section.folder && section.title)
+  if (!configuredSections.length) {
+    throw new Error('theme-webawesome: `siteToc.sections` must include at least one valid section.')
+  }
+
+  const sectionNavigation = configuredSections.length > 1
+  const primarySection = !sectionNavigation ? configuredSections[0] : undefined
+  const siteTocBaseUrl = primarySection ? toSectionBaseUrl(siteTocRootUrl, primarySection.folder) : siteTocRootUrl
+  const siteTocFilter = siteTocOptions.filter
+    ? siteTocOptions.filter
+    : `hide_menu!=true url^=${
+      normalizeUrlPrefix(primarySection?.folder ? siteTocBaseUrl : (siteTocOptions.includeUrlPrefix ?? siteTocBaseUrl))
+    }`
   const themeSections: ThemeSectionLink[] = []
 
-  function getSectionTitle(sectionKey: string): string {
-    if (!sectionKey) {
-      return ''
-    }
-
-    return sectionKey
-      .split('-')
-      .filter(Boolean)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ')
-  }
-
-  function normalizeSectionPageUrl(url: string): string {
-    const withLeadingSlash = url.startsWith('/') ? url : `/${url}`
-    const withoutHash = withLeadingSlash.split('#')[0]
-    const withoutQuery = withoutHash.split('?')[0]
-    return withoutQuery.endsWith('/') ? withoutQuery : `${withoutQuery}/`
-  }
-
   function buildThemeSections(pages: Lume.Data[]): ThemeSectionLink[] {
-    const candidatesBySection = new Map<
-      string,
-      Array<{ url: string; order: number; secondLevel: string; title: string }>
-    >()
-
-    for (const page of pages) {
-      if (page.data.hide_menu === true) {
-        continue
-      }
-
-      const urlValue = page.data.url
-      if (typeof urlValue !== 'string' || !urlValue.startsWith('/')) {
-        continue
-      }
-
-      const normalizedUrl = normalizeSectionPageUrl(urlValue)
-      const segments = normalizedUrl.split('/').filter(Boolean)
-
-      // Require root/first-level/second-level to form a section + entrypoint.
-      if (segments.length < 2) {
-        continue
-      }
-
-      const [sectionKey] = segments
-      if (!sectionKey) {
-        continue
-      }
-
-      const sectionCandidates = candidatesBySection.get(sectionKey) || []
-      sectionCandidates.push({
-        url: normalizedUrl,
-        order: typeof page.data.order === 'number' ? page.data.order : Number.POSITIVE_INFINITY,
-        secondLevel: segments[1] || '',
-        title: typeof page.data.title === 'string' ? page.data.title.trim() : '',
-      })
-      candidatesBySection.set(sectionKey, sectionCandidates)
-    }
-
-    return [...candidatesBySection.entries()]
-      .map(([key, candidates]) => {
-        const [entrypoint] = [...candidates].sort((a, b) => {
-          if (a.order !== b.order) {
-            return a.order - b.order
-          }
-
-          if (a.secondLevel !== b.secondLevel) {
-            return a.secondLevel.localeCompare(b.secondLevel)
-          }
-
-          return a.url.localeCompare(b.url)
-        })
-
-        return {
-          key,
-          title: getSectionTitle(key),
-          indexTitle: entrypoint?.title || getSectionTitle(key),
-          url: entrypoint?.url || '/',
-          order: entrypoint?.order ?? Number.POSITIVE_INFINITY,
-          sectionRank: sectionOrderIndex.get(key) ?? Number.POSITIVE_INFINITY,
-        }
-      })
+    const sections = [...configuredSections]
       .sort((a, b) => {
-        if (a.sectionRank !== b.sectionRank) {
-          return a.sectionRank - b.sectionRank
-        }
-
         if (a.order !== b.order) {
           return a.order - b.order
         }
-
         return a.title.localeCompare(b.title)
       })
-      .map(({ key, title, indexTitle, url }) => ({
-        key,
-        title,
-        indexTitle,
-        url,
-      }))
+
+    return sections.map((section) => {
+      const sectionBaseUrl = toSectionBaseUrl(siteTocRootUrl, section.folder)
+      const entrypointCandidates: Array<{ url: string; order: number; title: string; pathDepth: number }> = []
+
+      for (const page of pages) {
+        if (page.data.hide_menu === true) {
+          continue
+        }
+
+        const urlValue = page.data.url
+        if (typeof urlValue !== 'string' || !urlValue.startsWith('/')) {
+          continue
+        }
+
+        const normalizedUrl = normalizePageUrl(urlValue)
+        if (!normalizedUrl.startsWith(sectionBaseUrl)) {
+          continue
+        }
+
+        const relativeSegments = getRelativeSegmentsFromRoot(normalizedUrl, sectionBaseUrl) ?? []
+        entrypointCandidates.push({
+          url: normalizedUrl,
+          order: typeof page.data.order === 'number' ? page.data.order : Number.POSITIVE_INFINITY,
+          title: typeof page.data.title === 'string' ? page.data.title.trim() : '',
+          pathDepth: relativeSegments.length,
+        })
+      }
+
+      const directSectionEntry = entrypointCandidates.find((candidate) => candidate.url === sectionBaseUrl)
+      const [sortedEntrypoint] = entrypointCandidates.sort((a, b) => {
+        if (a.order !== b.order) {
+          return a.order - b.order
+        }
+        if (a.pathDepth !== b.pathDepth) {
+          return a.pathDepth - b.pathDepth
+        }
+        return a.url.localeCompare(b.url)
+      })
+      const entrypoint = directSectionEntry ?? sortedEntrypoint
+
+      return {
+        key: section.key,
+        title: section.title || toTitleCase(section.key),
+        indexTitle: entrypoint?.title || section.title || toTitleCase(section.key),
+        baseUrl: entrypointCandidates.length ? sectionBaseUrl : siteTocRootUrl,
+        url: entrypoint?.url || (entrypointCandidates.length ? sectionBaseUrl : siteTocRootUrl),
+        order: section.order,
+      }
+    })
   }
 
   function getThemeNavigationSnapshot() {
     return {
       siteTocFilter,
-      siteTocRootLabel,
-      sectionsFromRoot,
+      rootUrl: siteTocBaseUrl,
       sections: [...themeSections],
     }
   }
@@ -357,9 +403,9 @@ export default function (userOptions?: Options) {
         page.data.toc = htmlToc
       }
 
-      if (sectionsFromRoot) {
-        themeSections.splice(0, themeSections.length, ...buildThemeSections(pages))
-      }
+      const resolvedSections = buildThemeSections(pages)
+      const navigationSections = sectionNavigation ? resolvedSections : resolvedSections.slice(0, 1)
+      themeSections.splice(0, themeSections.length, ...navigationSections)
 
       const navigation = getThemeNavigationSnapshot()
       for (const page of pages) {

@@ -66,14 +66,21 @@
   <body>
     {{ set currentPathParts = (url || '/').split('/').filter((part) => part.length > 0) }}
     {{ set currentSectionKey = currentPathParts[0] || '' }}
-    {{ set sectionNavigation = themeNavigation?.sectionsFromRoot === true }}
-    {{ set sectionChoices = sectionNavigation ? (themeNavigation?.sections || []) : [] }}
-    {{ set activeSection = sectionChoices.find((section) => section.key === currentSectionKey) || sectionChoices[0] }}
+    {{ set sectionChoices = themeNavigation?.sections || [] }}
+    {{ set sectionNavigation = sectionChoices.length > 1 }}
+    {{
+      set activeSection = sectionNavigation
+      ? (sectionChoices.find((section) => section.baseUrl && url.startsWith(section.baseUrl)) ||
+        sectionChoices.find((section) => section.key === currentSectionKey) ||
+        sectionChoices[0])
+      : sectionChoices[0]
+    }}
+    {{ set sectionChooserVisible = sectionNavigation && sectionChoices.length > 1 }}
     {{ set siteNavigationHeading = sectionNavigation ? (activeSection?.title || 'Documentation') : 'Documentation' }}
 
     <wa-drawer id="site-toc-drawer" label="Menu" placement="start">
       <section>
-        {{ if sectionChoices.length }}
+        {{ if sectionChooserVisible }}
           <nav class="site-section-drawer" aria-label="Sections">
             {{ for section of sectionChoices }}
               <a
@@ -87,11 +94,7 @@
         {{ /if }}
       </section>
       <section class="site-toc-shell">
-        {{ if sectionNavigation }}
-          {{ include '../section-toc.vto' }}
-        {{ else }}
-          {{ include '../site-toc.vto' }}
-        {{ /if }}
+        {{ include '../section-toc.vto' }}
       </section>
     </wa-drawer>
     <header class="site-header">
@@ -104,10 +107,10 @@
           id="site-toc-trigger"
         ><wa-icon name="bars" label="bars"></wa-icon></wa-button>
         <a class="site-title" href="/">{{ metas.site }}</a>
-        {{ if sectionNavigation }}
+        {{ if sectionChooserVisible }}
           <span class="site-section-drawer">{{ activeSection?.title || siteNavigationHeading }}</span>
         {{ /if }}
-        {{ if sectionChoices.length && sectionNavigation }}
+        {{ if sectionChooserVisible }}
           <nav class="site-section-nav" aria-label="Sections">
             {{ for section of sectionChoices }}
               <a
@@ -126,11 +129,7 @@
       <aside class="site-toc-panel">
         <section class="site-toc-shell">
           <!--          <h2>{{ siteNavigationHeading }}</h2>-->
-          {{ if sectionNavigation }}
-            {{ include '../section-toc.vto' }}
-          {{ else }}
-            {{ include '../site-toc.vto' }}
-          {{ /if }}
+          {{ include '../section-toc.vto' }}
         </section>
       </aside>
       <article class="docs-content">

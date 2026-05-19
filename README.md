@@ -55,8 +55,8 @@ const site = lume()
 
 site.use(theme({
   siteToc: {
+    root: '.',
     includeUrlPrefix: '/docs/',
-    rootLabel: 'Overview',
     // Or provide a full nav filter string:
     // filter: 'hide_menu!=true url^=/guides/',
   },
@@ -152,10 +152,12 @@ Notes:
   layout.
 - Always register custom elements with a guard:
   - `if (!customElements.get('my-tag')) customElements.define('my-tag', MyEl)`
-- Sidebar navigation uses `siteToc.includeUrlPrefix` by default (`/docs/`). For advanced matching, use `siteToc.filter`.
-- `siteToc.rootLabel` supports both modes:
-  - `string`: label for the root (`/`) sidebar item (default `Overview`)
-  - `string[]`: section labels for section index mode (`sectionsFromRoot: true`), applied by section order
+- `siteToc.root` controls the navigation root path (`'.'` maps to `/`).
+- `siteToc.root` must be relative to the current working directory (for example `.` or `src/docs`); `/` is invalid.
+- `siteToc.sections` defines section folders, labels, and order.
+- A single section renders one scoped sidebar TOC.
+- More than one section automatically enables section tabs in header/drawer.
+- Sidebar navigation uses `siteToc.includeUrlPrefix` by default (`/`). For advanced matching, use `siteToc.filter`.
 
 ## Local development and test-site workflow
 
