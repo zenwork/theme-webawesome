@@ -14,9 +14,13 @@ order: 50
   <section class="docs-section">
     <h2>Site Navigation</h2>
     <p>
-      The left sidebar tree is built from docs pages under <code>/docs/</code> and is rendered in
-      <code>src/_includes/site-toc.vto</code>. Tree expansion state is persisted by <code>site-toc-tree</code> using
-      local storage.
+      The left sidebar tree is rendered by <code>src/_includes/section-toc.vto</code>. With one configured section, that
+      section provides the TOC scope. Tree expansion state is persisted by <code>site-toc-tree</code> using local
+      storage.
+    </p>
+    <p>
+      When more than one section is configured in <code>siteToc.sections</code>, section tabs are shown in the header
+      and drawer. Each section defines its folder, label, and order explicitly.
     </p>
   </section>
 
@@ -40,8 +44,9 @@ order: 50
   <section class="docs-section">
     <h2>Page TOC</h2>
     <p>
-      During preprocess, headings <code>h2</code> to <code>h6</code> receive IDs and are converted into page TOC data.
-      The right panel in <code>layouts/base.vto</code> renders this TOC when headings exist.
+      The theme uses the Lume Markdown TOC plugin for page-level heading data. During preprocess, headings
+      <code>h2</code> to <code>h6</code> receive IDs and are converted into page TOC data. The right panel in
+      <code>layouts/base.vto</code> renders this TOC when headings exist.
     </p>
   </section>
 

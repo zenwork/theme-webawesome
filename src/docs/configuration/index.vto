@@ -18,14 +18,23 @@ order: 40
       By default, the theme uses WebAwesome free mode and loads assets from
       <code>/lib/webawesome/dist-cdn</code>. The Pro default base path is <code>/lib/webawesome-pro/dist-cdn</code>.
     </p>
+    <p>
+      In free mode, these files are pulled from <code>@awesome.me/webawesome</code> during build, so the theme does not
+      need to vendor the full library in <code>src/lib</code>.
+    </p>
   </section>
 
   <section class="docs-section">
     <h2>Options</h2>
     <!-- deno-fmt-ignore -->
     <code-example language="typescript">
-site.use(
-  theme({
+    site.use(
+      theme({
+        siteToc: {
+          root: '.',
+          includeUrlPrefix: '/docs/',
+          // or filter: 'hide_menu!=true url^=/guides/',
+        },
     webawesome: {
       mode: 'free',
       assetBasePath: '/lib/webawesome/dist-cdn',
@@ -36,6 +45,39 @@ site.use(
     },
     componentEntrypoint: 'components/index.ts',
     additionalComponentEntrypoints: ['components/custom.ts'],
+  }),
+)
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Site TOC Scope</h2>
+    <p>
+      Sidebar page discovery is configurable. Use <code>siteToc.includeUrlPrefix</code> for simple path scoping, or pass
+      a full nav query in <code>siteToc.filter</code> for advanced control.
+    </p>
+    <p>
+      Use <code>siteToc.root</code> to define where sidebar discovery starts in the filesystem. The default
+      <code>.</code> resolves to the site source root URL <code>/</code>. When your site uses
+      <code>src: './src'</code>, values like <code>src</code> or <code>src/docs</code> are valid.
+    </p>
+    <p>
+      Section mode is inferred from <code>siteToc.sections</code>. With one section, the sidebar is scoped to that
+      section and no section picker is shown. With more than one section, section tabs are shown in the header and
+      drawer.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+site.use(
+  theme({
+    siteToc: {
+      root: '.',
+      sections: [
+        { folder: 'platform', label: 'Platform', order: 0 },
+        { folder: 'reference', label: 'Reference', order: 1 },
+        { folder: 'guides', label: 'Guides', order: 2 },
+      ],
+    },
   }),
 )
     </code-example>

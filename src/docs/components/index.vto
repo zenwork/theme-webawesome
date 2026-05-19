@@ -18,15 +18,23 @@ order: 45
       <li>
         <code>&lt;demo-pane&gt;</code>: interactive code example surface with JSON data, template, and output tabs
       </li>
-      <li><code>&lt;code-example&gt;</code>: read-only CodeMirror block for documentation snippets</li>
-      <li><code>&lt;site-toc-tree&gt;</code>: persists sidebar tree expansion state and selected page behavior</li>
+      <li>
+        <code>&lt;code-example&gt;</code>: read-only CodeMirror block for documentation snippets
+      </li>
+      <li>
+        <code>&lt;site-toc-tree&gt;</code>: persists sidebar tree expansion state and selected page behavior
+      </li>
     </ul>
-    <p>Use <code>src/components/index.ts</code> as the default registration/export surface.</p>
+    <p>
+      Use <code>src/components/index.ts</code> as the default registration/export surface.
+    </p>
   </section>
 
   <section class="docs-section">
     <h2>Using Code Examples</h2>
-    <p>Use <code>&lt;code-example&gt;</code> when you want static snippets with theme-consistent syntax styling.</p>
+    <p>
+      Use <code>&lt;code-example&gt;</code> when you want static snippets with theme-consistent syntax styling.
+    </p>
     <!-- deno-fmt-ignore -->
     <code-example language="html">
 &lt;code-example language="typescript"&gt;
@@ -44,6 +52,7 @@ order: 45
       data='{"label":"Deploy","variant":"brand","size":"small"}'
       template='<wa-button variant="${variant}" size="${size}">${label}</wa-button>'
       imports='["button"]'
+      output-background="color-mix(in srgb, var(--wa-color-brand-fill-loud) 10%, white)"
       default-tab="output"
       editor-open
     >
@@ -73,7 +82,7 @@ order: 45
     </p>
     <demo-pane
       data='{"title":"Release 0.2.0","items":["Navigation persistence","Page TOC fixes","Docs API references"]}'
-      template='<section><h3>${title}</h3><ul>${items.map((item) => `<li><wa-badge variant="brand">${item}</wa-badge></li>`).join("")}</ul></section>'
+      template='<wa-card><h3>${title}</h3><ul>${items.map((item) => html`<li><wa-badge variant="brand">${item}</wa-badge></li>`)}</ul></wa-card>'
       editor-open
     >
     </demo-pane>
@@ -90,6 +99,7 @@ order: 45
       template='<wa-button variant="${variant}">${label}</wa-button>'
       imports='["button"]'
       editable="false"
+      fit-content
     >
     </demo-pane>
   </section>
@@ -97,8 +107,12 @@ order: 45
   <section class="docs-section">
     <h2><code>demo-pane</code> API</h2>
     <ul>
-      <li><code>data</code> (string, default <code>{}</code>): JSON object string used as template scope</li>
-      <li><code>template</code> (string, default empty): HTML template with <code>${...}</code> expressions</li>
+      <li>
+        <code>data</code> (string, default <code>{}</code>): JSON object string used as template scope
+      </li>
+      <li>
+        <code>template</code> (string, default empty): HTML template with <code>${...}</code> expressions
+      </li>
       <li>
         <code>imports</code> (string, default <code>[]</code>): JSON array of WebAwesome component names to import
       </li>
@@ -111,15 +125,31 @@ order: 45
         previews always show data/template/output together.
       </li>
       <li>
-        <code>default-tab</code> (<code>data</code> | <code>markup</code> | <code>output</code>, default
+        <code>default-tab</code> (<code>data</code> | <code>markup</code> |
+        <code>output</code>, default
         <code>output</code>)
       </li>
-      <li><code>editor-open</code> (boolean, default <code>false</code>): opens the editor details panel on load</li>
-      <li><code>data-label</code> / <code>template-label</code> (string, default empty): editor field labels</li>
+      <li>
+        <code>editor-open</code> (boolean, default <code>false</code>): opens the editor details panel on load
+      </li>
+      <li>
+        <code>data-label</code> / <code>template-label</code> (string, default empty): editor field labels
+      </li>
+      <li>
+        <code>output-background</code> (string, default empty): optional CSS background value for the rendered output
+        area (for example
+        <code>#fff</code> or <code>var(--wa-color-neutral-50)</code>)
+      </li>
+      <li>
+        <code>fit-content</code> (boolean, default <code>false</code>): grows/shrinks preview height to match rendered
+        output content instead of using the resizable fixed-height preview area
+      </li>
     </ul>
     <p>
-      Notes: JSON must parse to an object. The component sanitizes rendered output, auto-detects <code>wa-*</code> tags
-      for imports, and supports <code>Mod+Enter</code> to run from editors.
+      Notes: JSON must parse to an object. The component sanitizes rendered output while allowing valid custom elements,
+      supports Lit-style bindings in templates (for example <code>.prop</code>, <code>?attr</code>, and
+      <code>@event</code>), auto-detects <code>wa-*</code> tags for imports, supports <code>Mod+Enter</code> to run from
+      editors, and lets readers drag the output panel’s bottom edge to resize preview height.
     </p>
   </section>
 
@@ -128,7 +158,7 @@ order: 45
     <ul>
       <li>
         <code>language</code> (<code>json</code> | <code>html</code> | <code>javascript</code> |
-        <code>typescript</code> | <code>text</code>, default <code>text</code>)
+        <code>typescript</code> | <code>text</code>, default inferred from slot content or <code>text</code>)
       </li>
       <li><code>line-numbers</code> (boolean, default <code>true</code>)</li>
       <li><code>code</code> (string, default empty): explicit snippet text</li>
@@ -136,6 +166,10 @@ order: 45
     <p>
       If <code>code</code> is not provided, content is read from the element slot, normalized for indentation, and then
       rendered in a read-only CodeMirror view.
+    </p>
+    <p>
+      You can slot real HTML without escaping. If <code>language</code> is omitted, the component auto-detects from
+      slotted content (for example element nodes, <code>data-language</code>, or <code>language-*</code> classes).
     </p>
   </section>
 

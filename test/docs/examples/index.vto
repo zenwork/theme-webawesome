@@ -1,0 +1,63 @@
+---
+layout: layouts/base.vto
+title: Component Examples
+order: 2
+---
+<section class="docs-stack">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      Feature coverage page for <code>code-example</code> and <code>demo-pane</code> in the test site.
+    </p>
+  </header>
+
+  <section class="docs-section">
+    <h2>Code Example (Typed Source)</h2>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+import { html } from 'lit'
+
+const release = {
+  version: 'v0.2.0',
+  status: 'stable',
+}
+
+console.log(`${release.version} is ${release.status}`)
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Code Example (Slotted HTML)</h2>
+    <!-- deno-fmt-ignore -->
+    <code-example>
+<wa-callout variant="brand">
+  <strong>Auto-detected HTML</strong>
+  <p>Slotted markup should render as source without escaping.</p>
+</wa-callout>
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Editable Demo Pane</h2>
+    <demo-pane
+      data='{"title":"Release v0.2.0","state":"Ready","items":["Navigation offsets","TOC active state","Resizable editors"]}'
+      template='<wa-card><strong>${title}</strong><div style="margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap"><wa-badge variant="success">${state}</wa-badge></div><ul style="margin:.75rem 0 0 1rem">${items.map((item) => html`<li>${item}</li>`)}</ul></wa-card>'
+      imports='["card","badge"]'
+      output-background="var(--wa-color-neutral-50)"
+      editor-open
+    >
+    </demo-pane>
+  </section>
+
+  <section class="docs-section">
+    <h2>Read-only Demo Pane</h2>
+    <demo-pane
+      data='{"label":"Deploy","state":"Stable","version":"v0.2.0"}'
+      template='<div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap"><wa-button variant="brand" size="small">${label}</wa-button><wa-badge variant="success">${state}</wa-badge><wa-badge variant="neutral">${version}</wa-badge></div>'
+      imports='["button","badge"]'
+      readonly
+      fit-content
+    >
+    </demo-pane>
+  </section>
+</section>

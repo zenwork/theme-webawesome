@@ -1,7 +1,6 @@
 {
   "version": "0.1.0",
   "imports": {
-    "webawesome": "./lib/webawesome/dist/",
     "lit": "npm:lit@3.3.2",
     "lit/": "npm:lit@3.3.2/",
     "lit/decorators.js": "npm:lit@3.3.2/decorators.js",
@@ -24,7 +23,7 @@
   "tasks": {
     "lume": {
       "description": "Run Lume command",
-      "command": "deno run -P=lume lume/cli.ts"
+      "command": "deno run -P=lume lume/cli.ts --config _config.ts --src src"
     },
     "build": {
       "description": "Build the site for production",
@@ -49,8 +48,7 @@
   },
   "compilerOptions": {
     "types": [
-      "lume/types.ts",
-      "webawesome/dist/custom-elements-jsx.d.ts"
+      "lume/types.ts"
     ],
     "jsx": "react-jsx",
     "jsxImportSource": "lume",

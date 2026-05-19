@@ -2,12 +2,31 @@
 layout: layouts/base.vto
 title: Theme Demo Home
 ---
+<script type="module">
+  class DemoStatusPill extends HTMLElement {
+    connectedCallback() {
+      this.style.display = 'inline-flex'
+      this.style.alignItems = 'center'
+      this.style.padding = '.15rem .55rem'
+      this.style.borderRadius = '999px'
+      this.style.fontWeight = '600'
+      this.style.fontSize = '.82rem'
+      this.style.background = 'color-mix(in srgb, var(--wa-color-brand-fill-loud) 88%, white)'
+      this.style.color = 'var(--wa-color-neutral-900)'
+      this.style.border = '1px solid color-mix(in srgb, var(--wa-color-brand-border-loud) 50%, transparent)'
+    }
+  }
+
+  if (!customElements.get('demo-status-pill')) {
+    customElements.define('demo-status-pill', DemoStatusPill)
+  }
+</script>
 <section class="docs-stack">
   <header>
     <h1>{{ title }}</h1>
     <p class="lead">
-      Interactive playground for validating the theme in a consumer site,
-      including runnable component recipes and long-page TOC behavior.
+      Interactive playground for validating the theme in a consumer site, including runnable component recipes and
+      long-page TOC behavior.
     </p>
   </header>
 
@@ -15,7 +34,19 @@ title: Theme Demo Home
     <h2>Demo Navigation</h2>
     <ul>
       <li>
-        <a href="/docs/smoke/">Docs Smoke page</a>
+        <a href="/guides/howtos/">Guides Smoke page (included in sidebar)</a>
+      </li>
+      <li>
+        <a href="/platform/start/">Platform section entry</a>
+      </li>
+      <li>
+        <a href="/reference/start/">Reference section entry</a>
+      </li>
+      <li>
+        <a href="/docs/smoke/">Docs Smoke page (control, excluded from sidebar)</a>
+      </li>
+      <li>
+        <a href="/docs/examples/">Component Examples (code-example and demo-pane)</a>
       </li>
       <li>
         <a href="/404.html">404 page</a>
@@ -57,8 +88,9 @@ if (!customElements.get('release-callout')) {
     <h2>Editable Demo Pane: Release Summary</h2>
     <demo-pane
       data='{"title":"Release v0.2.0","state":"Ready","items":["Navigation offsets","TOC active state","Resizable editors"]}'
-      template='<wa-card><strong>${title}</strong><div style="margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap"><wa-badge variant="success">${state}</wa-badge></div><ul style="margin:.75rem 0 0 1rem">${items.map((item) => `<li>${item}</li>`).join("")}</ul></wa-card>'
+      template='<wa-card><strong>${title}</strong><div style="margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap"><wa-badge variant="success">${state}</wa-badge></div><ul style="margin:.75rem 0 0 1rem">${items.map((item) => html`<li>${item}</li>`)}</ul></wa-card>'
       imports='["card","badge"]'
+      output-background="var(--wa-color-neutral-50)"
       editor-open
     >
     </demo-pane>
@@ -71,6 +103,29 @@ if (!customElements.get('release-callout')) {
       template='<div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap"><wa-button variant="brand" size="small">${label}</wa-button><wa-badge variant="success">${state}</wa-badge><wa-badge variant="neutral">${version}</wa-badge></div>'
       imports='["button","badge"]'
       readonly
+      fit-content
+    >
+    </demo-pane>
+  </section>
+
+  <section class="docs-section">
+    <h2>Custom Element Demo Pane</h2>
+    <demo-pane
+      data='{"tone":"release","label":"Custom element renders"}'
+      template='<demo-status-pill tone="${tone}" data-test="custom-pill">${label}</demo-status-pill>'
+      editor-open
+    >
+    </demo-pane>
+  </section>
+
+  <section class="docs-section">
+    <h2>Lit Binding Notation Demo</h2>
+    <demo-pane
+      data='{"label":"Lit bindings","disabled":false,"title":"Bound with .title"}'
+      template="<wa-button ?disabled=${disabled} .title=${title} @click=${() => alert(`clicked: ${label}`)}>${label}</wa-button>"
+      imports='["button"]'
+      editor-open
+      fit-content
     >
     </demo-pane>
   </section>
@@ -78,16 +133,33 @@ if (!customElements.get('release-callout')) {
   <section class="docs-section">
     <h2>TOC Behavior Check</h2>
     <p>
-      Use this section to validate sticky-header offset and active state in the
-      page TOC.
+      Use this section to validate sticky-header offset and active state in the page TOC.
     </p>
+  </section>
+
+  <section class="docs-section">
+    <h2>Demo Pane Error States</h2>
+    <h3>JSON Data Error</h3>
+    <demo-pane
+      data='{"label": }'
+      template="<wa-button>${label}</wa-button>"
+      imports='["button"]'
+      editable="false"
+    >
+    </demo-pane>
+    <h3>Template Error</h3>
+    <demo-pane
+      data='{"label":"Unsafe"}'
+      template="<script>alert(label)</script>"
+      editable="false"
+    >
+    </demo-pane>
   </section>
 
   <section class="docs-section">
     <h2>Long-scroll Anchor</h2>
     <p>
-      This heading helps validate active section changes while scrolling through
-      the page.
+      This heading helps validate active section changes while scrolling through the page.
     </p>
   </section>
 </section>

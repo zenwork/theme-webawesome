@@ -3,5 +3,5 @@ _cache
 .DS_Store
 .idea
 
-src/lib/webawesome
 /node_modules/**/*
+/out/**/*

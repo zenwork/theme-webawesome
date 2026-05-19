@@ -1,30 +1,27 @@
 ---
 layout: layouts/base.vto
-title: Docs Smoke
-order: 1
+title: Lorem Ipsum Example
 ---
 <section class="docs-stack">
   <header>
     <h1>{{ title }}</h1>
     <p class="lead">
-      Lorem ipsum smoke page for validating long-form reading layouts, anchor
-      scrolling, and active section tracking in the page TOC.
+      Lorem ipsum smoke page for validating long-form reading layouts, anchor scrolling, and active section tracking in
+      the page TOC.
     </p>
   </header>
 
   <section class="docs-section">
     <h2>Introduction</h2>
     <p>
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate
-      augue eget sem fermentum, quis vestibulum eros tincidunt. Donec laoreet
-      varius lorem, at efficitur justo posuere et. Vestibulum ante ipsum primis
-      in faucibus orci luctus et ultrices posuere cubilia curae.
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate augue eget sem fermentum, quis vestibulum
+      eros tincidunt. Donec laoreet varius lorem, at efficitur justo posuere et. Vestibulum ante ipsum primis in
+      faucibus orci luctus et ultrices posuere cubilia curae.
     </p>
     <p>
-      Curabitur nec sem non massa feugiat blandit. Integer placerat, tortor
-      vitae faucibus viverra, arcu mi gravida arcu, id commodo justo lorem in
-      enim. Vestibulum dapibus, augue nec gravida aliquet, lectus dui feugiat
-      nunc, in pretium eros lorem non nulla.
+      Curabitur nec sem non massa feugiat blandit. Integer placerat, tortor vitae faucibus viverra, arcu mi gravida
+      arcu, id commodo justo lorem in enim. Vestibulum dapibus, augue nec gravida aliquet, lectus dui feugiat nunc, in
+      pretium eros lorem non nulla.
     </p>
   </section>
 
@@ -32,31 +29,26 @@ order: 1
     <h2>Architecture Notes</h2>
     <h3>Rendering Flow</h3>
     <p>
-      Aenean feugiat, lacus id pellentesque venenatis, leo dui volutpat mauris,
-      sed consectetur sapien lorem non elit. Aliquam congue sem sed tortor
-      ultrices, vel tempor nisl volutpat. Nam id iaculis nibh, non tincidunt
-      felis.
+      Aenean feugiat, lacus id pellentesque venenatis, leo dui volutpat mauris, sed consectetur sapien lorem non elit.
+      Aliquam congue sem sed tortor ultrices, vel tempor nisl volutpat. Nam id iaculis nibh, non tincidunt felis.
     </p>
     <h3>State Boundaries</h3>
     <p>
-      Nulla facilisi. Phasellus pulvinar tristique tincidunt. Donec et elit ut
-      elit egestas efficitur ut et lectus. Integer feugiat, libero nec efficitur
-      pharetra, justo libero dictum dui, et facilisis risus elit ut eros.
+      Nulla facilisi. Phasellus pulvinar tristique tincidunt. Donec et elit ut elit egestas efficitur ut et lectus.
+      Integer feugiat, libero nec efficitur pharetra, justo libero dictum dui, et facilisis risus elit ut eros.
     </p>
   </section>
 
   <section class="docs-section">
     <h2>Implementation Details</h2>
     <p>
-      Praesent sed leo nec odio eleifend cursus. Vestibulum finibus dui in
-      bibendum facilisis. Vivamus feugiat interdum justo, non vulputate arcu
-      bibendum nec. Suspendisse potenti. Morbi fermentum ligula at mi suscipit,
-      vitae blandit nibh eleifend.
+      Praesent sed leo nec odio eleifend cursus. Vestibulum finibus dui in bibendum facilisis. Vivamus feugiat interdum
+      justo, non vulputate arcu bibendum nec. Suspendisse potenti. Morbi fermentum ligula at mi suscipit, vitae blandit
+      nibh eleifend.
     </p>
     <p>
-      Quisque eu purus eu sem ullamcorper consequat. Donec ac felis volutpat,
-      tincidunt nibh ut, faucibus quam. Integer in tellus lacus. Mauris
-      convallis placerat risus, vitae iaculis felis fermentum vitae.
+      Quisque eu purus eu sem ullamcorper consequat. Donec ac felis volutpat, tincidunt nibh ut, faucibus quam. Integer
+      in tellus lacus. Mauris convallis placerat risus, vitae iaculis felis fermentum vitae.
     </p>
   </section>
 
@@ -77,12 +69,24 @@ console.log(summarize(states[2]))
   </section>
 
   <section class="docs-section">
+    <h2>Slotted HTML Example Block</h2>
+    <!-- deno-fmt-ignore -->
+    <code-example>
+<wa-callout variant="brand">
+  <strong>Auto-detected HTML</strong>
+  <p>Raw slotted markup renders as source without escaping entities.</p>
+</wa-callout>
+    </code-example>
+  </section>
+
+  <section class="docs-section">
     <h2>Inline Demo Pane</h2>
     <demo-pane
       data='{"message":"Smoke page demo","status":"Ready"}'
       template='<wa-callout variant="brand"><strong>${status}</strong>: ${message}</wa-callout>'
       imports='["callout"]'
       readonly
+      fit-content
     >
     </demo-pane>
   </section>
@@ -91,15 +95,13 @@ console.log(summarize(states[2]))
     <h2>Performance Considerations</h2>
     <h3>Initial Load</h3>
     <p>
-      Sed gravida congue semper. Integer non augue quis mauris suscipit
-      facilisis. Morbi in egestas lorem, vel cursus nibh. Vivamus imperdiet
-      dictum est, id volutpat velit mollis in.
+      Sed gravida congue semper. Integer non augue quis mauris suscipit facilisis. Morbi in egestas lorem, vel cursus
+      nibh. Vivamus imperdiet dictum est, id volutpat velit mollis in.
     </p>
     <h3>Interaction Latency</h3>
     <p>
-      Duis condimentum tristique lectus, a feugiat elit ullamcorper quis. Sed et
-      ultrices arcu. Curabitur aliquet turpis nibh, non egestas arcu posuere ac.
-      Duis non nibh augue.
+      Duis condimentum tristique lectus, a feugiat elit ullamcorper quis. Sed et ultrices arcu. Curabitur aliquet turpis
+      nibh, non egestas arcu posuere ac. Duis non nibh augue.
     </p>
   </section>
 
@@ -114,24 +116,20 @@ console.log(summarize(states[2]))
       <li>Fusce vel magna a eros condimentum vulputate non in nisl.</li>
     </ul>
     <p>
-      Pellentesque habitant morbi tristique senectus et netus et malesuada fames
-      ac turpis egestas. Vivamus volutpat ex sed massa euismod, eget consequat
-      lectus condimentum.
+      Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vivamus volutpat ex
+      sed massa euismod, eget consequat lectus condimentum.
     </p>
   </section>
 
   <section class="docs-section">
     <h2>Conclusion</h2>
     <p>
-      Integer at lectus finibus, sagittis risus eu, feugiat metus. Vestibulum
-      lobortis, magna id tempor mattis, tortor lacus eleifend purus, at
-      efficitur massa lectus id odio. Ut hendrerit nibh nisi, at porttitor nibh
-      placerat vitae.
+      Integer at lectus finibus, sagittis risus eu, feugiat metus. Vestibulum lobortis, magna id tempor mattis, tortor
+      lacus eleifend purus, at efficitur massa lectus id odio. Ut hendrerit nibh nisi, at porttitor nibh placerat vitae.
     </p>
     <p>
-      Cras faucibus bibendum gravida. Phasellus ultrices tincidunt ipsum, non
-      feugiat nulla faucibus id. Donec imperdiet, lorem et vehicula iaculis,
-      turpis lorem faucibus sapien, vitae tempus tortor neque vel mauris.
+      Cras faucibus bibendum gravida. Phasellus ultrices tincidunt ipsum, non feugiat nulla faucibus id. Donec
+      imperdiet, lorem et vehicula iaculis, turpis lorem faucibus sapien, vitae tempus tortor neque vel mauris.
     </p>
   </section>
 </section>
