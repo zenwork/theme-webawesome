@@ -80,6 +80,26 @@ function getOutputContainerHeight(host) {
   })
 }
 
+function getOutputContainerOverflowState(host) {
+  return host.evaluate((el) => {
+    const output = el.shadowRoot?.querySelector('.output-container')
+    if (!(output instanceof HTMLElement)) {
+      return null
+    }
+    const filler = globalThis.document.createElement('div')
+    filler.style.blockSize = '2400px'
+    filler.textContent = 'overflow probe'
+    output.append(filler)
+    const style = globalThis.getComputedStyle(output)
+    const state = {
+      overflowY: style.overflowY,
+      hasVerticalOverflow: output.scrollHeight > output.clientHeight,
+    }
+    filler.remove()
+    return state
+  })
+}
+
 function getPreviewResizerBottomGap(host) {
   return host.evaluate((el) => {
     const preview = el.shadowRoot?.querySelector('.editable-preview')
@@ -249,6 +269,17 @@ async function run() {
     assert(
       outputHeightAfter > outputHeightBefore + 40,
       `Output container did not resize with preview: before=${outputHeightBefore}, after=${outputHeightAfter}`,
+    )
+    const outputOverflowState = await getOutputContainerOverflowState(host)
+    assert(
+      outputOverflowState?.overflowY === 'auto' || outputOverflowState?.overflowY === 'scroll',
+      `Output container overflowY should be scrollable, got: ${outputOverflowState?.overflowY}`,
+    )
+    assert(
+      outputOverflowState?.hasVerticalOverflow,
+      `Output container did not report overflow when content exceeded available height: ${
+        JSON.stringify(outputOverflowState)
+      }`,
     )
     const previewResizerBottomGap = await getPreviewResizerBottomGap(host)
     assert(

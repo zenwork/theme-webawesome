@@ -295,13 +295,16 @@ export const styles: CSSResultGroup = css`
     display: flex;
     flex-direction: column;
     min-block-size: 0;
+    overflow: hidden;
   }
 
   .editable-preview .output-container,
   .editable-preview .error {
     flex: 1 1 auto;
+    min-height: 0;
     min-block-size: 0;
     margin: 0;
+    overflow: auto;
   }
 
   :host(:not([readonly]):not([editor-open])) .editable-preview .pane-content {
