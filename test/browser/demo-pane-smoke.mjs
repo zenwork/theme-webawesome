@@ -264,6 +264,11 @@ async function run() {
         initialEditorSizing.splitHeight >= 120,
       `Editor did not keep the expected minimum height: ${JSON.stringify(initialEditorSizing)}`,
     )
+    const initialTemplateDoc = await getTemplateDoc(host)
+    assert(
+      initialTemplateDoc.includes('\n'),
+      `Template was not formatted on initial render: ${initialTemplateDoc.slice(0, 240)}`,
+    )
 
     await setTemplate(host, `<section>${'X'.repeat(1200)}</section>`)
     await delay(120)
@@ -488,6 +493,15 @@ ${Array.from({ length: 80 }, (_, index) => `  <p>Editor fit row ${index + 1}</p>
       `Editor height toggle did not expand: before=${JSON.stringify(editorToggleBefore)}, after=${
         JSON.stringify(editorToggleExpanded)
       }`,
+    )
+    const largestExpandedEditor = Math.max(
+      editorToggleExpanded?.jsonHeight ?? 0,
+      editorToggleExpanded?.templateHeight ?? 0,
+    )
+    assert(
+      editorToggleExpanded &&
+        editorToggleExpanded.splitHeight >= largestExpandedEditor - 2,
+      `Editor fit did not reach the largest CodeMirror content height: ${JSON.stringify(editorToggleExpanded)}`,
     )
     await clickEditorAction(host, 'Toggle editor height')
     await delay(200)

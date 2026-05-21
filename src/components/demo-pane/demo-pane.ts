@@ -130,7 +130,6 @@ class DemoPane extends LitElement {
   private _jsonEditor: EditorView | null = null
   private _templateEditor: EditorView | null = null
   private _syncingEditors = false
-  private _didFormatInitialContent = false
   private _hasManualEditorHeight = true
   private _editorResizeStartY = 0
   private _editorResizeStartHeight = 220
@@ -449,7 +448,7 @@ class DemoPane extends LitElement {
     const panelContent = this.shadowRoot?.querySelector<HTMLElement>('.editor-panel-content')
     this._editorMinHeight = this.getMinimumEditorPanelHeight(panelContent)
     const measuredHeight = panelContent ? Math.round(panelContent.getBoundingClientRect().height) : this._editorHeight
-    this._editorHeight = Math.max(this._editorMinHeight, Math.min(640, measuredHeight))
+    this._editorHeight = Math.max(this._editorMinHeight, measuredHeight)
     this._hasManualEditorHeight = true
     this._isEditorHeightFitted = false
     if (this.fitContent) {
@@ -482,7 +481,7 @@ class DemoPane extends LitElement {
       return
     }
     const deltaY = event.clientY - this._editorResizeStartY
-    const nextHeight = Math.max(this._editorMinHeight, Math.min(640, this._editorResizeStartHeight + deltaY))
+    const nextHeight = Math.max(this._editorMinHeight, this._editorResizeStartHeight + deltaY)
     if (nextHeight === this._editorHeight) {
       return
     }
@@ -641,7 +640,7 @@ class DemoPane extends LitElement {
     if (this._isEditorHeightFitted) {
       const panelMin = this.getMinimumEditorPanelHeight()
       const restoredHeight = this._editorHeightBeforeFit > 0 ? this._editorHeightBeforeFit : this._editorHeight
-      this._editorHeight = Math.max(panelMin, Math.min(640, Math.round(restoredHeight)))
+      this._editorHeight = Math.max(panelMin, Math.round(restoredHeight))
       this._hasManualEditorHeight = true
       this._isEditorHeightFitted = false
       if (this.fitContent) {
@@ -798,10 +797,6 @@ class DemoPane extends LitElement {
   }
 
   private formatInitialDrafts(): void {
-    if (this._didFormatInitialContent) {
-      return
-    }
-
     const parsed = parseJSON(this._draftData)
     if (parsed) {
       this._draftData = JSON.stringify(parsed, null, 2)
@@ -810,7 +805,6 @@ class DemoPane extends LitElement {
     this._draftTemplate = formatHtmlTemplate(this._draftTemplate, {
       maxLineLength: this.getTemplateFormatLineLength(),
     })
-    this._didFormatInitialContent = true
   }
 
   private resetDemo(): void {
@@ -895,7 +889,7 @@ class DemoPane extends LitElement {
     }
 
     const preferred = Math.round(desiredEditorArea + overhead)
-    return Math.max(panelMin, Math.min(640, preferred))
+    return Math.max(panelMin, preferred)
   }
 
   private measureEditorContentHeight(which: 'data' | 'template'): number {
