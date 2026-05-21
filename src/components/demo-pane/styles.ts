@@ -288,7 +288,20 @@ export const styles: CSSResultGroup = css`
 
   .editable-preview .pane {
     min-height: 0;
-    height: auto;
+    block-size: 100%;
+  }
+
+  .editable-preview .pane-content {
+    display: flex;
+    flex-direction: column;
+    min-block-size: 0;
+  }
+
+  .editable-preview .output-container,
+  .editable-preview .error {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    margin: 0;
   }
 
   :host(:not([readonly]):not([editor-open])) .editable-preview .pane-content {

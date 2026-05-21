@@ -73,6 +73,26 @@ function getPreviewHeight(host) {
   })
 }
 
+function getOutputContainerHeight(host) {
+  return host.evaluate((el) => {
+    const output = el.shadowRoot?.querySelector('.output-container')
+    return output instanceof HTMLElement ? output.getBoundingClientRect().height : 0
+  })
+}
+
+function getPreviewResizerBottomGap(host) {
+  return host.evaluate((el) => {
+    const preview = el.shadowRoot?.querySelector('.editable-preview')
+    const resizer = el.shadowRoot?.querySelector('.preview-resizer')
+    if (!(preview instanceof HTMLElement) || !(resizer instanceof HTMLElement)) {
+      return null
+    }
+    const previewRect = preview.getBoundingClientRect()
+    const resizerRect = resizer.getBoundingClientRect()
+    return previewRect.bottom - resizerRect.bottom
+  })
+}
+
 function getEditorSizing(host) {
   return host.evaluate((el) => {
     const panel = el.shadowRoot?.querySelector('.editor-panel-content')
@@ -203,6 +223,7 @@ async function run() {
     )
 
     const previewHeightBefore = await getPreviewHeight(host)
+    const outputHeightBefore = await getOutputContainerHeight(host)
     await host.evaluate((el) => {
       const handle = el.shadowRoot?.querySelector('.preview-resizer')
       if (!(handle instanceof HTMLElement)) {
@@ -223,6 +244,16 @@ async function run() {
     assert(
       previewHeightAfter > previewHeightBefore + 40,
       `Preview did not resize as expected: before=${previewHeightBefore}, after=${previewHeightAfter}`,
+    )
+    const outputHeightAfter = await getOutputContainerHeight(host)
+    assert(
+      outputHeightAfter > outputHeightBefore + 40,
+      `Output container did not resize with preview: before=${outputHeightBefore}, after=${outputHeightAfter}`,
+    )
+    const previewResizerBottomGap = await getPreviewResizerBottomGap(host)
+    assert(
+      typeof previewResizerBottomGap === 'number' && Math.abs(previewResizerBottomGap) <= 2,
+      `Preview resizer is not anchored to the preview bottom edge: gap=${previewResizerBottomGap}`,
     )
 
     await host.evaluate((el) => {
