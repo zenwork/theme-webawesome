@@ -8,6 +8,7 @@ import { merge } from 'lume/core/utils/object.ts'
 import createSlugifier from 'lume/core/slugifier.ts'
 import esbuild from 'lume/plugins/esbuild.ts'
 import toc from 'https://deno.land/x/lume_markdown_plugins@v0.9.0/toc.ts'
+import { isAbsolute, join } from 'jsr:@std/path@1.1.2'
 
 import 'lume/types.ts'
 
@@ -86,6 +87,8 @@ const stripTagsPattern = /<[^>]*>/g
 const collapseWhitespacePattern = /\s+/g
 const absoluteUrlPattern = /^(?:[a-z]+:)?\/\//i
 const freeWebAwesomeAssetSource = 'npm:@awesome.me/webawesome@^3.1.0/dist-cdn/**'
+const freeWebAwesomeAssetMarker = 'styles/webawesome.css'
+const freeWebAwesomeAssetStampFile = '.theme-webawesome-assets.stamp'
 const slugifyHeading = createSlugifier()
 
 function toScriptPath(entrypoint: string): string {
@@ -212,6 +215,51 @@ function resolveSiteTocRootUrl(siteSourcePath: string, siteTocRootPath: string):
 
 function normalizeFolder(folder: string): string {
   return folder.trim().replace(/^\/+|\/+$/g, '')
+}
+
+function normalizeOutputPath(path: string): string {
+  return path.replace(/^\/+/, '').replace(/\/+$/g, '')
+}
+
+function fileExists(path: string): boolean {
+  try {
+    Deno.statSync(path)
+    return true
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      return false
+    }
+
+    throw error
+  }
+}
+
+function resolveSiteDestPath(site: Lume.Site): string {
+  const dest = typeof site.options.dest === 'string' ? site.options.dest : './_site'
+  const cwd = typeof site.options.cwd === 'string' ? site.options.cwd : Deno.cwd()
+
+  return isAbsolute(dest) ? dest : join(cwd, dest)
+}
+
+function shouldCopyFreeWebAwesomeAssets(site: Lume.Site, assetBasePath: string): boolean {
+  const outputDir = normalizeOutputPath(assetBasePath)
+  const destRoot = resolveSiteDestPath(site)
+  const markerPath = join(destRoot, outputDir, freeWebAwesomeAssetMarker)
+  const stampPath = join(destRoot, outputDir, freeWebAwesomeAssetStampFile)
+
+  if (!fileExists(markerPath) || !fileExists(stampPath)) {
+    return true
+  }
+
+  try {
+    return Deno.readTextFileSync(stampPath).trim() !== freeWebAwesomeAssetSource
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      return true
+    }
+
+    throw error
+  }
 }
 
 function normalizePageUrl(url: string): string {
@@ -507,7 +555,40 @@ export default function (userOptions?: Options) {
       .add(options.componentEntrypoint ?? 'components/index.ts')
 
     if (webawesome.mode === 'free' && !absoluteUrlPattern.test(webawesome.assetBasePath)) {
-      site.copy(freeWebAwesomeAssetSource, webawesome.assetBasePath.replace(/^\//, ''))
+      const outputDir = normalizeOutputPath(webawesome.assetBasePath)
+      const outputPrefix = outputDir ? `/${outputDir}/` : '/'
+      let isUpdateBuild = false
+
+      const writeAssetStamp = () => {
+        const outputPath = join(resolveSiteDestPath(site), outputDir)
+        Deno.mkdirSync(outputPath, { recursive: true })
+        Deno.writeTextFileSync(join(outputPath, freeWebAwesomeAssetStampFile), freeWebAwesomeAssetSource)
+      }
+
+      site.copy(freeWebAwesomeAssetSource, outputDir)
+      site.addEventListener('beforeBuild', () => {
+        isUpdateBuild = false
+      })
+      site.addEventListener('beforeUpdate', () => {
+        isUpdateBuild = true
+      })
+      site.addEventListener('beforeSave', () => {
+        if (!isUpdateBuild) {
+          return
+        }
+
+        if (shouldCopyFreeWebAwesomeAssets(site, webawesome.assetBasePath)) {
+          return
+        }
+
+        site.files.splice(
+          0,
+          site.files.length,
+          ...site.files.filter((file) => !(file.isCopy && file.outputPath.startsWith(outputPrefix))),
+        )
+      })
+      site.addEventListener('afterBuild', writeAssetStamp)
+      site.addEventListener('afterUpdate', writeAssetStamp)
     }
 
     if (webawesome.customPropertiesCssPath && !absoluteUrlPattern.test(webawesome.customPropertiesCssPath)) {
