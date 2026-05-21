@@ -40,10 +40,6 @@
     "changelog": {
       "description": "Run the changelog utility to format the CHANGELOG.md file",
       "command": "deno run --allow-read --allow-write https://deno.land/x/changelog@v2.6.2/bin.ts"
-    },
-    "npm": {
-      "description": "Build the npm package",
-      "command": "deno run --allow-read --allow-write --allow-env tools/npm.ts"
     }
   },
   "compilerOptions": {

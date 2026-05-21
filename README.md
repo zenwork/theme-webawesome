@@ -192,5 +192,4 @@ deno task build
 ## Maintainer notes
 
 - Update Lume deps: `deno task lume upgrade`
-- Generate npm package metadata from `deno.json`: `deno task npm`
 - Release notes: `release-please` is configured via `.github/workflows/release-please.yml`
