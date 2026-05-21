@@ -89,6 +89,21 @@ order: 45
   </section>
 
   <section class="docs-section">
+    <h2>Recipe: Long Output + Fit Action</h2>
+    <p>
+      Use this when a runnable example renders many rows. The editor toolbar includes a fit action that resizes the
+      output preview to the full rendered height.
+    </p>
+    <demo-pane
+      data='{"title":"Changelog Preview","entries":["Authentication update and migration notes","CLI lifecycle and release workflow details","Type-safe config defaults and overrides","CSS token mapping and fallback strategy","Server-side rendering compatibility checklist","Hot reload performance benchmark results","Accessibility audit remediation checklist","Navigation state persistence logic","Code sample rendering edge cases","Semantic versioning and deprecation policy","Error handling and retry semantics","Platform support matrix and caveats","Extension registration lifecycle","Theme customization and variable scoping","Diagnostic logging and tracing strategy","Testing strategy with smoke and integration coverage","Runtime dependency graph review","Build output and asset pipeline notes","Preview rendering and sanitization behavior","Component API compatibility guidance","Deployment rollout and rollback procedure","Documentation publishing workflow","Localization and translation notes","Telemetry event payload examples","Caching strategy for static assets","Contributor workflow and branch policy","UI state machine transition table","Feature flag lifecycle management","Template parser expression examples","Security hardening and input validation","Dependency update policy and cadence","Long-running task progress reporting","Schema migration ordering and safeguards","Performance budget and monitoring baselines","Read-only mode interaction rules","Split pane behavior and resize constraints","Browser support and known limitations","Troubleshooting guide and quick fixes","Recovery procedure for failed releases","Final release checklist and sign-off"]}'
+      template='<section><h3>${title}</h3><div style="display:grid;gap:.375rem">${entries.map((entry, index) => html`<p style="margin:0">${index + 1}. ${entry}</p>`)}</div></section>'
+      editor-open
+      output-background="var(--wa-color-neutral-50)"
+    >
+    </demo-pane>
+  </section>
+
+  <section class="docs-section">
     <h2>Recipe: Static Preview (Non-Editable)</h2>
     <p>
       This example disables editing while keeping the full data/template/output preview visible.
@@ -149,7 +164,8 @@ order: 45
       Notes: JSON must parse to an object. The component sanitizes rendered output while allowing valid custom elements,
       supports Lit-style bindings in templates (for example <code>.prop</code>, <code>?attr</code>, and
       <code>@event</code>), auto-detects <code>wa-*</code> tags for imports, supports <code>Mod+Enter</code> to run from
-      editors, and lets readers drag the output panel’s bottom edge to resize preview height.
+      editors, provides toolbar actions for run/format/reset and toggle fit/restore for output and editor heights, and
+      lets readers drag the output panel’s bottom edge to resize preview height.
     </p>
   </section>
 

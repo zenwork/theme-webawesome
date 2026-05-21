@@ -180,6 +180,8 @@ export const styles: CSSResultGroup = css`
   .editor-split::part(end) {
     display: flex;
     align-items: stretch;
+    min-inline-size: 0;
+    min-block-size: 0;
     overflow: hidden;
     background: var(--demo-editor-bg);
   }
@@ -187,6 +189,7 @@ export const styles: CSSResultGroup = css`
   .editor-split [slot="start"],
   .editor-split [slot="end"] {
     flex: 1 1 auto;
+    min-inline-size: 0;
     min-height: 0;
   }
 
@@ -194,6 +197,7 @@ export const styles: CSSResultGroup = css`
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
     gap: 0.375rem;
+    min-inline-size: 0;
     min-height: 0;
     block-size: 100%;
     font-size: 0.75rem;
@@ -202,7 +206,10 @@ export const styles: CSSResultGroup = css`
   }
 
   .editor-host {
+    min-inline-size: 0;
     min-height: 0;
+    inline-size: 100%;
+    max-inline-size: 100%;
     block-size: 100%;
     border: 1px solid var(--wa-color-neutral-300);
     border-radius: var(--wa-border-radius-small);
@@ -212,13 +219,25 @@ export const styles: CSSResultGroup = css`
   }
 
   .editor-host .cm-editor {
+    min-inline-size: 0;
+    inline-size: 100%;
+    max-inline-size: 100%;
     block-size: 100%;
     font-size: 0.8rem;
   }
 
   .editor-host .cm-scroller {
+    min-inline-size: 0;
+    inline-size: 100%;
+    max-inline-size: 100%;
+    overflow: auto;
     font-family: Monaco, Menlo, "Ubuntu Mono", monospace;
     line-height: 1.4;
+  }
+
+  .editor-host .cm-content {
+    min-inline-size: 0;
+    max-inline-size: 100%;
   }
 
   .editor-actions {
@@ -294,6 +313,7 @@ export const styles: CSSResultGroup = css`
   .editable-preview .pane-content {
     display: flex;
     flex-direction: column;
+    min-inline-size: 0;
     min-block-size: 0;
     overflow: hidden;
   }
@@ -301,10 +321,13 @@ export const styles: CSSResultGroup = css`
   .editable-preview .output-container,
   .editable-preview .error {
     flex: 1 1 auto;
+    min-inline-size: 0;
     min-height: 0;
     min-block-size: 0;
+    block-size: auto;
     margin: 0;
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: auto;
   }
 
   :host(:not([readonly]):not([editor-open])) .editable-preview .pane-content {

@@ -108,13 +108,19 @@ class DemoPane extends LitElement {
   private _outputVersion = 0
 
   @state()
-  private _editorHeight = 180
+  private _editorHeight = 220
 
   @state()
   private _isResizingEditors = false
 
   @state()
   private _previewHeight = 320
+
+  @state()
+  private _isEditorHeightFitted = false
+
+  @state()
+  private _isPreviewHeightFitted = false
 
   @state()
   private _isResizingPreview = false
@@ -125,12 +131,14 @@ class DemoPane extends LitElement {
   private _templateEditor: EditorView | null = null
   private _syncingEditors = false
   private _didFormatInitialContent = false
-  private _hasManualEditorHeight = false
+  private _hasManualEditorHeight = true
   private _editorResizeStartY = 0
-  private _editorResizeStartHeight = 180
+  private _editorResizeStartHeight = 220
+  private _editorHeightBeforeFit = 220
   private _editorMinHeight = 120
   private _previewResizeStartY = 0
   private _previewResizeStartHeight = 320
+  private _previewHeightBeforeFit = 320
   private _fitContentReflowTimeout: number | null = null
   private _contentResizeObserver: ResizeObserver | null = null
   private readonly _observedContentDOMs = new WeakSet<Element>()
@@ -139,6 +147,7 @@ class DemoPane extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback()
     this._activeTab = this.defaultTab
+    this._isEditorHeightFitted = this.fitContent
     this._mediaQuery = globalThis.matchMedia('(max-width: 768px)')
     this._isCompact = this._mediaQuery.matches
     this._mediaQuery.addEventListener('change', this.handleMediaChange)
@@ -221,9 +230,18 @@ class DemoPane extends LitElement {
       this.refreshEditorLayout()
       this.requestFitContentReflow()
     }
+    if (_changedProperties.has('fitContent')) {
+      this._isEditorHeightFitted = this.fitContent
+    }
     if (this.shouldAutoSizeEditors) {
       this.requestFitContentReflow()
       this.setupContentObservers()
+    }
+    if (
+      this._isPreviewHeightFitted &&
+      (_changedProperties.has('_outputVersion') || _changedProperties.has('_error'))
+    ) {
+      this.fitPreviewToOutputHeight()
     }
   }
 
@@ -433,6 +451,7 @@ class DemoPane extends LitElement {
     const measuredHeight = panelContent ? Math.round(panelContent.getBoundingClientRect().height) : this._editorHeight
     this._editorHeight = Math.max(this._editorMinHeight, Math.min(640, measuredHeight))
     this._hasManualEditorHeight = true
+    this._isEditorHeightFitted = false
     if (this.fitContent) {
       this.fitContent = false
     }
@@ -523,6 +542,7 @@ class DemoPane extends LitElement {
   private handlePreviewResizeStart = (event: PointerEvent): void => {
     event.preventDefault()
     this._isResizingPreview = true
+    this._isPreviewHeightFitted = false
     this._previewResizeStartY = event.clientY
     this._previewResizeStartHeight = this._previewHeight
     this.requestUpdate()
@@ -549,6 +569,103 @@ class DemoPane extends LitElement {
     globalThis.removeEventListener('pointermove', this.handlePreviewResizeMove)
     globalThis.removeEventListener('pointerup', this.handlePreviewResizeEnd)
     globalThis.removeEventListener('pointercancel', this.handlePreviewResizeEnd)
+  }
+
+  private fitPreviewToOutputHeight = (): void => {
+    if (!this.isConnected) {
+      return
+    }
+
+    const applyFit = (): void => {
+      const preview = this.renderRoot.querySelector<HTMLElement>('.editable-preview')
+      const output = this.renderRoot.querySelector<HTMLElement>(
+        '.editable-preview .output-container, .editable-preview .error',
+      )
+      if (!preview || !output) {
+        return
+      }
+
+      const previewRect = preview.getBoundingClientRect()
+      const outputRect = output.getBoundingClientRect()
+      const outputStyles = globalThis.getComputedStyle(output)
+      const outputBorderHeight = this.readPx(outputStyles.borderTopWidth) + this.readPx(outputStyles.borderBottomWidth)
+      const outputContentHeight = Math.ceil(output.scrollHeight + outputBorderHeight)
+      const outputVisibleHeight = Math.ceil(outputRect.height)
+      const delta = outputContentHeight - outputVisibleHeight
+
+      const minPreviewHeight = this.getMinimumPreviewHeight(preview)
+      const nextPreviewHeight = Math.max(minPreviewHeight, Math.round(previewRect.height + delta))
+
+      if (!Number.isFinite(nextPreviewHeight) || nextPreviewHeight <= 0) {
+        return
+      }
+      if (Math.abs(nextPreviewHeight - this._previewHeight) < 1) {
+        return
+      }
+      this._previewHeight = nextPreviewHeight
+      this.requestUpdate()
+    }
+
+    this.updateComplete.then(() =>
+      requestAnimationFrame(() => {
+        applyFit()
+        requestAnimationFrame(applyFit)
+      })
+    )
+  }
+
+  private getMinimumPreviewHeight(preview?: HTMLElement | null): number {
+    const target = preview ?? this.renderRoot.querySelector<HTMLElement>('.editable-preview')
+    if (!target) {
+      return 220
+    }
+    const styles = globalThis.getComputedStyle(target)
+    return this.readPx(styles.minBlockSize) || this.readPx(styles.minHeight) || 220
+  }
+
+  private togglePreviewHeightFit = (): void => {
+    if (this._isPreviewHeightFitted) {
+      const restoredHeight = this._previewHeightBeforeFit > 0 ? this._previewHeightBeforeFit : 320
+      this._previewHeight = Math.max(this.getMinimumPreviewHeight(), Math.round(restoredHeight))
+      this._isPreviewHeightFitted = false
+      this.requestUpdate()
+      return
+    }
+
+    this._previewHeightBeforeFit = this._previewHeight
+    this._isPreviewHeightFitted = true
+    this.fitPreviewToOutputHeight()
+  }
+
+  private toggleEditorPanelHeightFit = (): void => {
+    if (this._isEditorHeightFitted) {
+      const panelMin = this.getMinimumEditorPanelHeight()
+      const restoredHeight = this._editorHeightBeforeFit > 0 ? this._editorHeightBeforeFit : this._editorHeight
+      this._editorHeight = Math.max(panelMin, Math.min(640, Math.round(restoredHeight)))
+      this._hasManualEditorHeight = true
+      this._isEditorHeightFitted = false
+      if (this.fitContent) {
+        this.fitContent = false
+      }
+      const nextHeightCss = `${this._editorHeight}px`
+      for (const panel of this.renderRoot.querySelectorAll<HTMLElement>('.editor-panel-content')) {
+        panel.style.setProperty('--demo-editor-height', nextHeightCss)
+      }
+      this.requestUpdate()
+      this.refreshEditorLayout()
+      return
+    }
+
+    const panel = this.renderRoot.querySelector<HTMLElement>('.editor-panel-content')
+    const measuredHeight = panel ? Math.round(panel.getBoundingClientRect().height) : this._editorHeight
+    this._editorHeightBeforeFit = Math.max(1, measuredHeight)
+    this._hasManualEditorHeight = false
+    this._isEditorHeightFitted = true
+    if (!this.fitContent) {
+      this.fitContent = true
+    }
+    this.requestFitContentReflow()
+    this.requestUpdate()
   }
 
   private refreshEditorLayout(): void {
@@ -920,6 +1037,8 @@ class DemoPane extends LitElement {
 
     const dataLabel = this.dataLabel.trim()
     const templateLabel = this.templateLabel.trim()
+    const editorHeightToggleLabel = this._isEditorHeightFitted ? 'Restore editor height' : 'Fit editor height'
+    const previewHeightToggleLabel = this._isPreviewHeightFitted ? 'Restore output height' : 'Fit output height'
     const editorHeight = this.shouldAutoSizeEditors ? this.getFitContentEditorHeight() : this._editorHeight
     const editorContentStyle = `--demo-editor-height: ${editorHeight}px; --demo-editor-min-height: ${
       this.shouldAutoSizeEditors ? 0 : 120
@@ -989,6 +1108,28 @@ class DemoPane extends LitElement {
               @click="${this.formatHtml}"
             >
               <wa-icon name="file-code" label="Format HTML"></wa-icon>
+            </wa-button>
+            <wa-button
+              size="small"
+              variant="neutral"
+              appearance="plain"
+              aria-label="Toggle output height"
+              aria-pressed="${this._isPreviewHeightFitted ? 'true' : 'false'}"
+              title="${previewHeightToggleLabel}"
+              @click="${this.togglePreviewHeightFit}"
+            >
+              <wa-icon name="bars" label="${previewHeightToggleLabel}"></wa-icon>
+            </wa-button>
+            <wa-button
+              size="small"
+              variant="neutral"
+              appearance="plain"
+              aria-label="Toggle editor height"
+              aria-pressed="${this._isEditorHeightFitted ? 'true' : 'false'}"
+              title="${editorHeightToggleLabel}"
+              @click="${this.toggleEditorPanelHeightFit}"
+            >
+              <wa-icon name="bars" label="${editorHeightToggleLabel}"></wa-icon>
             </wa-button>
             <wa-button
               size="small"

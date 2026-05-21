@@ -87,16 +87,34 @@ function getOutputContainerOverflowState(host) {
       return null
     }
     const filler = globalThis.document.createElement('div')
+    filler.style.inlineSize = '2400px'
     filler.style.blockSize = '2400px'
+    filler.style.whiteSpace = 'nowrap'
     filler.textContent = 'overflow probe'
     output.append(filler)
     const style = globalThis.getComputedStyle(output)
     const state = {
+      overflowX: style.overflowX,
       overflowY: style.overflowY,
+      hasHorizontalOverflow: output.scrollWidth > output.clientWidth,
       hasVerticalOverflow: output.scrollHeight > output.clientHeight,
     }
     filler.remove()
     return state
+  })
+}
+
+function getOutputContainerScrollMetrics(host) {
+  return host.evaluate((el) => {
+    const output = el.shadowRoot?.querySelector('.output-container')
+    if (!(output instanceof HTMLElement)) {
+      return null
+    }
+    return {
+      clientHeight: output.clientHeight,
+      scrollHeight: output.scrollHeight,
+      hasVerticalOverflow: output.scrollHeight > output.clientHeight,
+    }
   })
 }
 
@@ -164,6 +182,34 @@ function getEditorSizing(host) {
   })
 }
 
+function getEditorWidthMetrics(host) {
+  return host.evaluate((el) => {
+    const measure = (selector) => {
+      const field = el.shadowRoot?.querySelector(selector)
+      const content = field?.querySelector('.cm-content')
+      const editor = field?.querySelector('.cm-editor')
+      const scroller = field?.querySelector('.cm-scroller')
+      if (!(field instanceof HTMLElement)) {
+        return null
+      }
+      const slotRect = field.getBoundingClientRect()
+      const contentRect = content instanceof HTMLElement ? content.getBoundingClientRect() : null
+      const editorRect = editor instanceof HTMLElement ? editor.getBoundingClientRect() : null
+      const scrollerRect = scroller instanceof HTMLElement ? scroller.getBoundingClientRect() : null
+      return {
+        slotWidth: slotRect.width,
+        contentWidth: contentRect?.width ?? 0,
+        editorWidth: editorRect?.width ?? 0,
+        scrollerWidth: scrollerRect?.width ?? 0,
+      }
+    }
+    return {
+      start: measure('.editor-field[slot="start"]'),
+      end: measure('.editor-field[slot="end"]'),
+    }
+  })
+}
+
 async function setJson(host, value) {
   const jsonEditor = host.locator('#json-editor .cm-content')
   await jsonEditor.click()
@@ -212,14 +258,22 @@ async function run() {
 
     await delay(250)
     const initialEditorSizing = await getEditorSizing(host)
-    const initialLongestEditor = Math.max(
-      initialEditorSizing?.jsonHeight ?? 0,
-      initialEditorSizing?.templateHeight ?? 0,
-    )
     assert(
       initialEditorSizing &&
-        initialEditorSizing.splitHeight >= initialLongestEditor - 2,
-      `Editor did not auto-size to content: ${JSON.stringify(initialEditorSizing)}`,
+        initialEditorSizing.panelHeight >= 200 &&
+        initialEditorSizing.splitHeight >= 120,
+      `Editor did not keep the expected minimum height: ${JSON.stringify(initialEditorSizing)}`,
+    )
+
+    await setTemplate(host, `<section>${'X'.repeat(1200)}</section>`)
+    await delay(120)
+    const widthMetrics = await getEditorWidthMetrics(host)
+    assert(
+      widthMetrics?.end &&
+        widthMetrics.end.contentWidth <= widthMetrics.end.slotWidth + 2 &&
+        widthMetrics.end.editorWidth <= widthMetrics.end.slotWidth + 2 &&
+        widthMetrics.end.scrollerWidth <= widthMetrics.end.slotWidth + 2,
+      `Template editor width overflowed its split-pane slot: ${JSON.stringify(widthMetrics?.end)}`,
     )
 
     const outputBackground = await host.evaluate((el) => {
@@ -240,6 +294,52 @@ async function run() {
     assert(
       outputBackground?.image === 'none',
       `Expected solid background, got: ${outputBackground?.image}`,
+    )
+
+    const longRows = Array.from({ length: 80 }, (_, index) => `Row ${String(index + 1).padStart(2, '0')}`)
+    await setJson(
+      host,
+      JSON.stringify(
+        {
+          title: 'Fit output height check',
+          rows: longRows,
+        },
+        null,
+        2,
+      ),
+    )
+    await setTemplate(
+      host,
+      `<section><h3>\${title}</h3><div>\${rows.map((row) => html\`<p>\${row}</p>\`).join('')}</div></section>`,
+    )
+    await clickEditorAction(host, 'Run demo')
+    await delay(250)
+    const fitBeforePreviewHeight = await getPreviewHeight(host)
+    const fitBeforeScrollMetrics = await getOutputContainerScrollMetrics(host)
+    assert(
+      fitBeforeScrollMetrics?.hasVerticalOverflow,
+      `Expected overflow before fitting output height: ${JSON.stringify(fitBeforeScrollMetrics)}`,
+    )
+    await clickEditorAction(host, 'Toggle output height')
+    await delay(120)
+    const fitAfterPreviewHeight = await getPreviewHeight(host)
+    const fitAfterScrollMetrics = await getOutputContainerScrollMetrics(host)
+    assert(
+      fitAfterPreviewHeight > fitBeforePreviewHeight,
+      `Fit output action did not increase preview height: before=${fitBeforePreviewHeight}, after=${fitAfterPreviewHeight}`,
+    )
+    assert(
+      fitAfterScrollMetrics &&
+        fitAfterScrollMetrics.scrollHeight <= fitAfterScrollMetrics.clientHeight + 2 &&
+        !fitAfterScrollMetrics.hasVerticalOverflow,
+      `Output still overflowed after fit action: ${JSON.stringify(fitAfterScrollMetrics)}`,
+    )
+    await clickEditorAction(host, 'Toggle output height')
+    await delay(120)
+    const fitRestoredPreviewHeight = await getPreviewHeight(host)
+    assert(
+      fitRestoredPreviewHeight < fitAfterPreviewHeight - 10,
+      `Output height toggle did not shrink after second click: expanded=${fitAfterPreviewHeight}, restored=${fitRestoredPreviewHeight}`,
     )
 
     const previewHeightBefore = await getPreviewHeight(host)
@@ -276,8 +376,18 @@ async function run() {
       `Output container overflowY should be scrollable, got: ${outputOverflowState?.overflowY}`,
     )
     assert(
+      outputOverflowState?.overflowX === 'auto' || outputOverflowState?.overflowX === 'scroll',
+      `Output container overflowX should be scrollable, got: ${outputOverflowState?.overflowX}`,
+    )
+    assert(
       outputOverflowState?.hasVerticalOverflow,
       `Output container did not report overflow when content exceeded available height: ${
+        JSON.stringify(outputOverflowState)
+      }`,
+    )
+    assert(
+      outputOverflowState?.hasHorizontalOverflow,
+      `Output container did not report overflow when content exceeded available width: ${
         JSON.stringify(outputOverflowState)
       }`,
     )
@@ -358,6 +468,35 @@ async function run() {
           ) < 2,
       `Editor auto-sizing overrode manual resize: manual=${JSON.stringify(manualEditorSizing)}, afterEdit=${
         JSON.stringify(afterManualEditSizing)
+      }`,
+    )
+
+    await setTemplate(
+      host,
+      `<section>
+${Array.from({ length: 80 }, (_, index) => `  <p>Editor fit row ${index + 1}</p>`).join('\n')}
+</section>`,
+    )
+    await delay(250)
+    const editorToggleBefore = await getEditorSizing(host)
+    await clickEditorAction(host, 'Toggle editor height')
+    await delay(200)
+    const editorToggleExpanded = await getEditorSizing(host)
+    assert(
+      editorToggleBefore && editorToggleExpanded &&
+        editorToggleExpanded.panelHeight > editorToggleBefore.panelHeight + 40,
+      `Editor height toggle did not expand: before=${JSON.stringify(editorToggleBefore)}, after=${
+        JSON.stringify(editorToggleExpanded)
+      }`,
+    )
+    await clickEditorAction(host, 'Toggle editor height')
+    await delay(200)
+    const editorToggleRestored = await getEditorSizing(host)
+    assert(
+      editorToggleRestored &&
+        Math.abs(editorToggleRestored.panelHeight - editorToggleBefore.panelHeight) < 8,
+      `Editor height toggle did not restore: before=${JSON.stringify(editorToggleBefore)}, restored=${
+        JSON.stringify(editorToggleRestored)
       }`,
     )
 
