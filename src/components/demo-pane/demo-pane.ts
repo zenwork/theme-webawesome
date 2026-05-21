@@ -536,7 +536,7 @@ class DemoPane extends LitElement {
       return
     }
     const deltaY = event.clientY - this._previewResizeStartY
-    this._previewHeight = Math.max(220, Math.min(960, this._previewResizeStartHeight + deltaY))
+    this._previewHeight = Math.max(220, this._previewResizeStartHeight + deltaY)
     this.requestUpdate()
   }
 

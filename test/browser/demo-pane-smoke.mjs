@@ -281,6 +281,27 @@ async function run() {
         JSON.stringify(outputOverflowState)
       }`,
     )
+    await host.evaluate((el) => {
+      const handle = el.shadowRoot?.querySelector('.preview-resizer')
+      if (!(handle instanceof HTMLElement)) {
+        throw new Error('Missing preview resizer')
+      }
+      handle.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, clientY: 200 }),
+      )
+      globalThis.dispatchEvent(
+        new PointerEvent('pointermove', { bubbles: true, clientY: 1500 }),
+      )
+      globalThis.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, clientY: 1500 }),
+      )
+    })
+    await delay(80)
+    const previewHeightAfterLargeDrag = await getPreviewHeight(host)
+    assert(
+      previewHeightAfterLargeDrag > 960,
+      `Preview height remained capped: ${previewHeightAfterLargeDrag}`,
+    )
     const previewResizerBottomGap = await getPreviewResizerBottomGap(host)
     assert(
       typeof previewResizerBottomGap === 'number' && Math.abs(previewResizerBottomGap) <= 2,
