@@ -60,6 +60,11 @@
       src="{{ webawesome.assetBasePath }}/components/icon/icon.js"
       data-webawesome="{{ webawesome.assetBasePath }}"
     ></script>
+    <script
+      type="module"
+      src="{{ webawesome.assetBasePath }}/components/input/input.js"
+      data-webawesome="{{ webawesome.assetBasePath }}"
+    ></script>
     {{# CUSTOM COMPONENTS #}}
     <script type="module" src="{{ themeComponents.primaryScript }}"></script>
   </head>
@@ -122,6 +127,18 @@
             {{ /for }}
           </nav>
         {{ /if }}
+        <div class="site-search">
+          <wa-input
+            class="site-search-input"
+            type="search"
+            size="small"
+            appearance="outlined"
+            placeholder="Search docs"
+            aria-label="Search documentation"
+          >
+            <wa-icon slot="start" name="magnifying-glass" label="Search"></wa-icon>
+          </wa-input>
+        </div>
         {{ include '../theme-toggle.vto' }}
       </div>
     </header>
@@ -386,6 +403,44 @@
               window.setTimeout(() => icon.setAttribute('name', 'copy'), 1400)
             }
           }
+        })
+      })()
+    </script>
+    <script>
+      ;(() => {
+        const searchInput = document.querySelector('.site-search-input')
+        if (!searchInput) {
+          return
+        }
+
+        document.addEventListener('keydown', (event) => {
+          if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {
+            return
+          }
+
+          if (event.key !== '/') {
+            return
+          }
+
+          const active = document.activeElement
+          const inEditableContext = active instanceof HTMLElement &&
+            (
+              active.isContentEditable ||
+              active.tagName === 'INPUT' ||
+              active.tagName === 'TEXTAREA' ||
+              active.tagName === 'SELECT'
+            )
+
+          if (inEditableContext) {
+            return
+          }
+
+          if (!(searchInput instanceof HTMLElement) || searchInput.offsetParent === null) {
+            return
+          }
+
+          event.preventDefault()
+          searchInput.focus()
         })
       })()
     </script>

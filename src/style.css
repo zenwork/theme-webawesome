@@ -27,6 +27,10 @@ html {
   box-sizing: border-box;
 }
 
+.site-header wa-input:not(:defined) {
+  display: none;
+}
+
 #site-toc-trigger:not(:defined) {
   min-block-size: 38px;
   padding-inline: 0.75rem;
@@ -120,6 +124,19 @@ a {
   color: var(--wa-color-brand-text-loud);
   background: color-mix(in srgb, var(--wa-color-brand-fill-loud) 22%, transparent);
   border-color: var(--wa-color-brand-border-loud);
+}
+
+.site-search {
+  display: none;
+  min-inline-size: min(18rem, 32vw);
+}
+
+.site-search-input {
+  inline-size: clamp(12rem, 24vw, 18rem);
+}
+
+.site-search-input::part(base) {
+  background: var(--wa-color-neutral-0);
 }
 
 .docs-shell {
@@ -411,6 +428,10 @@ code {
 @media (min-width: 1024px) {
   .site-section-nav {
     display: inline-flex;
+  }
+
+  .site-search {
+    display: block;
   }
 
   .site-section-drawer {
