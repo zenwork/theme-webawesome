@@ -14,8 +14,9 @@ class CodeExample extends LitElement {
       display: block;
       margin-block-end: 0.875rem;
       border: 1px solid var(--wa-color-neutral-300);
-      border-radius: var(--wa-border-radius-medium);
+      border-radius: var(--wa-border-radius-m);
       overflow: hidden;
+      background: var(--wa-color-neutral-0);
     }
 
     :host(:last-child) {
@@ -28,6 +29,7 @@ class CodeExample extends LitElement {
 
     .cm-editor {
       font-size: 0.8125rem;
+      line-height: 1.45;
     }
 
     .cm-scroller {

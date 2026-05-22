@@ -6,11 +6,10 @@ export const styles: CSSResultGroup = css`
     --demo-editor-min-height: 120px;
     display: block;
     margin-block-end: 0.875rem;
-    border: 1px solid var(--wa-color-neutral-200);
-    border-radius: var(--wa-border-radius-medium);
+    border: 1px solid var(--wa-color-neutral-300);
+    border-radius: var(--wa-border-radius-m);
     overflow: hidden;
     background: var(--wa-color-neutral-0);
-    box-shadow: 0 1px 2px color-mix(in srgb, var(--wa-color-neutral-900) 8%, transparent);
   }
 
   :host([fit-content]) {
@@ -62,13 +61,9 @@ export const styles: CSSResultGroup = css`
     min-height: 200px;
     padding: 0.875rem;
     margin: 0.125rem 0.125rem 0.875rem;
-    border: 2px dotted rgba(148, 163, 184, 0.8);
-    border-radius: var(--wa-border-radius-small);
-    background: var(
-      --demo-output-bg,
-      radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.2) 1px, transparent 0) 0 0 / 10px 10px,
-      transparent
-    );
+    border: 1px dashed var(--wa-color-neutral-400);
+    border-radius: var(--wa-border-radius-m);
+    background: var(--demo-output-bg, color-mix(in srgb, var(--wa-color-neutral-50) 50%, transparent));
   }
 
   .error {
@@ -77,7 +72,7 @@ export const styles: CSSResultGroup = css`
     border: 1px solid var(--wa-color-danger-200);
     border-left: 3px solid var(--wa-color-danger-500);
     padding: 0.75rem 0.875rem;
-    border-radius: var(--wa-border-radius-small);
+    border-radius: var(--wa-border-radius-m);
     font-size: 0.875rem;
   }
 
@@ -111,7 +106,7 @@ export const styles: CSSResultGroup = css`
 
   .editor-panel::part(header) {
     padding-inline: 0.75rem;
-    border-bottom: 1px dotted rgba(148, 163, 184, 0.7);
+    border-bottom: 1px solid var(--wa-color-neutral-300);
     font-size: 0.8125rem;
     font-weight: 600;
     background: transparent;
@@ -149,7 +144,7 @@ export const styles: CSSResultGroup = css`
 
   .editor-panel-loading {
     padding: 0.625rem 0.75rem;
-    border-bottom: 1px dotted rgba(148, 163, 184, 0.7);
+    border-bottom: 1px solid var(--wa-color-neutral-300);
     font-size: 0.8125rem;
     color: var(--wa-color-neutral-600);
   }
@@ -160,20 +155,24 @@ export const styles: CSSResultGroup = css`
     block-size: auto;
     min-block-size: var(--demo-editor-min-height);
     background: var(--demo-editor-bg);
-    border-radius: var(--wa-border-radius-small);
+    border-radius: var(--wa-border-radius-m);
     overflow: hidden;
   }
 
   .editor-split::part(divider) {
     background:
-      radial-gradient(circle at center, rgba(148, 163, 184, 0.45) 1px, transparent 1.5px) center / 6px 6px repeat-y,
+      radial-gradient(
+        circle at center,
+        color-mix(in srgb, var(--wa-color-neutral-500) 70%, transparent) 1px,
+        transparent 1.5px
+      ) center / 6px 6px repeat-y,
       transparent;
-    border-inline: 1px dotted rgba(148, 163, 184, 0.75);
+    border-inline: 1px dashed var(--wa-color-neutral-400);
     transition: border-color 0.16s ease, background-color 0.16s ease;
   }
 
   .editor-split::part(divider):hover {
-    border-inline-color: color-mix(in srgb, var(--wa-color-brand-border-loud) 75%, rgba(148, 163, 184, 0.75));
+    border-inline-color: var(--wa-color-brand-border-loud);
   }
 
   .editor-split::part(start),
@@ -212,10 +211,10 @@ export const styles: CSSResultGroup = css`
     max-inline-size: 100%;
     block-size: 100%;
     border: 1px solid var(--wa-color-neutral-300);
-    border-radius: var(--wa-border-radius-small);
+    border-radius: var(--wa-border-radius-m);
     overflow: hidden;
     background: var(--demo-editor-bg);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #ffffff 6%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wa-color-neutral-100) 16%, transparent);
   }
 
   .editor-host .cm-editor {
@@ -258,7 +257,7 @@ export const styles: CSSResultGroup = css`
   .editor-resizer,
   .preview-resizer {
     block-size: 12px;
-    border-top: 1px dotted rgba(148, 163, 184, 0.7);
+    border-top: 1px dashed var(--wa-color-neutral-400);
     cursor: ns-resize;
     touch-action: none;
     position: relative;
@@ -356,7 +355,7 @@ export const styles: CSSResultGroup = css`
     border: 1px solid var(--wa-color-neutral-300);
     background: var(--wa-color-neutral-0);
     color: var(--wa-color-neutral-800);
-    border-radius: var(--wa-border-radius-small);
+    border-radius: var(--wa-border-radius-m);
     font: inherit;
     font-size: 0.8rem;
     font-weight: 600;
