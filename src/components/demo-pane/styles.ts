@@ -257,7 +257,8 @@ export const styles: CSSResultGroup = css`
   .editor-resizer,
   .preview-resizer {
     block-size: 12px;
-    border-top: 1px dashed var(--wa-color-neutral-400);
+    border-top: 1px dashed var(--wa-color-neutral-100);
+    background: transparent;
     cursor: ns-resize;
     touch-action: none;
     position: relative;
@@ -276,20 +277,22 @@ export const styles: CSSResultGroup = css`
     content: "";
     position: absolute;
     inset-inline: 50%;
-    top: 4px;
+    top: 3px;
     transform: translateX(-50%);
-    inline-size: 2.5rem;
-    block-size: 4px;
+    inline-size: 3rem;
+    block-size: 5px;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--wa-color-neutral-500) 70%, transparent);
-    transition: background-color 0.16s ease;
+    background: color-mix(in srgb, var(--wa-color-brand-border-loud) 50%, transparent);
+    opacity: 0.5;
+    transition: background-color 0.16s ease, opacity 0.16s ease;
   }
 
   .editor-resizer:hover::before,
   .editor-resizer.is-active::before,
   .preview-resizer:hover::before,
   .preview-resizer.is-active::before {
-    background: color-mix(in srgb, var(--wa-color-brand-border-loud) 70%, transparent);
+    background: color-mix(in srgb, var(--wa-color-brand-border-loud) 72%, transparent);
+    opacity: 0.96;
   }
 
   .editable-layout {
