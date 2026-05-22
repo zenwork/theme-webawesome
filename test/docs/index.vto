@@ -2,4 +2,19 @@
 layout: layouts/base.vto
 title: Doc Index
 ---
-<div>Hello World</div>
+<h1>{{ title }}</h1>
+
+<p>
+  This test site includes a sample custom WebAwesome theme file you can reuse when wiring
+  <code>webawesome.customPropertiesCssPath</code>.
+</p>
+
+<h2>Example custom theming file</h2>
+
+<p>
+  Path: <code>/styles/webawesome-theme-example.css</code>
+</p>
+
+<code-example language="typescript">
+  site.use(theme({ webawesome: { customPropertiesCssPath: '/styles/webawesome-theme-example.css', }, }))
+</code-example>
