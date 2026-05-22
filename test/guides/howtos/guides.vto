@@ -1,0 +1,30 @@
+---
+layout: layouts/base.vto
+title: "How-to #1"
+order: 2
+---
+<section class="docs-stack">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      Validates the configurable site TOC scope in a theme consumer.
+    </p>
+  </header>
+
+  <section class="docs-section">
+    <h2>TOC Scope Override</h2>
+    <p>
+      This page lives under <code>/guides/</code>. In the test site config, the theme sets <code
+      >siteToc.includeUrlPrefix</code> to <code>/guides/</code>, so this entry should appear in the left sidebar tree.
+    </p>
+  </section>
+
+  <section class="docs-section">
+    <h2>Control Page</h2>
+    <p>
+      The existing <code>/docs/smoke/</code> page remains available, but should not appear in the sidebar when the TOC
+      scope is set to
+      <code>/guides/</code>.
+    </p>
+  </section>
+</section>

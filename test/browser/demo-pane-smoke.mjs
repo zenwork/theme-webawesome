@@ -5,7 +5,7 @@ import { chromium } from 'playwright'
 
 const TEST_PORT = 3311
 const BASE_URL = `http://127.0.0.1:${TEST_PORT}`
-const ROOT_DIR = new URL('../../', import.meta.url)
+const TEST_DIR = new URL('../', import.meta.url)
 
 function assert(condition, message) {
   if (!condition) {
@@ -18,7 +18,8 @@ async function waitForServer(url, timeoutMs = 30000) {
   while (Date.now() - started < timeoutMs) {
     try {
       const response = await fetch(url)
-      if (response.ok) {
+      const text = response.ok ? await response.text() : ''
+      if (response.ok && text.includes('<demo-pane')) {
         return
       }
     } catch {
@@ -30,8 +31,14 @@ async function waitForServer(url, timeoutMs = 30000) {
 }
 
 function startServer() {
-  const child = spawn('deno', ['task', 'lume', '-s', '--port', String(TEST_PORT)], {
-    cwd: ROOT_DIR,
+  const child = spawn('deno', [
+    'task',
+    'lume',
+    '-s',
+    '--port',
+    String(TEST_PORT),
+  ], {
+    cwd: TEST_DIR,
     stdio: ['ignore', 'pipe', 'pipe'],
   })
 
@@ -59,17 +66,165 @@ function getErrorText(host) {
   })
 }
 
+function getPreviewHeight(host) {
+  return host.evaluate((el) => {
+    const preview = el.shadowRoot?.querySelector('.editable-preview')
+    return preview instanceof HTMLElement ? preview.getBoundingClientRect().height : 0
+  })
+}
+
+function getOutputContainerHeight(host) {
+  return host.evaluate((el) => {
+    const output = el.shadowRoot?.querySelector('.output-container')
+    return output instanceof HTMLElement ? output.getBoundingClientRect().height : 0
+  })
+}
+
+function getOutputContainerOverflowState(host) {
+  return host.evaluate((el) => {
+    const output = el.shadowRoot?.querySelector('.output-container')
+    if (!(output instanceof HTMLElement)) {
+      return null
+    }
+    const filler = globalThis.document.createElement('div')
+    filler.style.inlineSize = '2400px'
+    filler.style.blockSize = '2400px'
+    filler.style.whiteSpace = 'nowrap'
+    filler.textContent = 'overflow probe'
+    output.append(filler)
+    const style = globalThis.getComputedStyle(output)
+    const state = {
+      overflowX: style.overflowX,
+      overflowY: style.overflowY,
+      hasHorizontalOverflow: output.scrollWidth > output.clientWidth,
+      hasVerticalOverflow: output.scrollHeight > output.clientHeight,
+    }
+    filler.remove()
+    return state
+  })
+}
+
+function getOutputContainerScrollMetrics(host) {
+  return host.evaluate((el) => {
+    const output = el.shadowRoot?.querySelector('.output-container')
+    if (!(output instanceof HTMLElement)) {
+      return null
+    }
+    return {
+      clientHeight: output.clientHeight,
+      scrollHeight: output.scrollHeight,
+      hasVerticalOverflow: output.scrollHeight > output.clientHeight,
+    }
+  })
+}
+
+function getPreviewResizerBottomGap(host) {
+  return host.evaluate((el) => {
+    const preview = el.shadowRoot?.querySelector('.editable-preview')
+    const resizer = el.shadowRoot?.querySelector('.preview-resizer')
+    if (!(preview instanceof HTMLElement) || !(resizer instanceof HTMLElement)) {
+      return null
+    }
+    const previewRect = preview.getBoundingClientRect()
+    const resizerRect = resizer.getBoundingClientRect()
+    return previewRect.bottom - resizerRect.bottom
+  })
+}
+
+function getEditorSizing(host) {
+  return host.evaluate((el) => {
+    const panel = el.shadowRoot?.querySelector('.editor-panel-content')
+    const split = el.shadowRoot?.querySelector('.editor-split')
+    if (!(panel instanceof HTMLElement) || !(split instanceof HTMLElement)) {
+      return null
+    }
+    const readPx = (value) => {
+      const parsed = Number.parseFloat(value ?? '')
+      return Number.isFinite(parsed) ? parsed : 0
+    }
+    const measureField = (field, editor) => {
+      const host = field?.querySelector('.editor-host, code-example')
+      if (!(field instanceof HTMLElement) || !(host instanceof HTMLElement)) {
+        return 0
+      }
+      const contentDOM = editor?.contentDOM ??
+        ('contentDOM' in host && host.contentDOM instanceof HTMLElement ? host.contentDOM : null)
+      const contentHeight = contentDOM instanceof HTMLElement
+        ? Math.max(contentDOM.getBoundingClientRect().height, contentDOM.scrollHeight)
+        : host.scrollHeight
+      const extraRows = [...field.children].filter((child) =>
+        child instanceof HTMLElement && child !== host && child.getBoundingClientRect().height > 0
+      )
+      const extraRowsHeight = extraRows.reduce(
+        (total, child) => total + Math.ceil(child.getBoundingClientRect().height),
+        0,
+      )
+      const fieldStyles = globalThis.getComputedStyle(field)
+      const fieldGap = extraRows.length > 0 ? readPx(fieldStyles.rowGap || fieldStyles.gap) : 0
+      const hostStyles = globalThis.getComputedStyle(host)
+      const hostBorder = readPx(hostStyles.borderTopWidth) + readPx(hostStyles.borderBottomWidth)
+      return contentHeight + extraRowsHeight + fieldGap + hostBorder
+    }
+    const jsonHeight = measureField(
+      el.shadowRoot?.querySelector('.editor-field[slot="start"]'),
+      el._jsonEditor,
+    )
+    const templateHeight = measureField(
+      el.shadowRoot?.querySelector('.editor-field[slot="end"]'),
+      el._templateEditor,
+    )
+    return {
+      panelHeight: panel.getBoundingClientRect().height,
+      splitHeight: split.getBoundingClientRect().height,
+      jsonHeight,
+      templateHeight,
+    }
+  })
+}
+
+function getEditorWidthMetrics(host) {
+  return host.evaluate((el) => {
+    const measure = (selector) => {
+      const field = el.shadowRoot?.querySelector(selector)
+      const content = field?.querySelector('.cm-content')
+      const editor = field?.querySelector('.cm-editor')
+      const scroller = field?.querySelector('.cm-scroller')
+      if (!(field instanceof HTMLElement)) {
+        return null
+      }
+      const slotRect = field.getBoundingClientRect()
+      const contentRect = content instanceof HTMLElement ? content.getBoundingClientRect() : null
+      const editorRect = editor instanceof HTMLElement ? editor.getBoundingClientRect() : null
+      const scrollerRect = scroller instanceof HTMLElement ? scroller.getBoundingClientRect() : null
+      return {
+        slotWidth: slotRect.width,
+        contentWidth: contentRect?.width ?? 0,
+        editorWidth: editorRect?.width ?? 0,
+        scrollerWidth: scrollerRect?.width ?? 0,
+      }
+    }
+    return {
+      start: measure('.editor-field[slot="start"]'),
+      end: measure('.editor-field[slot="end"]'),
+    }
+  })
+}
+
 async function setJson(host, value) {
   const jsonEditor = host.locator('#json-editor .cm-content')
   await jsonEditor.click()
-  await jsonEditor.page().keyboard.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A')
+  await jsonEditor.page().keyboard.press(
+    process.platform === 'darwin' ? 'Meta+A' : 'Control+A',
+  )
   await jsonEditor.page().keyboard.type(value)
 }
 
 async function setTemplate(host, value) {
   const templateEditor = host.locator('#template-editor .cm-content')
   await templateEditor.click()
-  await templateEditor.page().keyboard.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A')
+  await templateEditor.page().keyboard.press(
+    process.platform === 'darwin' ? 'Meta+A' : 'Control+A',
+  )
   await templateEditor.page().keyboard.type(value)
 }
 
@@ -77,20 +232,287 @@ function getTemplateDoc(host) {
   return host.evaluate((el) => el._templateEditor?.state.doc.toString() ?? '')
 }
 
+async function clickEditorAction(host, label) {
+  await host.locator(`wa-button[aria-label="${label}"]`).click()
+}
+
 async function run() {
   const server = startServer()
   let browser
   try {
-    await waitForServer(`${BASE_URL}/examples/buttons/`)
+    await waitForServer(`${BASE_URL}/`)
     browser = await chromium.launch({ headless: true })
     const page = await browser.newPage()
-    await page.goto(`${BASE_URL}/examples/buttons/?t=${Date.now()}`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE_URL}/?t=${Date.now()}`, {
+      waitUntil: 'networkidle',
+    })
 
     const host = page.locator('demo-pane').first()
     await host.waitFor()
 
     const initial = await getOutputText(host)
-    assert(initial.includes('Save changes'), `Unexpected initial output: ${initial}`)
+    assert(
+      initial.includes('Release v0.2.0'),
+      `Unexpected initial output: ${initial}`,
+    )
+
+    await delay(250)
+    const initialEditorSizing = await getEditorSizing(host)
+    assert(
+      initialEditorSizing &&
+        initialEditorSizing.panelHeight >= 200 &&
+        initialEditorSizing.splitHeight >= 120,
+      `Editor did not keep the expected minimum height: ${JSON.stringify(initialEditorSizing)}`,
+    )
+    const initialTemplateDoc = await getTemplateDoc(host)
+    assert(
+      initialTemplateDoc.includes('\n'),
+      `Template was not formatted on initial render: ${initialTemplateDoc.slice(0, 240)}`,
+    )
+
+    await setTemplate(host, `<section>${'X'.repeat(1200)}</section>`)
+    await delay(120)
+    const widthMetrics = await getEditorWidthMetrics(host)
+    assert(
+      widthMetrics?.end &&
+        widthMetrics.end.contentWidth <= widthMetrics.end.slotWidth + 2 &&
+        widthMetrics.end.editorWidth <= widthMetrics.end.slotWidth + 2 &&
+        widthMetrics.end.scrollerWidth <= widthMetrics.end.slotWidth + 2,
+      `Template editor width overflowed its split-pane slot: ${JSON.stringify(widthMetrics?.end)}`,
+    )
+
+    const outputBackground = await host.evaluate((el) => {
+      const output = el.shadowRoot?.querySelector('.output-container')
+      if (!(output instanceof HTMLElement)) {
+        return null
+      }
+      const style = globalThis.getComputedStyle(output)
+      return {
+        color: style.backgroundColor,
+        image: style.backgroundImage,
+      }
+    })
+    assert(
+      outputBackground?.color && outputBackground.color !== 'rgba(0, 0, 0, 0)',
+      'Output background was not applied',
+    )
+    assert(
+      outputBackground?.image === 'none',
+      `Expected solid background, got: ${outputBackground?.image}`,
+    )
+
+    const longRows = Array.from({ length: 80 }, (_, index) => `Row ${String(index + 1).padStart(2, '0')}`)
+    await setJson(
+      host,
+      JSON.stringify(
+        {
+          title: 'Fit output height check',
+          rows: longRows,
+        },
+        null,
+        2,
+      ),
+    )
+    await setTemplate(
+      host,
+      `<section><h3>\${title}</h3><div>\${rows.map((row) => html\`<p>\${row}</p>\`).join('')}</div></section>`,
+    )
+    await clickEditorAction(host, 'Run demo')
+    await delay(250)
+    const fitBeforePreviewHeight = await getPreviewHeight(host)
+    const fitBeforeScrollMetrics = await getOutputContainerScrollMetrics(host)
+    assert(
+      fitBeforeScrollMetrics?.hasVerticalOverflow,
+      `Expected overflow before fitting output height: ${JSON.stringify(fitBeforeScrollMetrics)}`,
+    )
+    await clickEditorAction(host, 'Toggle output height')
+    await delay(120)
+    const fitAfterPreviewHeight = await getPreviewHeight(host)
+    const fitAfterScrollMetrics = await getOutputContainerScrollMetrics(host)
+    assert(
+      fitAfterPreviewHeight > fitBeforePreviewHeight,
+      `Fit output action did not increase preview height: before=${fitBeforePreviewHeight}, after=${fitAfterPreviewHeight}`,
+    )
+    assert(
+      fitAfterScrollMetrics &&
+        fitAfterScrollMetrics.scrollHeight <= fitAfterScrollMetrics.clientHeight + 2 &&
+        !fitAfterScrollMetrics.hasVerticalOverflow,
+      `Output still overflowed after fit action: ${JSON.stringify(fitAfterScrollMetrics)}`,
+    )
+    await clickEditorAction(host, 'Toggle output height')
+    await delay(120)
+    const fitRestoredPreviewHeight = await getPreviewHeight(host)
+    assert(
+      fitRestoredPreviewHeight < fitAfterPreviewHeight - 10,
+      `Output height toggle did not shrink after second click: expanded=${fitAfterPreviewHeight}, restored=${fitRestoredPreviewHeight}`,
+    )
+
+    const previewHeightBefore = await getPreviewHeight(host)
+    const outputHeightBefore = await getOutputContainerHeight(host)
+    await host.evaluate((el) => {
+      const handle = el.shadowRoot?.querySelector('.preview-resizer')
+      if (!(handle instanceof HTMLElement)) {
+        throw new Error('Missing preview resizer')
+      }
+      handle.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, clientY: 200 }),
+      )
+      globalThis.dispatchEvent(
+        new PointerEvent('pointermove', { bubbles: true, clientY: 320 }),
+      )
+      globalThis.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, clientY: 320 }),
+      )
+    })
+    await delay(80)
+    const previewHeightAfter = await getPreviewHeight(host)
+    assert(
+      previewHeightAfter > previewHeightBefore + 40,
+      `Preview did not resize as expected: before=${previewHeightBefore}, after=${previewHeightAfter}`,
+    )
+    const outputHeightAfter = await getOutputContainerHeight(host)
+    assert(
+      outputHeightAfter > outputHeightBefore + 40,
+      `Output container did not resize with preview: before=${outputHeightBefore}, after=${outputHeightAfter}`,
+    )
+    const outputOverflowState = await getOutputContainerOverflowState(host)
+    assert(
+      outputOverflowState?.overflowY === 'auto' || outputOverflowState?.overflowY === 'scroll',
+      `Output container overflowY should be scrollable, got: ${outputOverflowState?.overflowY}`,
+    )
+    assert(
+      outputOverflowState?.overflowX === 'auto' || outputOverflowState?.overflowX === 'scroll',
+      `Output container overflowX should be scrollable, got: ${outputOverflowState?.overflowX}`,
+    )
+    assert(
+      outputOverflowState?.hasVerticalOverflow,
+      `Output container did not report overflow when content exceeded available height: ${
+        JSON.stringify(outputOverflowState)
+      }`,
+    )
+    assert(
+      outputOverflowState?.hasHorizontalOverflow,
+      `Output container did not report overflow when content exceeded available width: ${
+        JSON.stringify(outputOverflowState)
+      }`,
+    )
+    await host.evaluate((el) => {
+      const handle = el.shadowRoot?.querySelector('.preview-resizer')
+      if (!(handle instanceof HTMLElement)) {
+        throw new Error('Missing preview resizer')
+      }
+      handle.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, clientY: 200 }),
+      )
+      globalThis.dispatchEvent(
+        new PointerEvent('pointermove', { bubbles: true, clientY: 1500 }),
+      )
+      globalThis.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, clientY: 1500 }),
+      )
+    })
+    await delay(80)
+    const previewHeightAfterLargeDrag = await getPreviewHeight(host)
+    assert(
+      previewHeightAfterLargeDrag > 960,
+      `Preview height remained capped: ${previewHeightAfterLargeDrag}`,
+    )
+    const previewResizerBottomGap = await getPreviewResizerBottomGap(host)
+    assert(
+      typeof previewResizerBottomGap === 'number' && Math.abs(previewResizerBottomGap) <= 2,
+      `Preview resizer is not anchored to the preview bottom edge: gap=${previewResizerBottomGap}`,
+    )
+
+    await host.evaluate((el) => {
+      const handle = el.shadowRoot?.querySelector('.editor-resizer')
+      if (!(handle instanceof HTMLElement)) {
+        throw new Error('Missing editor resizer')
+      }
+      handle.dispatchEvent(
+        new PointerEvent('pointerdown', { bubbles: true, clientY: 200 }),
+      )
+      globalThis.dispatchEvent(
+        new PointerEvent('pointermove', { bubbles: true, clientY: 280 }),
+      )
+      globalThis.dispatchEvent(
+        new PointerEvent('pointerup', { bubbles: true, clientY: 280 }),
+      )
+    })
+    await delay(80)
+    const manualEditorSizing = await getEditorSizing(host)
+    assert(
+      manualEditorSizing &&
+        manualEditorSizing.panelHeight > initialEditorSizing.panelHeight + 40,
+      `Editor did not resize manually: before=${JSON.stringify(initialEditorSizing)}, after=${
+        JSON.stringify(manualEditorSizing)
+      }`,
+    )
+
+    await setTemplate(
+      host,
+      `<section>
+  <h2>\${label}</h2>
+  <p>One</p>
+  <p>Two</p>
+  <p>Three</p>
+  <p>Four</p>
+  <p>Five</p>
+  <p>Six</p>
+  <p>Seven</p>
+  <p>Eight</p>
+  <p>Nine</p>
+  <p>Ten</p>
+</section>`,
+    )
+    await delay(250)
+    const afterManualEditSizing = await getEditorSizing(host)
+    assert(
+      afterManualEditSizing &&
+        Math.abs(
+            afterManualEditSizing.panelHeight - manualEditorSizing.panelHeight,
+          ) < 2,
+      `Editor auto-sizing overrode manual resize: manual=${JSON.stringify(manualEditorSizing)}, afterEdit=${
+        JSON.stringify(afterManualEditSizing)
+      }`,
+    )
+
+    await setTemplate(
+      host,
+      `<section>
+${Array.from({ length: 80 }, (_, index) => `  <p>Editor fit row ${index + 1}</p>`).join('\n')}
+</section>`,
+    )
+    await delay(250)
+    const editorToggleBefore = await getEditorSizing(host)
+    await clickEditorAction(host, 'Toggle editor height')
+    await delay(200)
+    const editorToggleExpanded = await getEditorSizing(host)
+    assert(
+      editorToggleBefore && editorToggleExpanded &&
+        editorToggleExpanded.panelHeight > editorToggleBefore.panelHeight + 40,
+      `Editor height toggle did not expand: before=${JSON.stringify(editorToggleBefore)}, after=${
+        JSON.stringify(editorToggleExpanded)
+      }`,
+    )
+    const largestExpandedEditor = Math.max(
+      editorToggleExpanded?.jsonHeight ?? 0,
+      editorToggleExpanded?.templateHeight ?? 0,
+    )
+    assert(
+      editorToggleExpanded &&
+        editorToggleExpanded.splitHeight >= largestExpandedEditor - 2,
+      `Editor fit did not reach the largest CodeMirror content height: ${JSON.stringify(editorToggleExpanded)}`,
+    )
+    await clickEditorAction(host, 'Toggle editor height')
+    await delay(200)
+    const editorToggleRestored = await getEditorSizing(host)
+    assert(
+      editorToggleRestored &&
+        Math.abs(editorToggleRestored.panelHeight - editorToggleBefore.panelHeight) < 8,
+      `Editor height toggle did not restore: before=${JSON.stringify(editorToggleBefore)}, restored=${
+        JSON.stringify(editorToggleRestored)
+      }`,
+    )
 
     await setJson(
       host,
@@ -100,23 +522,33 @@ async function run() {
   "size": "medium"
 }`,
     )
-    await host.locator('wa-button:has-text("Run")').click()
+    await clickEditorAction(host, 'Run demo')
     await delay(300)
     const updated = await getOutputText(host)
-    assert(updated.includes('Updated Label'), `Run did not update output: ${updated}`)
+    assert(
+      updated.includes('Updated Label'),
+      `Run did not update output: ${updated}`,
+    )
 
     await setJson(host, `{"label":"Broken"`)
-    await host.locator('wa-button:has-text("Run")').click()
+    await clickEditorAction(host, 'Run demo')
     await delay(200)
     const error = await getErrorText(host)
-    assert(error.includes('Invalid JSON data'), `Expected invalid JSON error, got: ${error}`)
+    assert(
+      error.includes('JSON parse error'),
+      `Expected invalid JSON error, got: ${error}`,
+    )
 
-    await setTemplate(host, `<div><wa-button variant="${'${variant}'}">${'${label}'}</wa-button></div>`)
-    await host.locator('wa-button:has-text("Format HTML")').click()
+    await setTemplate(
+      host,
+      `<div><wa-button variant="${'${variant}'}">${'${label}'}</wa-button></div>`,
+    )
+    await clickEditorAction(host, 'Format HTML')
     await delay(200)
     const formattedTemplate = await getTemplateDoc(host)
     assert(
-      formattedTemplate.includes('\n  <wa-button') && formattedTemplate.includes('\n</div>'),
+      formattedTemplate.includes('\n  <wa-button') &&
+        formattedTemplate.includes('\n</div>'),
       `Format HTML did not expand template as expected:\n${formattedTemplate}`,
     )
 
@@ -133,30 +565,112 @@ async function run() {
       host,
       `<wa-button variant="\${variant}">\${meta?.subtitle ?? label}</wa-button>`,
     )
-    await host.locator('wa-button:has-text("Run")').click()
+    await clickEditorAction(host, 'Run demo')
     await delay(250)
     const subtitleOutput = await getOutputText(host)
-    assert(subtitleOutput.includes('Live Preview'), `Nested/optional expression failed: ${subtitleOutput}`)
+    assert(
+      subtitleOutput.includes('Live Preview'),
+      `Nested/optional expression failed: ${subtitleOutput}`,
+    )
 
     await setTemplate(
       host,
       `<ul>\${items.map((item) => '<li>' + item + '</li>').join('')}</ul>`,
     )
-    await host.locator('wa-button:has-text("Run")').click()
+    await clickEditorAction(host, 'Run demo')
     await delay(250)
     const listOutput = await getOutputText(host)
-    assert(listOutput.includes('Alpha') && listOutput.includes('Beta'), `Array expression failed: ${listOutput}`)
+    assert(
+      listOutput.includes('Alpha') && listOutput.includes('Beta'),
+      `Array expression failed: ${listOutput}`,
+    )
 
     await setTemplate(
       host,
       `<ul>\${items.map((item) => \`<li>\${item}</li>\`).join('')}</ul>`,
     )
-    await host.locator('wa-button:has-text("Run")').click()
+    await clickEditorAction(host, 'Run demo')
     await delay(250)
     const nestedTemplateOutput = await getOutputText(host)
     assert(
-      nestedTemplateOutput.includes('Alpha') && nestedTemplateOutput.includes('Beta'),
+      nestedTemplateOutput.includes('Alpha') &&
+        nestedTemplateOutput.includes('Beta'),
       `Nested template-literal expression failed: ${nestedTemplateOutput}`,
+    )
+
+    await setJson(
+      host,
+      `{
+  "label": "Lit binding button",
+  "disabled": true,
+  "title": "Bound via .title"
+}`,
+    )
+    await setTemplate(
+      host,
+      `<wa-button ?disabled=\${disabled} .title=\${title} @click=\${(event) => event.currentTarget.setAttribute('data-clicked', 'yes')}>\${label}</wa-button>`,
+    )
+    await clickEditorAction(host, 'Run demo')
+    await delay(250)
+    const litBindingState = await host.evaluate((el) => {
+      const button = el.shadowRoot?.querySelector(
+        '.output-container wa-button',
+      )
+      if (!(button instanceof HTMLElement)) {
+        return null
+      }
+      return {
+        disabled: button.disabled === true,
+        title: button.title,
+      }
+    })
+    assert(
+      litBindingState?.disabled,
+      `Boolean Lit binding did not apply: ${JSON.stringify(litBindingState)}`,
+    )
+    assert(
+      litBindingState?.title === 'Bound via .title',
+      `Property Lit binding did not apply: ${JSON.stringify(litBindingState)}`,
+    )
+    await setJson(
+      host,
+      `{
+  "label": "Lit binding button",
+  "disabled": false,
+  "title": "Bound via .title"
+}`,
+    )
+    await clickEditorAction(host, 'Run demo')
+    await delay(250)
+    await host.evaluate((el) => {
+      const button = el.shadowRoot?.querySelector(
+        '.output-container wa-button',
+      )
+      if (button instanceof HTMLElement) {
+        button.click()
+      }
+    })
+    const clickedState = await host.evaluate((el) => {
+      const button = el.shadowRoot?.querySelector(
+        '.output-container wa-button',
+      )
+      return button instanceof HTMLElement ? button.getAttribute('data-clicked') : null
+    })
+    assert(
+      clickedState === 'yes',
+      `Event Lit binding did not apply: ${clickedState}`,
+    )
+
+    const customElementDemo = page.locator('demo-pane').nth(2)
+    await customElementDemo.waitFor()
+    const customOutputHtml = await customElementDemo.evaluate((el) => {
+      const output = el.shadowRoot?.querySelector('.output-container')
+      return output?.innerHTML ?? ''
+    })
+    assert(
+      customOutputHtml.includes('<demo-status-pill') &&
+        customOutputHtml.includes('Custom element renders'),
+      `Custom element was stripped by sanitizer: ${customOutputHtml}`,
     )
 
     await page.close()

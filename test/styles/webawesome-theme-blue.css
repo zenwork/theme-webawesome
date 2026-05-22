@@ -1,0 +1,20 @@
+:root,
+.wa-light {
+  --wa-color-brand-fill-loud: oklch(0.72 0.154 266.21);
+  --wa-color-brand-fill-normal: oklch(0.66 0.136 266.21);
+  --wa-color-brand-border-loud: oklch(0.58 0.118 266.21);
+  --wa-color-brand-text-loud: oklch(0.41 0.103 266.21);
+  --wa-color-brand-text-normal: oklch(0.5 0.098 266.21);
+
+  --wa-border-radius-s: 0.15rem;
+  --wa-border-radius-m: 0.28rem;
+  --wa-border-radius-l: 0.38rem;
+}
+
+.wa-dark {
+  --wa-color-brand-fill-loud: oklch(0.68 0.146 266.21);
+  --wa-color-brand-fill-normal: oklch(0.62 0.13 266.21);
+  --wa-color-brand-border-loud: oklch(0.57 0.116 266.21);
+  --wa-color-brand-text-loud: oklch(0.84 0.118 266.21);
+  --wa-color-brand-text-normal: oklch(0.77 0.106 266.21);
+}

@@ -39,10 +39,23 @@ deno task serve
 ## What the theme wires up
 
 - WebAwesome CSS + loader scripts in the base layout
+- Automatic copy of free WebAwesome assets from `@awesome.me/webawesome` into `/lib/webawesome/dist-cdn` at build time
 - Theme components bundle loaded from `componentEntrypoint` (default: `components/index.ts`)
 - Site/table-of-contents navigation helpers (`nav` + markdown `toc`)
 - HTML heading preprocessing that assigns IDs and builds page TOC data from `h2`-`h6`
-- Docs plugin stack: `lightningcss`, `base_path`, `metas`, `sitemap`, `favicon`, `esbuild`
+- Header utilities: section tabs, docs search, theme toggle, and "Copy as Markdown"
+- Docs plugin stack: `lightningcss`, `base_path`, `nav`, `search`, `pagefind`, `metas`, `toc`, `sitemap`, `favicon`,
+  `esbuild`
+
+## Built-in docs search
+
+- Search is enabled by default through Lume `search` + `pagefind` plugins.
+- The header search uses the generated Pagefind index and shows matched page sections.
+- Selecting a result navigates directly to the matched section anchor when available.
+- Keyboard behavior:
+  - `/` focuses search (outside editable fields)
+  - `ArrowDown` moves focus into result items
+  - `Enter` on the input opens the first result
 
 ## WebAwesome: free vs Pro configuration
 
@@ -53,6 +66,12 @@ import theme from 'theme/mod.ts'
 const site = lume()
 
 site.use(theme({
+  siteToc: {
+    root: '.',
+    includeUrlPrefix: '/docs/',
+    // Or provide a full nav filter string:
+    // filter: 'hide_menu!=true url^=/guides/',
+  },
   webawesome: {
     mode: 'free', // or 'pro'
     // Free default:
@@ -70,6 +89,11 @@ site.use(theme({
 
 export default site
 ```
+
+Notes:
+
+- In `mode: 'free'`, the theme fetches WebAwesome assets from `npm:@awesome.me/webawesome@^3.1.0` during build.
+- In `mode: 'pro'`, provide your own Pro asset files and paths.
 
 ## Customize WebAwesome tokens with CSS custom properties
 
@@ -140,6 +164,14 @@ Notes:
   layout.
 - Always register custom elements with a guard:
   - `if (!customElements.get('my-tag')) customElements.define('my-tag', MyEl)`
+- `siteToc.root` points to the docs root directory in your workspace (relative to `cwd`).
+- `siteToc.root: '.'` maps to the site source root URL (`/`).
+- `siteToc.root` must be relative to `cwd` and inside your configured `site.src` path (for example `src` or `src/docs`
+  when `site.src` is `./src`); `/` is invalid.
+- `siteToc.sections` defines section folders, labels, and order.
+- A single section renders one scoped sidebar TOC.
+- More than one section automatically enables section tabs in header/drawer.
+- Sidebar navigation uses `siteToc.includeUrlPrefix` by default (`/`). For advanced matching, use `siteToc.filter`.
 
 ## Local development and test-site workflow
 
@@ -172,5 +204,4 @@ deno task build
 ## Maintainer notes
 
 - Update Lume deps: `deno task lume upgrade`
-- Generate npm package metadata from `deno.json`: `deno task npm`
 - Release notes: `release-please` is configured via `.github/workflows/release-please.yml`

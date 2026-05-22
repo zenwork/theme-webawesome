@@ -2,12 +2,15 @@ import lightningcss from 'lume/plugins/lightningcss.ts'
 import basePath from 'lume/plugins/base_path.ts'
 import metas from 'lume/plugins/metas.ts'
 import nav from 'lume/plugins/nav.ts'
+import search from 'lume/plugins/search.ts'
+import pagefind from 'lume/plugins/pagefind.ts'
 import { Options as SitemapOptions, sitemap } from 'lume/plugins/sitemap.ts'
 import { favicon, Options as FaviconOptions } from 'lume/plugins/favicon.ts'
 import { merge } from 'lume/core/utils/object.ts'
 import createSlugifier from 'lume/core/slugifier.ts'
 import esbuild from 'lume/plugins/esbuild.ts'
 import toc from 'https://deno.land/x/lume_markdown_plugins@v0.9.0/toc.ts'
+import { isAbsolute, join } from 'jsr:@std/path@1.1.2'
 
 import 'lume/types.ts'
 
@@ -20,10 +23,24 @@ export interface WebAwesomeOptions {
   splitPanelPath?: string
 }
 
+export interface SiteTocOptions {
+  root: string
+  sections?: { folder: string; label: string; order: number }[]
+  includeUrlPrefix?: string
+  filter?: string
+}
+
+export interface SiteLogoOptions {
+  src: string
+  alt?: string
+}
+
 export interface Options {
   sitemap?: Partial<SitemapOptions>
   favicon?: Partial<FaviconOptions>
   webawesome?: WebAwesomeOptions
+  siteToc?: SiteTocOptions
+  siteLogo?: SiteLogoOptions
   componentEntrypoint?: string
   additionalComponentEntrypoints?: string[]
 }
@@ -45,6 +62,15 @@ interface TocNode {
   children: TocNode[]
 }
 
+interface ThemeSectionLink {
+  key: string
+  title: string
+  indexTitle: string
+  baseUrl: string
+  url: string
+  order: number
+}
+
 export const defaults: Options = {
   favicon: {
     input: 'uploads/favicon.svg',
@@ -57,11 +83,20 @@ export const defaults: Options = {
   additionalComponentEntrypoints: [],
 }
 
+const siteTocDefaults: SiteTocOptions = {
+  root: '.',
+  sections: [{ folder: 'src', label: 'Home', order: 0 }],
+  includeUrlPrefix: '/',
+}
+
 const headingPattern = /<h([2-6])(\s[^>]*)?>([\s\S]*?)<\/h\1>/gi
 const headingIdPattern = /\sid=(["'])(.*?)\1/i
 const stripTagsPattern = /<[^>]*>/g
 const collapseWhitespacePattern = /\s+/g
 const absoluteUrlPattern = /^(?:[a-z]+:)?\/\//i
+const freeWebAwesomeAssetSource = 'npm:@awesome.me/webawesome@^3.1.0/dist-cdn/**'
+const freeWebAwesomeAssetMarker = 'styles/webawesome.css'
+const freeWebAwesomeAssetStampFile = '.theme-webawesome-assets.stamp'
 const slugifyHeading = createSlugifier()
 
 function toScriptPath(entrypoint: string): string {
@@ -93,6 +128,201 @@ function getUniqueSlug(slug: string, used: Set<string>): string {
 
   used.add(next)
   return next
+}
+
+function normalizeUrlPrefix(prefix: string): string {
+  const trimmed = prefix.trim()
+
+  if (!trimmed) {
+    return '/'
+  }
+
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`
+}
+
+function normalizeSectionKey(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return ''
+  }
+
+  const firstSegment = trimmed
+    .replace(/^\/+/, '')
+    .split('/')
+    .filter(Boolean)[0]
+
+  return firstSegment || ''
+}
+
+function normalizeRelativePath(path: string, optionName: string): string {
+  const trimmed = path.trim()
+  if (!trimmed || trimmed === '.') {
+    return '.'
+  }
+
+  if (trimmed === '/' || trimmed.startsWith('/')) {
+    throw new Error(
+      `theme-webawesome: \`${optionName}\` must be a relative path from the current working directory. Use \`.\` for root.`,
+    )
+  }
+
+  const normalized = trimmed.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/g, '')
+  if (!normalized || normalized === '.') {
+    return '.'
+  }
+
+  const segments = normalized.split('/').filter(Boolean)
+  if (segments.some((segment) => segment === '.' || segment === '..')) {
+    throw new Error(`theme-webawesome: \`${optionName}\` cannot contain "." or ".." path segments.`)
+  }
+
+  return segments.join('/')
+}
+
+function pathSegments(path: string): string[] {
+  return path === '.' ? [] : path.split('/').filter(Boolean)
+}
+
+function startsWithSegments(path: string[], prefix: string[]): boolean {
+  if (prefix.length > path.length) {
+    return false
+  }
+
+  return prefix.every((segment, index) => path[index] === segment)
+}
+
+function resolveSiteTocRootUrl(siteSourcePath: string, siteTocRootPath: string): string {
+  const normalizedSourceRoot = normalizeRelativePath(siteSourcePath || '.', 'site.src')
+  const normalizedSiteTocRoot = normalizeRelativePath(siteTocRootPath, 'siteToc.root')
+
+  if (normalizedSiteTocRoot === '.') {
+    return '/'
+  }
+
+  const sourceSegments = pathSegments(normalizedSourceRoot)
+  const siteTocSegments = pathSegments(normalizedSiteTocRoot)
+
+  if (!sourceSegments.length) {
+    return normalizeUrlPrefix(normalizedSiteTocRoot)
+  }
+
+  if (!startsWithSegments(siteTocSegments, sourceSegments)) {
+    throw new Error(
+      `theme-webawesome: \`siteToc.root\` (${normalizedSiteTocRoot}) must point to the site source directory (${normalizedSourceRoot}) or one of its subdirectories.`,
+    )
+  }
+
+  const relativeSegments = siteTocSegments.slice(sourceSegments.length)
+  if (!relativeSegments.length) {
+    return '/'
+  }
+
+  return normalizeUrlPrefix(relativeSegments.join('/'))
+}
+
+function normalizeFolder(folder: string): string {
+  return folder.trim().replace(/^\/+|\/+$/g, '')
+}
+
+function normalizeOutputPath(path: string): string {
+  return path.replace(/^\/+/, '').replace(/\/+$/g, '')
+}
+
+function fileExists(path: string): boolean {
+  try {
+    Deno.statSync(path)
+    return true
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      return false
+    }
+
+    throw error
+  }
+}
+
+function resolveSiteDestPath(site: Lume.Site): string {
+  const dest = typeof site.options.dest === 'string' ? site.options.dest : './_site'
+  const cwd = typeof site.options.cwd === 'string' ? site.options.cwd : Deno.cwd()
+
+  return isAbsolute(dest) ? dest : join(cwd, dest)
+}
+
+function shouldCopyFreeWebAwesomeAssets(site: Lume.Site, assetBasePath: string): boolean {
+  const outputDir = normalizeOutputPath(assetBasePath)
+  const destRoot = resolveSiteDestPath(site)
+  const markerPath = join(destRoot, outputDir, freeWebAwesomeAssetMarker)
+  const stampPath = join(destRoot, outputDir, freeWebAwesomeAssetStampFile)
+
+  if (!fileExists(markerPath) || !fileExists(stampPath)) {
+    return true
+  }
+
+  try {
+    return Deno.readTextFileSync(stampPath).trim() !== freeWebAwesomeAssetSource
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      return true
+    }
+
+    throw error
+  }
+}
+
+function normalizePageUrl(url: string): string {
+  const withLeadingSlash = url.startsWith('/') ? url : `/${url}`
+  const withoutHash = withLeadingSlash.split('#')[0]
+  const withoutQuery = withoutHash.split('?')[0]
+  return withoutQuery.endsWith('/') ? withoutQuery : `${withoutQuery}/`
+}
+
+function toTitleCase(value: string): string {
+  return value
+    .split(/[-_\s/]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function resolveSiteTocOptions(config?: Partial<SiteTocOptions>): SiteTocOptions {
+  const normalizedSections = config?.sections
+    ?.map((section) => ({
+      folder: normalizeFolder(section.folder),
+      label: section.label.trim(),
+      order: section.order,
+    }))
+    .filter((section) => section.folder && section.label)
+
+  const sections = normalizedSections?.length ? normalizedSections : siteTocDefaults.sections
+  if (!sections?.length) {
+    throw new Error('theme-webawesome: `siteToc.sections` must include at least one section definition.')
+  }
+
+  return {
+    root: (config?.root || siteTocDefaults.root).trim() || siteTocDefaults.root,
+    sections,
+    includeUrlPrefix: config?.includeUrlPrefix ?? siteTocDefaults.includeUrlPrefix,
+    filter: config?.filter?.trim() || undefined,
+  }
+}
+
+function getRelativeSegmentsFromRoot(url: string, rootUrl: string): string[] | null {
+  const normalizedUrl = normalizePageUrl(url)
+  if (rootUrl !== '/' && !normalizedUrl.startsWith(rootUrl)) {
+    return null
+  }
+
+  const relative = rootUrl === '/' ? normalizedUrl : normalizedUrl.slice(rootUrl.length)
+  return relative.split('/').filter(Boolean)
+}
+
+function toSectionBaseUrl(rootUrl: string, folder: string): string {
+  const normalizedFolder = normalizeFolder(folder)
+  if (!normalizedFolder) {
+    return rootUrl
+  }
+  return rootUrl === '/' ? `/${normalizedFolder}/` : `${rootUrl}${normalizedFolder}/`
 }
 
 function buildHtmlToc(content: string, minLevel = 2): { content: string; toc: TocNode[] } {
@@ -148,6 +378,7 @@ function buildHtmlToc(content: string, minLevel = 2): { content: string; toc: To
 /** Configure the site */
 export default function (userOptions?: Options) {
   const options = merge(defaults, userOptions)
+  const siteTocOptions = resolveSiteTocOptions(userOptions?.siteToc)
   const basePathByMode: Record<'free' | 'pro', string> = {
     free: '/lib/webawesome/dist-cdn',
     pro: '/lib/webawesome-pro/dist-cdn',
@@ -168,8 +399,111 @@ export default function (userOptions?: Options) {
     ...(options.additionalComponentEntrypoints ?? []),
   ]
   const componentScripts = componentEntrypoints.map(toScriptPath)
+  const siteLogo = options.siteLogo?.src
+    ? {
+      src: options.siteLogo.src,
+      alt: options.siteLogo.alt?.trim() || 'Site logo',
+    }
+    : null
+  const configuredSections = (siteTocOptions.sections ?? [])
+    .map((section) => ({
+      key: normalizeSectionKey(section.folder),
+      folder: normalizeFolder(section.folder),
+      title: section.label.trim(),
+      order: section.order,
+    }))
+    .filter((section) => section.key && section.folder && section.title)
+  if (!configuredSections.length) {
+    throw new Error('theme-webawesome: `siteToc.sections` must include at least one valid section.')
+  }
+
+  const sectionNavigation = configuredSections.length > 1
+  const primarySection = !sectionNavigation ? configuredSections[0] : undefined
+  let siteTocRootUrl = '/'
+  let siteTocBaseUrl = '/'
+  let siteTocFilter = siteTocOptions.filter
+    ? siteTocOptions.filter
+    : `hide_menu!=true url^=${normalizeUrlPrefix(siteTocOptions.includeUrlPrefix ?? '/')}`
+  const themeSections: ThemeSectionLink[] = []
+
+  function buildThemeSections(pages: Lume.Data[]): ThemeSectionLink[] {
+    const sections = [...configuredSections]
+      .sort((a, b) => {
+        if (a.order !== b.order) {
+          return a.order - b.order
+        }
+        return a.title.localeCompare(b.title)
+      })
+
+    return sections.map((section) => {
+      const sectionBaseUrl = toSectionBaseUrl(siteTocRootUrl, section.folder)
+      const entrypointCandidates: Array<{ url: string; order: number; title: string; pathDepth: number }> = []
+
+      for (const page of pages) {
+        if (page.data.hide_menu === true) {
+          continue
+        }
+
+        const urlValue = page.data.url
+        if (typeof urlValue !== 'string' || !urlValue.startsWith('/')) {
+          continue
+        }
+
+        const normalizedUrl = normalizePageUrl(urlValue)
+        if (!normalizedUrl.startsWith(sectionBaseUrl)) {
+          continue
+        }
+
+        const relativeSegments = getRelativeSegmentsFromRoot(normalizedUrl, sectionBaseUrl) ?? []
+        entrypointCandidates.push({
+          url: normalizedUrl,
+          order: typeof page.data.order === 'number' ? page.data.order : Number.POSITIVE_INFINITY,
+          title: typeof page.data.title === 'string' ? page.data.title.trim() : '',
+          pathDepth: relativeSegments.length,
+        })
+      }
+
+      const directSectionEntry = entrypointCandidates.find((candidate) => candidate.url === sectionBaseUrl)
+      const [sortedEntrypoint] = entrypointCandidates.sort((a, b) => {
+        if (a.order !== b.order) {
+          return a.order - b.order
+        }
+        if (a.pathDepth !== b.pathDepth) {
+          return a.pathDepth - b.pathDepth
+        }
+        return a.url.localeCompare(b.url)
+      })
+      const entrypoint = directSectionEntry ?? sortedEntrypoint
+
+      return {
+        key: section.key,
+        title: section.title || toTitleCase(section.key),
+        indexTitle: entrypoint?.title || section.title || toTitleCase(section.key),
+        baseUrl: entrypointCandidates.length ? sectionBaseUrl : siteTocRootUrl,
+        url: entrypoint?.url || (entrypointCandidates.length ? sectionBaseUrl : siteTocRootUrl),
+        order: section.order,
+      }
+    })
+  }
+
+  function getThemeNavigationSnapshot() {
+    return {
+      siteTocFilter,
+      rootUrl: siteTocBaseUrl,
+      sections: [...themeSections],
+    }
+  }
 
   return (site: Lume.Site) => {
+    const siteSourceRoot = typeof site.options.src === 'string' ? site.options.src : '.'
+    siteTocRootUrl = resolveSiteTocRootUrl(siteSourceRoot, siteTocOptions.root)
+    siteTocBaseUrl = primarySection ? toSectionBaseUrl(siteTocRootUrl, primarySection.folder) : siteTocRootUrl
+    siteTocFilter = siteTocOptions.filter ? siteTocOptions.filter : `hide_menu!=true url^=${
+      normalizeUrlPrefix(
+        primarySection?.folder ? siteTocBaseUrl : (siteTocOptions.includeUrlPrefix ?? siteTocBaseUrl),
+      )
+    }`
+
     site.preprocess(['.html'], (pages) => {
       for (const page of pages) {
         const content = typeof page.data.content === 'string' ? page.data.content : ''
@@ -187,6 +521,15 @@ export default function (userOptions?: Options) {
         page.data.content = nextContent
         page.data.toc = htmlToc
       }
+
+      const resolvedSections = buildThemeSections(pages)
+      const navigationSections = sectionNavigation ? resolvedSections : resolvedSections.slice(0, 1)
+      themeSections.splice(0, themeSections.length, ...navigationSections)
+
+      const navigation = getThemeNavigationSnapshot()
+      for (const page of pages) {
+        page.data.themeNavigation = navigation
+      }
     })
 
     site.data('webawesome', webawesome)
@@ -195,11 +538,17 @@ export default function (userOptions?: Options) {
       scripts: componentScripts,
       primaryScript: componentScripts[0],
     })
+    site.data('themeBranding', {
+      logo: siteLogo,
+    })
+    site.data('themeNavigation', getThemeNavigationSnapshot())
 
     site
       .use(lightningcss())
       .use(basePath())
       .use(nav())
+      .use(search())
+      .use(pagefind({ ui: false }))
       .use(metas())
       .use(toc())
       .use(sitemap(options.sitemap))
@@ -223,8 +572,43 @@ export default function (userOptions?: Options) {
       }))
       .add('style.css')
       .add(options.componentEntrypoint ?? 'components/index.ts')
-      // .copy("npm:@awesome.me/webawesome@^3.1.0/dist/styles/**/*.css", "styles/webawesome")
-      .copy('lib', 'lib')
+
+    if (webawesome.mode === 'free' && !absoluteUrlPattern.test(webawesome.assetBasePath)) {
+      const outputDir = normalizeOutputPath(webawesome.assetBasePath)
+      const outputPrefix = outputDir ? `/${outputDir}/` : '/'
+      let isUpdateBuild = false
+
+      const writeAssetStamp = () => {
+        const outputPath = join(resolveSiteDestPath(site), outputDir)
+        Deno.mkdirSync(outputPath, { recursive: true })
+        Deno.writeTextFileSync(join(outputPath, freeWebAwesomeAssetStampFile), freeWebAwesomeAssetSource)
+      }
+
+      site.copy(freeWebAwesomeAssetSource, outputDir)
+      site.addEventListener('beforeBuild', () => {
+        isUpdateBuild = false
+      })
+      site.addEventListener('beforeUpdate', () => {
+        isUpdateBuild = true
+      })
+      site.addEventListener('beforeSave', () => {
+        if (!isUpdateBuild) {
+          return
+        }
+
+        if (shouldCopyFreeWebAwesomeAssets(site, webawesome.assetBasePath)) {
+          return
+        }
+
+        site.files.splice(
+          0,
+          site.files.length,
+          ...site.files.filter((file) => !(file.isCopy && file.outputPath.startsWith(outputPrefix))),
+        )
+      })
+      site.addEventListener('afterBuild', writeAssetStamp)
+      site.addEventListener('afterUpdate', writeAssetStamp)
+    }
 
     if (webawesome.customPropertiesCssPath && !absoluteUrlPattern.test(webawesome.customPropertiesCssPath)) {
       site.add(webawesome.customPropertiesCssPath.replace(/^\//, ''))

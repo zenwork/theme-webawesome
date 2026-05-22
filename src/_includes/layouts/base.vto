@@ -60,30 +60,153 @@
       src="{{ webawesome.assetBasePath }}/components/icon/icon.js"
       data-webawesome="{{ webawesome.assetBasePath }}"
     ></script>
+    <script
+      type="module"
+      src="{{ webawesome.assetBasePath }}/components/input/input.js"
+      data-webawesome="{{ webawesome.assetBasePath }}"
+    ></script>
+    <script
+      type="module"
+      src="{{ webawesome.assetBasePath }}/components/dropdown/dropdown.js"
+      data-webawesome="{{ webawesome.assetBasePath }}"
+    ></script>
+    <script
+      type="module"
+      src="{{ webawesome.assetBasePath }}/components/dropdown-item/dropdown-item.js"
+      data-webawesome="{{ webawesome.assetBasePath }}"
+    ></script>
     {{# CUSTOM COMPONENTS #}}
     <script type="module" src="{{ themeComponents.primaryScript }}"></script>
   </head>
   <body>
-    <wa-drawer id="site-toc-drawer" label="Documentation" placement="start">
+    {{ set currentPathParts = (url || '/').split('/').filter((part) => part.length > 0) }}
+    {{ set currentSectionKey = currentPathParts[0] || '' }}
+    {{ set siteLogo = themeBranding ? themeBranding.logo : null }}
+    {{ set sectionChoices = themeNavigation?.sections || [] }}
+    {{ set sectionNavigation = sectionChoices.length > 1 }}
+    {{
+      set activeSection = sectionNavigation
+      ? (sectionChoices.find((section) => section.baseUrl && url.startsWith(section.baseUrl)) ||
+        sectionChoices.find((section) => section.key === currentSectionKey) ||
+        sectionChoices[0])
+      : sectionChoices[0]
+    }}
+    {{ set sectionChooserVisible = sectionNavigation && sectionChoices.length > 1 }}
+    {{ set siteNavigationHeading = sectionNavigation ? (activeSection?.title || 'Documentation') : 'Documentation' }}
+
+    <wa-drawer id="site-toc-drawer" label="Menu" placement="start">
+      <section>
+        {{ if sectionChooserVisible }}
+          <nav class="site-section-drawer" aria-label="Sections">
+            {{ for section of sectionChoices }}
+              <a
+                href="{{ section.url }}"
+                class="site-section-link {{ if activeSection?.key === section.key }}is-active{{ /if }}"
+              >
+                {{ section.title }}
+              </a>
+            {{ /for }}
+          </nav>
+        {{ /if }}
+      </section>
       <section class="site-toc-shell">
-        <h2>Documentation</h2>
-        {{ include '../site-toc.vto' }}
+        {{ include '../section-toc.vto' }}
       </section>
     </wa-drawer>
     <header class="site-header">
       <div class="site-header-inner">
-        <wa-button class="site-toc-trigger" variant="neutral" size="small" id="site-toc-trigger">Docs</wa-button>
-        <a class="site-title" href="/">{{ metas.site }}</a>
+        <wa-button
+          class="site-toc-trigger"
+          appearance="outlined"
+          variant="brand"
+          size="small"
+          id="site-toc-trigger"
+        ><wa-icon name="bars" label="bars"></wa-icon></wa-button>
+        <a class="site-brand" href="/">
+          {{ if siteLogo }}
+            <img
+              class="site-logo"
+              src="{{ siteLogo.src }}"
+              alt="{{ siteLogo.alt || 'Site logo' }}"
+              width="20"
+              height="20"
+              decoding="async"
+            />
+          {{ /if }}
+          <span class="site-title">{{ metas.site }}</span>
+        </a>
+        {{ if sectionChooserVisible }}
+          <span class="site-section-drawer">{{ activeSection?.title || siteNavigationHeading }}</span>
+        {{ /if }}
+        {{ if sectionChooserVisible }}
+          <nav class="site-section-nav" aria-label="Sections">
+            {{ for section of sectionChoices }}
+              <a
+                href="{{ section.url }}"
+                class="site-section-link {{ if activeSection?.key === section.key }}is-active{{ /if }}"
+              >
+                {{ section.title }}
+              </a>
+            {{ /for }}
+          </nav>
+        {{ /if }}
+        <div class="site-search">
+          <wa-dropdown
+            class="site-search-dropdown"
+            placement="bottom-start"
+            distance="8"
+            data-pagefind-script="{{ '/pagefind/pagefind.js' |> url }}"
+          >
+            <wa-input
+              slot="trigger"
+              class="site-search-input"
+              type="search"
+              size="xs"
+              appearance="outlined"
+              placeholder="Search docs"
+              aria-label="Search documentation"
+              autocomplete="off"
+            >
+              <wa-icon slot="start" name="magnifying-glass" label="Search"></wa-icon>
+            </wa-input>
+          </wa-dropdown>
+        </div>
         {{ include '../theme-toggle.vto' }}
       </div>
     </header>
     <main class="docs-shell">
       <aside class="site-toc-panel">
         <section class="site-toc-shell">
-          <h2>Documentation</h2>
-          {{ include '../site-toc.vto' }}
+          {{ include '../section-toc.vto' }}
         </section>
       </aside>
+      {{ if toc?.length }}
+        <section class="page-toc-mobile">
+          <section class="page-toc-shell">
+            <h2>On this page</h2>
+            <nav aria-label="Page table of contents">
+              <ol class="page-toc-list">
+                {{ for item of toc }}
+                  <li>
+                    <a href="{{ item.slug ? `#${item.slug}` : item.url }}" class="toc-link">{{ item.text }}</a>
+                    {{ if item.children.length }}
+                      <ul class="page-toc-list">
+                        {{ for child of item.children }}
+                          <li>
+                            <a href="{{ child.slug ? `#${child.slug}` : child.url }}" class="toc-link">{{
+                              child.text
+                            }}</a>
+                          </li>
+                        {{ /for }}
+                      </ul>
+                    {{ /if }}
+                  </li>
+                {{ /for }}
+              </ol>
+            </nav>
+          </section>
+        </section>
+      {{ /if }}
       <article class="docs-content">
         {{ content }}
       </article>
@@ -117,6 +240,646 @@
     </main>
     <script>
       ;(() => {
+        const docsContent = document.querySelector('.docs-content')
+        const copyButton = document.getElementById('copy-page-markdown')
+
+        if (!docsContent || !copyButton || !navigator.clipboard?.writeText) {
+          if (copyButton) {
+            copyButton.setAttribute('disabled', '')
+          }
+          return
+        }
+
+        const skipActionClass = 'docs-content-actions'
+
+        const normalizeInline = (value) => value.replace(/[ \t]+/g, ' ').replace(/\s+\n/g, '\n').trim()
+
+        const toInlineMarkdown = (node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            return node.textContent || ''
+          }
+
+          if (node.nodeType !== Node.ELEMENT_NODE) {
+            return ''
+          }
+
+          const element = /** @type {HTMLElement} */ (node)
+          const tag = element.tagName
+          const content = Array.from(element.childNodes).map(toInlineMarkdown).join('')
+
+          if (tag === 'BR') {
+            return '  \n'
+          }
+
+          if (tag === 'CODE') {
+            const code = normalizeInline(element.textContent || '')
+            return code ? `\`${code}\`` : ''
+          }
+
+          if (tag === 'A') {
+            const label = normalizeInline(content || element.textContent || '')
+            const href = element.getAttribute('href') || ''
+            return label && href ? `[${label}](${href})` : label
+          }
+
+          if (tag === 'STRONG' || tag === 'B') {
+            const value = normalizeInline(content)
+            return value ? `**${value}**` : ''
+          }
+
+          if (tag === 'EM' || tag === 'I') {
+            const value = normalizeInline(content)
+            return value ? `*${value}*` : ''
+          }
+
+          if (tag === 'IMG') {
+            const alt = element.getAttribute('alt') || ''
+            const src = element.getAttribute('src') || ''
+            return src ? `![${alt}](${src})` : ''
+          }
+
+          return content
+        }
+
+        const toListMarkdown = (list, depth = 0) => {
+          const ordered = list.tagName === 'OL'
+          const items = Array.from(list.children).filter((child) => child.tagName === 'LI')
+          const lines = []
+
+          items.forEach((item, index) => {
+            const marker = ordered ? `${index + 1}.` : '-'
+            const prefix = `${'  '.repeat(depth)}${marker} `
+            const inlineParts = []
+            const nestedLists = []
+
+            for (const child of item.childNodes) {
+              if (child.nodeType === Node.ELEMENT_NODE) {
+                const childElement = /** @type {HTMLElement} */ (child)
+                if (childElement.tagName === 'UL' || childElement.tagName === 'OL') {
+                  nestedLists.push(toListMarkdown(childElement, depth + 1))
+                  continue
+                }
+              }
+              inlineParts.push(toInlineMarkdown(child))
+            }
+
+            const line = normalizeInline(inlineParts.join(''))
+            if (line) {
+              lines.push(`${prefix}${line}`)
+            }
+
+            nestedLists.forEach((nested) => {
+              if (nested) {
+                lines.push(nested)
+              }
+            })
+          })
+
+          return lines.join('\n')
+        }
+
+        const toBlockMarkdown = (element) => {
+          const tag = element.tagName
+
+          if (/^H[1-6]$/.test(tag)) {
+            const level = Number(tag.slice(1))
+            const title = normalizeInline(Array.from(element.childNodes).map(toInlineMarkdown).join(''))
+            return title ? `${'#'.repeat(level)} ${title}` : ''
+          }
+
+          if (tag === 'P') {
+            return normalizeInline(Array.from(element.childNodes).map(toInlineMarkdown).join(''))
+          }
+
+          if (tag === 'PRE') {
+            const code = element.querySelector('code')
+            const source = (code?.textContent || element.textContent || '').replace(/\n+$/g, '')
+            const language = code?.className.match(/language-([a-z0-9_-]+)/i)?.[1] || ''
+            return `\`\`\`${language}\n${source}\n\`\`\``
+          }
+
+          if (tag === 'UL' || tag === 'OL') {
+            return toListMarkdown(element)
+          }
+
+          if (tag === 'BLOCKQUOTE') {
+            const quote = normalizeInline(element.textContent || '')
+            return quote
+              .split('\n')
+              .filter(Boolean)
+              .map((line) => `> ${line}`)
+              .join('\n')
+          }
+
+          if (tag === 'HR') {
+            return '---'
+          }
+
+          if (tag === 'TABLE') {
+            return normalizeInline(element.textContent || '')
+          }
+
+          return normalizeInline(Array.from(element.childNodes).map(toInlineMarkdown).join(''))
+        }
+
+        const buildMarkdown = () => {
+          const blocks = []
+          for (const child of docsContent.children) {
+            if (child.classList.contains(skipActionClass)) {
+              continue
+            }
+            const block = toBlockMarkdown(child)
+            if (block) {
+              blocks.push(block)
+            }
+          }
+          return blocks.join('\n\n').replace(/\n{3,}/g, '\n\n').trim()
+        }
+
+        copyButton.addEventListener('click', async () => {
+          const markdown = buildMarkdown()
+          if (!markdown) {
+            return
+          }
+
+          try {
+            await navigator.clipboard.writeText(markdown)
+            const icon = copyButton.querySelector('wa-icon')
+            const textNode = Array.from(copyButton.childNodes).find((node) =>
+              node.nodeType === Node.TEXT_NODE && node.textContent?.trim()
+            )
+            if (icon) {
+              icon.setAttribute('name', 'check')
+            }
+            if (textNode) {
+              textNode.textContent = ' Copied Markdown'
+            }
+            window.setTimeout(() => {
+              if (icon) {
+                icon.setAttribute('name', 'copy')
+              }
+              if (textNode) {
+                textNode.textContent = ' Copy as Markdown'
+              }
+            }, 1400)
+          } catch {
+            const icon = copyButton.querySelector('wa-icon')
+            if (icon) {
+              icon.setAttribute('name', 'xmark')
+              window.setTimeout(() => icon.setAttribute('name', 'copy'), 1400)
+            }
+          }
+        })
+      })()
+    </script>
+    <script>
+      ;(() => {
+        const searchDropdown = document.querySelector('.site-search-dropdown')
+        const searchInput = searchDropdown?.querySelector('.site-search-input')
+        if (!searchDropdown || !searchInput) {
+          return
+        }
+
+        const minSearchLength = 2
+        const maxResults = 8
+        const debounceMs = 150
+        const excerptMaxLength = 72
+        const secondaryLineMaxLength = 84
+        const pagefindScriptPath = searchDropdown.getAttribute('data-pagefind-script') || '/pagefind/pagefind.js'
+
+        let debounceTimer = 0
+        let searchToken = 0
+        let pagefindPromise = null
+        let resultTargets = []
+        let preserveDropdownItemFocus = false
+
+        const restoreSearchInputFocus = () => {
+          searchInput.focus({ preventScroll: true })
+        }
+
+        const getSelectableResultItems = () => (
+          Array.from(searchDropdown.querySelectorAll('wa-dropdown-item'))
+            .filter((item) => !item.hasAttribute('disabled') && Boolean(item.value))
+        )
+
+        const focusFirstResultItem = () => {
+          const items = getSelectableResultItems()
+          if (!items.length) {
+            return false
+          }
+
+          for (const [index, item] of items.entries()) {
+            item.active = index === 0
+          }
+
+          preserveDropdownItemFocus = true
+          items[0].focus({ preventScroll: true })
+          window.setTimeout(() => {
+            preserveDropdownItemFocus = false
+          }, 0)
+
+          return true
+        }
+
+        const removeResultItems = () => {
+          for (const item of Array.from(searchDropdown.querySelectorAll('wa-dropdown-item'))) {
+            item.remove()
+          }
+        }
+
+        const hasResultItems = () => Boolean(searchDropdown.querySelector('wa-dropdown-item'))
+        const hasSelectableResults = () => getSelectableResultItems().length > 0
+
+        const createStatusItem = (label) => {
+          const item = document.createElement('wa-dropdown-item')
+          item.setAttribute('disabled', '')
+          item.textContent = label
+          return item
+        }
+
+        const trimExcerpt = (excerpt) => {
+          const compact = excerpt.replace(/\s+/g, ' ').trim()
+          if (compact.length <= excerptMaxLength) {
+            return compact
+          }
+          return `${compact.slice(0, excerptMaxLength - 1).trimEnd()}…`
+        }
+
+        const trimSecondaryLine = (value) => {
+          const compact = value.replace(/\s+/g, ' ').trim()
+          if (compact.length <= secondaryLineMaxLength) {
+            return compact
+          }
+          return `${compact.slice(0, secondaryLineMaxLength - 1).trimEnd()}…`
+        }
+
+        const toDisplayPath = (url) => {
+          try {
+            const parsed = new URL(url, window.location.origin)
+            const combined = `${parsed.pathname}${parsed.hash}`
+            return combined || '/'
+          } catch {
+            return url
+          }
+        }
+
+        const getSubResults = (item) => (
+          Array.isArray(item.sub_results) ? item.sub_results.filter((entry) => entry && typeof entry === 'object') : []
+        )
+
+        const getPreferredSubResult = (item) => {
+          const subResults = getSubResults(item)
+          const anchored = subResults.find((entry) => Boolean(entry.anchor) || (entry.url && entry.url !== item.url))
+          return anchored || subResults[0] || null
+        }
+
+        const appendAnchorToUrl = (url, anchor) => {
+          const normalizedAnchor = String(anchor || '').trim().replace(/^#/, '')
+          if (!normalizedAnchor) {
+            return url
+          }
+
+          const encodedAnchor = encodeURIComponent(normalizedAnchor)
+          if (!url) {
+            return `#${encodedAnchor}`
+          }
+
+          const [withoutHash] = String(url).split('#', 1)
+          return `${withoutHash}#${encodedAnchor}`
+        }
+
+        const resolveResultUrl = (item) => {
+          const baseUrl = typeof item.url === 'string' ? item.url : ''
+          const preferred = getPreferredSubResult(item)
+
+          if (!preferred) {
+            return baseUrl
+          }
+
+          const preferredUrl = typeof preferred.url === 'string' ? preferred.url : ''
+          const preferredAnchor = typeof preferred.anchor === 'string' ? preferred.anchor : ''
+
+          if (preferredUrl.includes('#')) {
+            return preferredUrl
+          }
+
+          if (preferredUrl && preferredAnchor) {
+            return appendAnchorToUrl(preferredUrl, preferredAnchor)
+          }
+
+          if (preferredUrl && preferredUrl !== baseUrl) {
+            return preferredUrl
+          }
+
+          if (baseUrl && preferredAnchor) {
+            return appendAnchorToUrl(baseUrl, preferredAnchor)
+          }
+
+          return preferredUrl || baseUrl
+        }
+
+        const resolveSecondaryLine = (item) => {
+          const preferred = getPreferredSubResult(item)
+          if (preferred) {
+            const subTitle = (preferred.title || '').replace(/\s+/g, ' ').trim()
+            const subExcerpt = (preferred.plain_excerpt || '').replace(/\s+/g, ' ').trim()
+
+            if (subTitle && subExcerpt && !subExcerpt.startsWith(subTitle)) {
+              return trimSecondaryLine(`${subTitle}: ${subExcerpt}`)
+            }
+
+            if (subTitle) {
+              return trimSecondaryLine(subTitle)
+            }
+
+            if (subExcerpt) {
+              return trimSecondaryLine(subExcerpt)
+            }
+          }
+
+          const fallback = (item.plain_excerpt || '').replace(/\s+/g, ' ').trim()
+          return fallback ? trimSecondaryLine(fallback) : ''
+        }
+
+        const renderState = (message) => {
+          removeResultItems()
+          searchDropdown.append(createStatusItem(message))
+          searchDropdown.open = true
+        }
+
+        const renderResults = (results) => {
+          resultTargets = results
+          removeResultItems()
+
+          if (!results.length) {
+            searchDropdown.append(createStatusItem('No results found'))
+            searchDropdown.open = true
+            return
+          }
+
+          for (const result of results) {
+            const item = document.createElement('wa-dropdown-item')
+            item.value = result.url
+
+            const title = document.createElement('span')
+            title.textContent = result.title
+            title.style.display = 'block'
+            title.style.color = 'var(--wa-color-brand-text-normal)'
+            title.style.fontSize = 'var(--wa-font-size-s)'
+            title.style.fontWeight = '600'
+            title.style.lineHeight = '1.25'
+
+            item.append(title)
+
+            if (result.secondary) {
+              const secondary = document.createElement('span')
+              secondary.textContent = result.secondary
+              secondary.style.display = 'block'
+              secondary.style.marginTop = '0.1rem'
+              secondary.style.fontSize = 'var(--wa-font-size-xs)'
+              secondary.style.color = 'var(--wa-color-text-quiet)'
+              secondary.style.lineHeight = '1.2'
+              item.append(secondary)
+            }
+
+            const details = document.createElement('span')
+            details.slot = 'details'
+            details.textContent = result.path
+            details.title = result.path
+            details.style.fontFamily = 'var(--wa-font-family-code)'
+            details.style.fontSize = 'var(--wa-font-size-2xs)'
+            details.style.color = 'var(--wa-color-text-quiet)'
+            details.style.maxInlineSize = '13.5rem'
+            details.style.whiteSpace = 'nowrap'
+            details.style.overflow = 'hidden'
+            details.style.textOverflow = 'ellipsis'
+            item.append(details)
+
+            searchDropdown.append(item)
+          }
+
+          searchDropdown.open = true
+        }
+
+        const loadPagefind = async () => {
+          if (!pagefindPromise) {
+            pagefindPromise = import(pagefindScriptPath).then(async (module) => {
+              if (typeof module.options === 'function') {
+                await module.options({ excerptLength: 20 })
+              }
+
+              if (typeof module.init === 'function') {
+                await module.init()
+              }
+
+              return module
+            }).catch((error) => {
+              pagefindPromise = null
+              throw error
+            })
+          }
+
+          return pagefindPromise
+        }
+
+        const preloadPagefind = () => {
+          void loadPagefind().catch(() => {})
+        }
+
+        const performSearch = async (query) => {
+          const normalized = query.trim()
+          const token = ++searchToken
+
+          if (normalized.length < minSearchLength) {
+            resultTargets = []
+            searchDropdown.open = false
+            removeResultItems()
+            return
+          }
+
+          renderState('Searching…')
+
+          try {
+            const pagefind = await loadPagefind()
+            const searchResult = await pagefind.search(normalized)
+            if (token !== searchToken) {
+              return
+            }
+
+            const detailed = await Promise.all(searchResult.results.slice(0, maxResults).map((entry) => entry.data()))
+            if (token !== searchToken) {
+              return
+            }
+
+            const mapped = detailed.map((item) => {
+              const targetUrl = resolveResultUrl(item)
+              return {
+                url: targetUrl || item.url,
+                title: item.meta?.title || item.url,
+                secondary: resolveSecondaryLine(item),
+                path: toDisplayPath(targetUrl || item.url),
+              }
+            })
+
+            renderResults(mapped)
+          } catch {
+            if (token !== searchToken) {
+              return
+            }
+            resultTargets = []
+            renderState('Search is temporarily unavailable')
+          }
+        }
+
+        const scheduleSearch = (query) => {
+          clearTimeout(debounceTimer)
+          debounceTimer = window.setTimeout(() => {
+            void performSearch(query)
+          }, debounceMs)
+        }
+
+        searchInput.addEventListener('focus', () => {
+          preloadPagefind()
+          const value = String(searchInput.value || '')
+          if (value.trim().length >= minSearchLength) {
+            scheduleSearch(value)
+          }
+        })
+
+        searchInput.addEventListener('input', () => {
+          const value = String(searchInput.value || '')
+          scheduleSearch(value)
+        })
+
+        searchInput.addEventListener('keydown', (event) => {
+          const allowDropdownArrowDown = event.key === 'ArrowDown' && resultTargets.length > 0
+          if (searchDropdown.open && !allowDropdownArrowDown) {
+            event.stopPropagation()
+          }
+
+          if (event.key === 'Escape') {
+            searchDropdown.open = false
+            return
+          }
+
+          if (event.key === 'ArrowDown') {
+            if (!resultTargets.length) {
+              return
+            }
+
+            event.preventDefault()
+            event.stopPropagation()
+
+            if (!searchDropdown.open) {
+              searchDropdown.open = true
+              requestAnimationFrame(() => {
+                focusFirstResultItem()
+              })
+              return
+            }
+
+            focusFirstResultItem()
+            return
+          }
+
+          if (event.key !== 'Enter') {
+            return
+          }
+
+          if (!resultTargets.length) {
+            return
+          }
+
+          event.preventDefault()
+          const first = resultTargets[0]
+          if (first?.url) {
+            window.location.assign(first.url)
+          }
+        })
+
+        searchDropdown.addEventListener('wa-after-show', () => {
+          if (preserveDropdownItemFocus) {
+            preserveDropdownItemFocus = false
+            return
+          }
+
+          const active = document.activeElement
+          if (!(active instanceof HTMLElement)) {
+            return
+          }
+
+          if (!searchDropdown.contains(active) || active === searchInput) {
+            return
+          }
+
+          requestAnimationFrame(() => restoreSearchInputFocus())
+        })
+
+        searchDropdown.addEventListener('focusin', (event) => {
+          if (preserveDropdownItemFocus || hasSelectableResults()) {
+            return
+          }
+
+          const focused = event.target
+          if (!(focused instanceof HTMLElement) || focused === searchInput) {
+            return
+          }
+
+          requestAnimationFrame(() => restoreSearchInputFocus())
+        })
+
+        searchDropdown.addEventListener('wa-show', (event) => {
+          if (hasResultItems()) {
+            return
+          }
+          event.preventDefault()
+          searchDropdown.open = false
+        })
+
+        searchDropdown.addEventListener('wa-select', (event) => {
+          const selected = event.detail?.item
+          const targetUrl = selected?.value
+          if (!targetUrl) {
+            event.preventDefault()
+            return
+          }
+          window.location.assign(targetUrl)
+        })
+
+        document.addEventListener('keydown', (event) => {
+          if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {
+            return
+          }
+
+          if (event.key !== '/') {
+            return
+          }
+
+          const active = document.activeElement
+          const inEditableContext = active instanceof HTMLElement &&
+            (
+              active.isContentEditable ||
+              active.tagName === 'INPUT' ||
+              active.tagName === 'TEXTAREA' ||
+              active.tagName === 'SELECT'
+            )
+
+          if (inEditableContext) {
+            return
+          }
+
+          if (!(searchInput instanceof HTMLElement) || searchInput.offsetParent === null) {
+            return
+          }
+
+          event.preventDefault()
+          searchInput.focus()
+          preloadPagefind()
+        })
+      })()
+    </script>
+    <script>
+      ;(() => {
         const trigger = document.getElementById('site-toc-trigger')
         const drawer = document.getElementById('site-toc-drawer')
         if (trigger && drawer) {
@@ -142,12 +905,14 @@
         }
 
         const header = document.querySelector('.site-header')
-        const pageToc = document.querySelector('.page-toc-panel')
-        if (!pageToc) {
+        const pageTocRoots = Array.from(document.querySelectorAll('.page-toc-panel, .page-toc-mobile'))
+        if (!pageTocRoots.length) {
           return
         }
 
-        const tocLinks = Array.from(pageToc.querySelectorAll('a.toc-link[href^="#"]'))
+        const tocLinks = pageTocRoots.flatMap((tocRoot) =>
+          Array.from(tocRoot.querySelectorAll('a.toc-link[href^="#"]'))
+        )
         if (!tocLinks.length) {
           return
         }
@@ -173,31 +938,41 @@
           document.documentElement.style.setProperty('--site-header-scroll-offset', `${getHeaderOffset()}px`)
         }
 
-        const tocItems = tocLinks
-          .map((link) => {
-            const id = parseHashId(link.hash)
-            if (!id) {
-              return null
-            }
-            const target = document.getElementById(id)
-            if (!target) {
-              return null
-            }
-            return { id, link, target }
-          })
-          .filter((item) => item !== null)
+        const tocItemsById = new Map()
+        for (const link of tocLinks) {
+          const id = parseHashId(link.hash)
+          if (!id) {
+            continue
+          }
+
+          const target = document.getElementById(id)
+          if (!target) {
+            continue
+          }
+
+          const existing = tocItemsById.get(id)
+          if (existing) {
+            existing.links.push(link)
+            continue
+          }
+
+          tocItemsById.set(id, { id, target, links: [link] })
+        }
+        const tocItems = Array.from(tocItemsById.values())
 
         if (!tocItems.length) {
           return
         }
 
         const setActiveToc = (activeId) => {
-          for (const { id, link } of tocItems) {
-            link.classList.toggle('is-active', id === activeId)
-            if (id === activeId) {
-              link.setAttribute('aria-current', 'location')
-            } else {
-              link.removeAttribute('aria-current')
+          for (const { id, links } of tocItems) {
+            for (const link of links) {
+              link.classList.toggle('is-active', id === activeId)
+              if (id === activeId) {
+                link.setAttribute('aria-current', 'location')
+              } else {
+                link.removeAttribute('aria-current')
+              }
             }
           }
         }
@@ -233,13 +1008,15 @@
           setActiveToc(activeId)
         }
 
-        for (const { id, link } of tocItems) {
-          link.addEventListener('click', (event) => {
-            event.preventDefault()
-            scrollToHeading(id, 'smooth')
-            history.pushState(null, '', `#${encodeURIComponent(id)}`)
-            setActiveToc(id)
-          })
+        for (const { id, links } of tocItems) {
+          for (const link of links) {
+            link.addEventListener('click', (event) => {
+              event.preventDefault()
+              scrollToHeading(id, 'smooth')
+              history.pushState(null, '', `#${encodeURIComponent(id)}`)
+              setActiveToc(id)
+            })
+          }
         }
 
         const hashId = parseHashId(window.location.hash)

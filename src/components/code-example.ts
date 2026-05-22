@@ -11,10 +11,18 @@ import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language'
 class CodeExample extends LitElement {
   static override styles = css`
     :host {
+      --code-example-border-color: var(--docs-color-divider, var(--wa-color-neutral-200));
+      --code-example-surface-bg: var(--docs-color-surface, var(--wa-color-neutral-0));
       display: block;
-      border: 1px solid var(--wa-color-neutral-300);
-      border-radius: var(--wa-border-radius-medium);
+      margin-block-end: 0.875rem;
+      border: 1px solid var(--code-example-border-color);
+      border-radius: var(--wa-border-radius-s);
       overflow: hidden;
+      background: var(--code-example-surface-bg);
+    }
+
+    :host(:last-child) {
+      margin-block-end: 0;
     }
 
     #editor {
@@ -22,11 +30,12 @@ class CodeExample extends LitElement {
     }
 
     .cm-editor {
-      font-size: 0.8125rem;
+      font-size: var(--wa-font-size-xs);
+      line-height: 1.45;
     }
 
     .cm-scroller {
-      font-family: Monaco, Menlo, Ubuntu Mono, monospace;
+      font-family: var(--wa-font-family-code);
       line-height: 1.4;
     }
   `
@@ -42,11 +51,28 @@ class CodeExample extends LitElement {
 
   private _editor: EditorView | null = null
 
-  override connectedCallback(): void {
-    super.connectedCallback()
-    if (!this.code) {
-      this.code = this.getNormalizedSlottedCode()
+  get contentHeight(): number {
+    const editor = this._editor
+    if (!editor) {
+      return 0
     }
+    const contentDOMHeight = Math.max(
+      Math.ceil(editor.contentDOM.getBoundingClientRect().height),
+      editor.contentDOM.scrollHeight,
+    )
+    if (contentDOMHeight > 0) {
+      return contentDOMHeight
+    }
+    // @ts-ignore: contentHeight is a valid property of EditorView in CM6
+    const measured = editor.contentHeight
+    if (typeof measured === 'number' && measured > 0) {
+      return measured
+    }
+    return editor.scrollDOM.scrollHeight
+  }
+
+  get contentDOM(): HTMLElement | null {
+    return this._editor?.contentDOM ?? null
   }
 
   override disconnectedCallback(): void {
@@ -59,6 +85,7 @@ class CodeExample extends LitElement {
     if (!this.code) {
       this.code = this.getNormalizedSlottedCode()
     }
+    this.applyInferredLanguage()
     this.mountEditor()
   }
 
@@ -118,13 +145,16 @@ class CodeExample extends LitElement {
       return
     }
     this.code = this.getNormalizedSlottedCode()
+    this.applyInferredLanguage()
   }
 
   private getNormalizedSlottedCode(): string {
     const slot = this.renderRoot.querySelector<HTMLSlotElement>('slot')
-    const raw = slot?.assignedNodes({ flatten: true }).map((node) => node.textContent ?? '').join('') ??
-      this.textContent ??
-      ''
+    const assigned = slot?.assignedNodes({ flatten: true }) ?? []
+    const hasElementNode = assigned.some((node) => node.nodeType === Node.ELEMENT_NODE)
+    const raw = hasElementNode
+      ? this.innerHTML
+      : assigned.map((node) => node.textContent ?? '').join('') || this.textContent || ''
 
     const lines = raw.replaceAll('\r\n', '\n').split('\n')
     while (lines.length > 0 && lines[0].trim() === '') {
@@ -146,6 +176,52 @@ class CodeExample extends LitElement {
     }
 
     return lines.map((line) => line.slice(minIndent)).join('\n')
+  }
+
+  private applyInferredLanguage(): void {
+    if (this.hasAttribute('language')) {
+      return
+    }
+    if (this.language !== 'text') {
+      return
+    }
+    this.language = this.inferLanguageFromSlot()
+  }
+
+  private inferLanguageFromSlot(): 'json' | 'html' | 'javascript' | 'typescript' | 'text' {
+    const slot = this.renderRoot.querySelector<HTMLSlotElement>('slot')
+    const firstElement = slot?.assignedElements({ flatten: true })[0]
+    const explicit = firstElement?.getAttribute('data-language') || firstElement?.getAttribute('language')
+    const normalizedExplicit = this.toKnownLanguage(explicit)
+    if (normalizedExplicit) {
+      return normalizedExplicit
+    }
+
+    const codeElement = firstElement?.matches('code') ? firstElement : firstElement?.querySelector('code')
+    const classHint = codeElement?.className.match(/(?:^|\s)language-([a-z0-9-]+)(?:\s|$)/i)?.[1]
+    const normalizedClassHint = this.toKnownLanguage(classHint)
+    if (normalizedClassHint) {
+      return normalizedClassHint
+    }
+
+    if (slot?.assignedNodes({ flatten: true }).some((node) => node.nodeType === Node.ELEMENT_NODE)) {
+      return 'html'
+    }
+
+    return 'text'
+  }
+
+  private toKnownLanguage(value?: string | null): 'json' | 'html' | 'javascript' | 'typescript' | 'text' | null {
+    if (!value) {
+      return null
+    }
+    const normalized = value.trim().toLowerCase()
+    if (normalized === 'js' || normalized === 'javascript') return 'javascript'
+    if (normalized === 'ts' || normalized === 'typescript') return 'typescript'
+    if (normalized === 'json') return 'json'
+    if (normalized === 'html' || normalized === 'markup') return 'html'
+    if (normalized === 'text' || normalized === 'txt' || normalized === 'plaintext') return 'text'
+    return null
   }
 
   private getLanguageExtension(): unknown | null {

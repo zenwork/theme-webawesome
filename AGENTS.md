@@ -41,7 +41,6 @@ Guidance for coding agents working in this repository.
 - `mod.ts`: theme entrypoint consumed by other Lume sites (`site.remote("/", import.meta.resolve("./src"), ["/**/*"])`).
 - `src/`: theme files, templates, CSS, and custom components.
 - `src/components/`: Lit components and exports.
-- `tools/npm.ts`: generates `package.json` dependencies from `deno.json` npm imports.
 - `test/`: standalone Lume site that imports this theme via `theme/mod.ts`.
 
 ## Standard Commands
@@ -51,7 +50,6 @@ From repo root:
 - `deno task serve` — run the theme site in dev mode.
 - `deno task build` — build root site.
 - `deno task lume upgrade` — update Lume deps.
-- `deno task npm` — generate/update `package.json` from `deno.json` npm imports.
 - `deno lint` / `deno fmt` — lint/format code.
 
 From `test/`:
@@ -101,6 +99,7 @@ Related docs for this project:
 ### Docs update checklist
 
 - If options, defaults, or component APIs changed, update docs pages under `src/docs/` in the same change.
+- Every configurable theme feature must be showcased in the `test/` integration site with at least one concrete usage.
 - Keep `<code-example>` snippets multiline and valid; use `<!-- deno-fmt-ignore -->` where formatter would reflow
   snippet bodies.
 - Verify `test/docs/smoke/` still renders key surfaces (`code-example`, editable/read-only `demo-pane`, page TOC).
@@ -116,7 +115,7 @@ Related docs for this project:
 - Keep WebAwesome integration configuration-driven where possible, so free vs Pro consumption can be switched without
   structural rewrites.
 - Preserve existing plugin order in `plugins.ts` unless the change explicitly requires it.
-- If adding npm-based imports, ensure `deno.json` imports are updated and run `deno task npm`.
+- If adding npm-based imports, ensure `deno.json` imports are updated.
 - Keep exports coherent:
   - component exports in `src/components/index.ts`
   - theme API in `mod.ts` / `plugins.ts`.

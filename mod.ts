@@ -16,7 +16,6 @@ export default function (options: Partial<Options> = {}) {
       '/components/**/*',
       '/style.css',
       '/uploads/**/*',
-      '/lib/**/*',
       '/_data.yml',
     ])
   }

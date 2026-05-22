@@ -53,14 +53,14 @@ class SiteTocTree extends LitElement {
       return
     }
 
-    const destination = new URL(link.href, window.location.origin)
-    const current = new URL(window.location.href)
+    const destination = new URL(link.href, globalThis.location.origin)
+    const current = new URL(globalThis.location.href)
     if (destination.pathname === current.pathname && destination.hash === current.hash) {
       return
     }
 
     this.persistExpandedState()
-    window.location.assign(destination.href)
+    globalThis.location.assign(destination.href)
   }
 
   private handleClick = (event: Event): void => {
@@ -83,18 +83,18 @@ class SiteTocTree extends LitElement {
     }
 
     this.persistExpandedState()
-    window.location.assign(itemLink.href)
+    globalThis.location.assign(itemLink.href)
   }
 
   private syncSelectedItem(): void {
-    const currentPath = this.normalizePath(window.location.pathname)
+    const currentPath = this.normalizePath(globalThis.location.pathname)
     for (const node of this.querySelectorAll<HTMLElement>('wa-tree-item')) {
       const link = node.querySelector<HTMLAnchorElement>(':scope > a[href]')
       if (!link) {
         node.removeAttribute('selected')
         continue
       }
-      const linkPath = this.normalizePath(new URL(link.href, window.location.origin).pathname)
+      const linkPath = this.normalizePath(new URL(link.href, globalThis.location.origin).pathname)
       if (linkPath === currentPath) {
         node.setAttribute('selected', '')
       } else {
