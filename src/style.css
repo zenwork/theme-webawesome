@@ -11,7 +11,7 @@ html {
   --docs-content-max-inline: clamp(68ch, 75vw, 90ch);
   --docs-sticky-top: 4.5rem;
   --docs-divider-color: var(--wa-color-neutral-200);
-  --docs-heading-color: color-mix(in oklab, var(--wa-color-text-normal) 68%, var(--wa-color-brand-text-normal) 62%);
+  --docs-heading-color: color-mix(in oklab, var(--wa-color-text-normal) 48%, var(--wa-color-brand-text-normal) 92%);
 }
 
 @supports not (scrollbar-gutter: stable) {
