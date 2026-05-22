@@ -1,63 +1,38 @@
 # Theme WebAwesome (Lume)
 
-A Lume theme for technical documentation with:
+<img alt="Theme WebAwesome screenshot" src="./schreenshot.png" width="300px"/>
 
-- WebAwesome components (free by default)
-- Lit-based web components
-- runnable code examples via `demo-pane`
+A Lume theme for technical documentation built with WebAwesome + Lit web components.
 
-## Project focus
+## First-time setup
 
-- Build a technical documentation theme for Lume.
-- Use WebAwesome (free by default) with optional Pro configuration.
-- Keep the interactive layer Lit + web components (no large framework required).
-- Make it easy for theme users to inject their own Lit-based components.
-
-## Quick start (theme consumer)
-
-1. Add the theme in your Lume config.
-2. Build or serve your site.
-3. Add your docs pages and Lit components.
+Use this as your minimal config (matches the root [`_config.ts`](./_config.ts)):
 
 ```ts
 import lume from 'lume/mod.ts'
-import theme from 'https://cdn.jsdelivr.net/gh/<user>/<repo>@<tag>/mod.ts'
+import theme from './mod.ts'
 
-const site = lume()
+const site = lume({ src: './src' })
 
-site.use(theme())
+site.use(theme({
+  siteToc: {
+    root: '.',
+  },
+  webawesome: {},
+}))
 
 export default site
 ```
 
-Run:
+Then run:
 
 ```sh
 deno task serve
 ```
 
-## What the theme wires up
+## Example with common customization
 
-- WebAwesome CSS + loader scripts in the base layout
-- Automatic copy of free WebAwesome assets from `@awesome.me/webawesome` into `/lib/webawesome/dist-cdn` at build time
-- Theme components bundle loaded from `componentEntrypoint` (default: `components/index.ts`)
-- Site/table-of-contents navigation helpers (`nav` + markdown `toc`)
-- HTML heading preprocessing that assigns IDs and builds page TOC data from `h2`-`h6`
-- Header utilities: section tabs, docs search, theme toggle, and "Copy as Markdown"
-- Docs plugin stack: `lightningcss`, `base_path`, `nav`, `search`, `pagefind`, `metas`, `toc`, `sitemap`, `favicon`,
-  `esbuild`
-
-## Built-in docs search
-
-- Search is enabled by default through Lume `search` + `pagefind` plugins.
-- The header search uses the generated Pagefind index and shows matched page sections.
-- Selecting a result navigates directly to the matched section anchor when available.
-- Keyboard behavior:
-  - `/` focuses search (outside editable fields)
-  - `ArrowDown` moves focus into result items
-  - `Enter` on the input opens the first result
-
-## WebAwesome: free vs Pro configuration
+The integration test site uses this config (from [`test/_config.ts`](./test/_config.ts)):
 
 ```ts
 import lume from 'lume/mod.ts'
@@ -65,117 +40,184 @@ import theme from 'theme/mod.ts'
 
 const site = lume()
 
+site.copy('logos')
+
 site.use(theme({
+  siteLogo: {
+    src: '/logos/test-site-logo.svg',
+    alt: 'Theme test site logo',
+  },
   siteToc: {
     root: '.',
-    includeUrlPrefix: '/docs/',
-    // Or provide a full nav filter string:
-    // filter: 'hide_menu!=true url^=/guides/',
+    sections: [
+      { folder: 'docs', label: 'Platform', order: 0 },
+      { folder: 'guides', label: 'Guides', order: 1 },
+      { folder: 'reference', label: 'Reference', order: 2 },
+      { folder: 'platform', label: 'Foo', order: 3 },
+    ],
   },
   webawesome: {
-    mode: 'free', // or 'pro'
-    // Free default:
-    // assetBasePath: '/lib/webawesome/dist-cdn',
-    // customPropertiesCssPath: '/styles/webawesome-theme.css',
-    //
-    // Pro example:
-    // assetBasePath: '/lib/webawesome-pro/dist-cdn',
-    // cssPath: '/lib/webawesome-pro/dist-cdn/styles/webawesome.css',
-    // customPropertiesCssPath: '/styles/webawesome-theme.css',
-    // loaderPath: '/lib/webawesome-pro/dist-cdn/webawesome.loader.js',
-    // splitPanelPath: '/lib/webawesome-pro/dist-cdn/components/split-panel/split-panel.js',
+    customPropertiesCssPath: '/styles/webawesome-theme.css',
   },
 }))
 
 export default site
 ```
 
-Notes:
+## What the theme configures for you
 
-- In `mode: 'free'`, the theme fetches WebAwesome assets from `npm:@awesome.me/webawesome@^3.1.0` during build.
-- In `mode: 'pro'`, provide your own Pro asset files and paths.
+From [`plugins.ts`](./plugins.ts), `theme()` wires up:
 
-## Customize WebAwesome tokens with CSS custom properties
+- Plugin stack: `lightningcss`, `base_path`, `nav`, `search`, `pagefind`, `metas`, markdown `toc`, `sitemap`, `favicon`,
+  `esbuild`.
+- Free WebAwesome asset copy in build output (default `assetBasePath: /lib/webawesome/dist-cdn`).
+- `style.css` and your component entrypoint bundle.
+- HTML heading preprocessing (`h2`-`h6`) that adds stable `id`s and page-level TOC data.
+- Theme navigation data (`themeNavigation`) based on `siteToc` sections.
+- Theme data objects:
+  - `webawesome` (resolved asset paths and mode),
+  - `themeComponents` (entrypoints and script output),
+  - `themeBranding` (logo),
+  - `themeNavigation` (resolved nav snapshot).
+- Optional local CSS token file add (`webawesome.customPropertiesCssPath`).
 
-Point the theme at your own CSS file and define the variables WebAwesome exposes:
+## Main options
+
+`theme(options)` supports:
+
+- `webawesome`
+  - `mode`: `'free' | 'pro'` (default: `'free'`)
+  - `assetBasePath`, `cssPath`, `loaderPath`, `splitPanelPath`
+  - `customPropertiesCssPath`
+- `siteToc`
+  - `root` (required by interface, defaults to `'.'`)
+  - `sections` (`[{ folder, label, order }]`)
+  - `includeUrlPrefix` (default: `'/'`)
+  - `filter` (advanced nav filter string override)
+- `siteLogo`
+  - `src` and optional `alt`
+- `componentEntrypoint`
+  - default: `'components/index.ts'`
+- `additionalComponentEntrypoints`
+  - default: `[]`
+- `favicon`, `sitemap`
+  - passed through to Lume plugins
+
+## WebAwesome free vs pro
+
+- `mode: 'free'` (default): theme copies `npm:@awesome.me/webawesome@^3.1.0/dist-cdn/**` into your output.
+- `mode: 'pro'`: provide your Pro asset paths via `assetBasePath`/`cssPath`/`loaderPath`/`splitPanelPath`.
+
+## Using your own Lit components
+
+Point `componentEntrypoint` to a module that imports and registers your elements:
 
 ```ts
 site.use(theme({
-  webawesome: {
-    customPropertiesCssPath: '/styles/webawesome-theme.css',
-  },
+  componentEntrypoint: 'components/custom-entry.ts',
+  additionalComponentEntrypoints: ['components/analytics.ts'],
 }))
 ```
 
-```css
-:root,
-.wa-light {
-  --wa-color-brand-fill-loud: oklch(59% 0.16 258);
-}
-
-.wa-dark {
-  --wa-color-brand-fill-loud: oklch(72% 0.12 258);
-}
-```
-
-## Inject your Lit components
-
-Use a component entrypoint that registers your custom elements.
+Always guard custom element registration:
 
 ```ts
-// components/custom-entry.ts
-import './my-card.ts'
-import './my-playground.ts'
-```
-
-```ts
-// components/my-card.ts
-import { html, LitElement } from 'lit'
-
-class MyCard extends LitElement {
-  protected override render() {
-    return html`
-      <p>My custom Lit component</p>
-    `
-  }
-}
-
 if (!customElements.get('my-card')) {
   customElements.define('my-card', MyCard)
 }
 ```
 
-Then configure the theme:
+## Built-in docs components
 
-```ts
-site.use(theme({
-  componentEntrypoint: 'components/custom-entry.ts',
-  additionalComponentEntrypoints: [
-    'components/analytics.ts',
-  ],
-}))
+### `<demo-pane>`
+
+Interactive runnable example surface that combines:
+
+- JSON data input,
+- HTML template input with `${...}` expressions,
+- live rendered output.
+
+Key features:
+
+- editable and read-only modes,
+- run / format / reset actions,
+- optional fit-to-content preview sizing,
+- auto-loading of `wa-*` components used in the template (plus explicit `imports` support),
+- Lit-style template bindings such as `.prop`, `?attr`, and `@event`.
+
+Attributes:
+
+- `data` (string, default `'{}'`): JSON object string used as template scope.
+- `template` (string, default `''`): HTML template source.
+- `imports` (string, default `'[]'`): JSON array of WebAwesome component names (for example `["button","badge"]`).
+- `editable` (boolean, default `true`): set `editable="false"` for non-editable display mode.
+- `readonly` (boolean, default `false`): disables editing/actions even if `editable` is true.
+- `layout` (`horizontal | tabs`, default `horizontal`): non-editable layout mode.
+- `default-tab` (`data | markup | output`, default `output`): initial active tab.
+- `editor-open` (boolean, default `false`): opens editor panel on load.
+- `data-label` / `template-label` (string): custom labels for editor panes.
+- `output-background` (string): CSS background value for the output area.
+- `fit-content` (boolean, default `false`): auto-size preview height to rendered output.
+
+Basic usage:
+
+```html
+<demo-pane
+  data='{"label":"Deploy","variant":"brand"}'
+  template='<wa-button variant="${variant}">${label}</wa-button>'
+  imports='["button"]'
+  default-tab="output"
+  editor-open
+></demo-pane>
 ```
 
-Notes:
+Read-only preview:
 
-- `componentEntrypoint` is loaded in the base layout as a module script.
-- `additionalComponentEntrypoints` are added and bundled, but are not auto-injected by `src/_includes/layouts/base.vto`.
-- Load additional entrypoints by importing them from your primary entrypoint, or by adding script tags in a custom
-  layout.
-- Always register custom elements with a guard:
-  - `if (!customElements.get('my-tag')) customElements.define('my-tag', MyEl)`
-- `siteToc.root` points to the docs root directory in your workspace (relative to `cwd`).
-- `siteToc.root: '.'` maps to the site source root URL (`/`).
-- `siteToc.root` must be relative to `cwd` and inside your configured `site.src` path (for example `src` or `src/docs`
-  when `site.src` is `./src`); `/` is invalid.
-- `siteToc.sections` defines section folders, labels, and order.
-- A single section renders one scoped sidebar TOC.
-- More than one section automatically enables section tabs in header/drawer.
-- Sidebar navigation uses `siteToc.includeUrlPrefix` by default (`/`). For advanced matching, use `siteToc.filter`.
+```html
+<demo-pane
+  data='{"label":"Deploy","variant":"brand"}'
+  template='<wa-button variant="${variant}">${label}</wa-button>'
+  editable="false"
+  fit-content
+></demo-pane>
+```
 
-## Local development and test-site workflow
+### `<code-example>`
 
-Theme repo:
+Read-only code snippet renderer using CodeMirror, intended for docs snippets.
+
+Key features:
+
+- theme-consistent syntax highlighting,
+- indentation normalization for slotted multiline content,
+- optional language inference from slotted content (`data-language`, `language-*` class, or HTML element content).
+
+Attributes:
+
+- `code` (string, default empty): explicit snippet text.
+- `language` (`json | html | javascript | typescript | text`, default inferred or `text`).
+- `line-numbers` (boolean, default `true`).
+
+Basic usage (slotted code):
+
+```html
+<code-example language="typescript">
+  console.log('Hello docs')
+</code-example>
+```
+
+Basic usage (explicit `code` value):
+
+```html
+<code-example
+  language="json"
+  code='{"name":"theme-webawesome","mode":"free"}'
+></code-example>
+```
+
+## Development commands
+
+Theme repo root:
 
 ```sh
 deno task serve
@@ -184,24 +226,10 @@ deno lint
 deno task test:browser
 ```
 
-Integration test site (`test/`):
+Integration test site:
 
 ```sh
 cd test
 deno task serve
 deno task build
 ```
-
-## Theme consumer checklist
-
-- [ ] `style.css` is included in generated output and loads in browser.
-- [ ] WebAwesome CSS + loader URLs are reachable (default local `/lib/webawesome/dist-cdn` or configured path).
-- [ ] `componentEntrypoint` points to a valid `.ts`/`.js` file.
-- [ ] custom elements are registered before use in templates.
-- [ ] If using `demo-pane`, template expressions use `${propName}` from JSON data.
-- [ ] Root `deno task build` and `test/deno task build` both pass.
-
-## Maintainer notes
-
-- Update Lume deps: `deno task lume upgrade`
-- Release notes: `release-please` is configured via `.github/workflows/release-please.yml`
