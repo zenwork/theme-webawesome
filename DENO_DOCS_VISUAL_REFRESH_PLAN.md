@@ -3,6 +3,59 @@
 This plan aligns the current `theme-webawesome` docs UI with the visual language of `https://docs.deno.com/runtime/`
 while keeping the existing Lume + Lit + WebAwesome architecture.
 
+## Progress Checklist
+
+### Phase Completion
+
+- [ ] Phase 0 — Baseline Capture
+- [ ] Phase 1 — Design Tokens (Deno-like Theme Preset)
+- [ ] Phase 2 — Shell Layout Restyle (Header + 3 Columns)
+- [ ] Phase 3 — Navigation Styling (Left Sidebar + Right Page TOC)
+- [ ] Phase 4 — Content Typography and Rhythm
+- [ ] Phase 5 — Code Surfaces (`code-example` + `demo-pane`)
+- [ ] Phase 6 — Optional “Deno-like” Header Enhancements
+- [ ] Phase 7 — Docs + Integration Test Site Updates
+
+### Acceptance Criteria Completion
+
+-
+  1. [ ] Visual structure clearly resembles Deno docs in both light and dark.
+-
+  2. [x] Header + left nav + content + right TOC remain stable across target breakpoints.
+-
+  3. [ ] Vertical divider lines provide clear, consistent column alignment cues.
+-
+  4. [ ] Sidebar/default nav colors remain desaturated relative to the reading column.
+-
+  5. [x] Navigation active and hover states are clearly identifiable at a glance.
+-
+  6. [x] Top-level navigation is grouped into separate menus/sections, not one giant tree.
+-
+  7. [x] On narrow screens, “On this page” is shown near the top of content and remains usable.
+-
+  8. [x] Main content width scales fluidly with viewport size and never becomes full-width text.
+-
+  9. [x] No regressions in TOC behavior (selection, expansion persistence, heading scroll sync).
+-
+  10. [x] `code-example` and `demo-pane` remain functional and visually integrated.
+-
+  11. [x] Visual skinning is primarily token-driven through WebAwesome theming surfaces.
+-
+  12. [ ] Bespoke CSS additions are limited to structural layout behavior, not duplicated color/theme systems.
+-
+  13. [x] No new styling library/toolkit or styling runtime/build dependency is introduced.
+-
+  14. [ ] Theme remains configurable for non-Deno branding and WebAwesome Pro paths.
+-
+  15. [x] `deno fmt`, `deno lint`, root `deno task build`, and `test/deno task build` pass.
+
+### Final Verification Commands
+
+- [x] `deno fmt`
+- [x] `deno lint`
+- [x] `deno task build` (root)
+- [x] `deno task build` (in `test/`)
+
 ## 1) Reference Snapshot (What We’re Matching)
 
 Based on the provided screenshots and live Deno docs runtime page, key visual traits are:
