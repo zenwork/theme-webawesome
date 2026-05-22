@@ -36,11 +36,13 @@ export default site
       <li>Compiles TypeScript component entrypoints with esbuild</li>
       <li>Registers a default theme component bundle at <code>/components/index.js</code></li>
       <li>Builds site navigation and page TOC data with <code>nav</code> and markdown <code>toc</code></li>
+      <li>Builds docs search indexes with <code>search</code> and <code>pagefind</code></li>
       <li>
         Preprocesses rendered HTML headings (<code>h2</code> to <code>h6</code>) to assign IDs and page TOC entries
       </li>
       <li>
-        Adds default docs plugins: lightningcss, base path, nav, metas, markdown toc, sitemap, favicon, and esbuild
+        Adds default docs plugins: lightningcss, base path, nav, search, pagefind, metas, markdown toc, sitemap,
+        favicon, and esbuild
       </li>
     </ul>
   </section>

@@ -48,6 +48,23 @@ order: 50
       <code>h2</code> to <code>h6</code> receive IDs and are converted into page TOC data. The right panel in
       <code>layouts/base.vto</code> renders this TOC when headings exist.
     </p>
+    <p>
+      On narrow screens, the "On this page" block is moved into the top of the article flow so readers still get quick
+      in-page navigation without a right rail.
+    </p>
+  </section>
+
+  <section class="docs-section">
+    <h2>Header Utilities</h2>
+    <p>The header includes section navigation, docs search, theme toggle, and a page-level markdown copy action.</p>
+    <ul>
+      <li>Search is backed by Pagefind and shows compact result previews in a dropdown.</li>
+      <li>Result selection navigates to a matched section anchor when Pagefind provides one.</li>
+      <li>
+        <code>/</code> focuses search, <code>ArrowDown</code> enters results, and <code>Enter</code> opens top result.
+      </li>
+      <li>The "Copy as Markdown" action serializes current page content into clipboard-friendly markdown.</li>
+    </ul>
   </section>
 
   <section class="docs-section">

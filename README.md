@@ -43,7 +43,19 @@ deno task serve
 - Theme components bundle loaded from `componentEntrypoint` (default: `components/index.ts`)
 - Site/table-of-contents navigation helpers (`nav` + markdown `toc`)
 - HTML heading preprocessing that assigns IDs and builds page TOC data from `h2`-`h6`
-- Docs plugin stack: `lightningcss`, `base_path`, `metas`, `sitemap`, `favicon`, `esbuild`
+- Header utilities: section tabs, docs search, theme toggle, and "Copy as Markdown"
+- Docs plugin stack: `lightningcss`, `base_path`, `nav`, `search`, `pagefind`, `metas`, `toc`, `sitemap`, `favicon`,
+  `esbuild`
+
+## Built-in docs search
+
+- Search is enabled by default through Lume `search` + `pagefind` plugins.
+- The header search uses the generated Pagefind index and shows matched page sections.
+- Selecting a result navigates directly to the matched section anchor when available.
+- Keyboard behavior:
+  - `/` focuses search (outside editable fields)
+  - `ArrowDown` moves focus into result items
+  - `Enter` on the input opens the first result
 
 ## WebAwesome: free vs Pro configuration
 
