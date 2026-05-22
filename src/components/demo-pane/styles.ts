@@ -2,14 +2,19 @@ import { css, CSSResultGroup } from 'lit'
 
 export const styles: CSSResultGroup = css`
   :host {
-    --demo-editor-bg: #282c34;
+    --demo-editor-bg: var(--wa-color-neutral-900);
     --demo-editor-min-height: 120px;
+    --demo-surface-border: var(--wa-color-neutral-300);
+    --demo-surface-border-subtle: var(--wa-color-neutral-200);
+    --demo-surface-bg: var(--wa-color-neutral-0);
+    --demo-toolbar-bg: var(--wa-color-neutral-50);
+    --demo-code-font: var(--wa-font-family-code);
     display: block;
     margin-block-end: 0.875rem;
-    border: 1px solid var(--wa-color-neutral-300);
-    border-radius: var(--wa-border-radius-m);
+    border: 1px solid var(--demo-surface-border);
+    border-radius: var(--wa-border-radius-s);
     overflow: hidden;
-    background: var(--wa-color-neutral-0);
+    background: var(--demo-surface-bg);
   }
 
   :host([fit-content]) {
@@ -33,21 +38,21 @@ export const styles: CSSResultGroup = css`
     align-items: center;
     min-height: 2.5rem;
     padding: 0.375rem 0.5rem;
-    background: var(--wa-color-neutral-50);
-    border-bottom: 1px solid var(--wa-color-neutral-200);
+    background: var(--demo-toolbar-bg);
+    border-bottom: 1px solid var(--demo-surface-border-subtle);
   }
 
   .pane-content {
     flex: 1;
     overflow: auto;
     padding: 0.875rem;
-    background: var(--wa-color-neutral-0);
+    background: var(--demo-surface-bg);
   }
 
   pre {
     margin: 0;
-    font-family: Monaco, Menlo, "Ubuntu Mono", monospace;
-    font-size: 0.8125rem;
+    font-family: var(--demo-code-font);
+    font-size: var(--wa-font-size-xs);
     line-height: 1.45;
   }
 
@@ -61,9 +66,9 @@ export const styles: CSSResultGroup = css`
     min-height: 200px;
     padding: 0.875rem;
     margin: 0.125rem 0.125rem 0.875rem;
-    border: 1px dashed var(--wa-color-neutral-400);
-    border-radius: var(--wa-border-radius-m);
-    background: var(--demo-output-bg, color-mix(in srgb, var(--wa-color-neutral-50) 50%, transparent));
+    border: 1px dashed var(--demo-surface-border);
+    border-radius: var(--wa-border-radius-s);
+    background: var(--demo-output-bg, color-mix(in srgb, var(--demo-toolbar-bg) 55%, transparent));
   }
 
   .error {
@@ -100,14 +105,14 @@ export const styles: CSSResultGroup = css`
   }
 
   .editor-panel {
-    border-bottom: 1px solid var(--wa-color-neutral-200);
+    border-bottom: 1px solid var(--demo-surface-border-subtle);
     background: transparent;
   }
 
   .editor-panel::part(header) {
     padding-inline: 0.75rem;
-    border-bottom: 1px solid var(--wa-color-neutral-300);
-    font-size: 0.8125rem;
+    border-bottom: 1px solid var(--demo-surface-border);
+    font-size: var(--wa-font-size-xs);
     font-weight: 600;
     background: transparent;
     cursor: pointer;
@@ -136,16 +141,16 @@ export const styles: CSSResultGroup = css`
   .editor-panel-content {
     display: grid;
     grid-template-rows: minmax(var(--demo-editor-min-height), 1fr) auto auto;
-    gap: 0.625rem;
+    gap: 0.375rem;
     box-sizing: border-box;
-    padding: 0.625rem 0.75rem 0.75rem;
+    padding: 0.5rem 0.625rem 0.5rem;
     block-size: var(--demo-editor-height, auto);
   }
 
   .editor-panel-loading {
     padding: 0.625rem 0.75rem;
-    border-bottom: 1px solid var(--wa-color-neutral-300);
-    font-size: 0.8125rem;
+    border-bottom: 1px solid var(--demo-surface-border);
+    font-size: var(--wa-font-size-xs);
     color: var(--wa-color-neutral-600);
   }
 
@@ -210,11 +215,11 @@ export const styles: CSSResultGroup = css`
     inline-size: 100%;
     max-inline-size: 100%;
     block-size: 100%;
-    border: 1px solid var(--wa-color-neutral-300);
-    border-radius: var(--wa-border-radius-m);
+    border: 1px solid var(--demo-surface-border);
+    border-radius: var(--wa-border-radius-s);
     overflow: hidden;
     background: var(--demo-editor-bg);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wa-color-neutral-100) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--demo-surface-border-subtle) 40%, transparent);
   }
 
   .editor-host .cm-editor {
@@ -222,7 +227,7 @@ export const styles: CSSResultGroup = css`
     inline-size: 100%;
     max-inline-size: 100%;
     block-size: 100%;
-    font-size: 0.8rem;
+    font-size: var(--wa-font-size-xs);
   }
 
   .editor-host .cm-scroller {
@@ -230,7 +235,7 @@ export const styles: CSSResultGroup = css`
     inline-size: 100%;
     max-inline-size: 100%;
     overflow: auto;
-    font-family: Monaco, Menlo, "Ubuntu Mono", monospace;
+    font-family: var(--demo-code-font);
     line-height: 1.4;
   }
 
@@ -242,11 +247,17 @@ export const styles: CSSResultGroup = css`
   .editor-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.35rem;
     margin-top: 0;
   }
 
-  .editor-actions wa-button::part(base),
+  .editor-actions wa-button::part(base) {
+    inline-size: 1.75rem;
+    min-inline-size: 1.75rem;
+    block-size: 1.75rem;
+    padding: 0;
+  }
+
   .pane-toolbar wa-button::part(base) {
     inline-size: 2rem;
     min-inline-size: 2rem;
@@ -256,7 +267,7 @@ export const styles: CSSResultGroup = css`
 
   .editor-resizer,
   .preview-resizer {
-    block-size: 12px;
+    block-size: 10px;
     border-top: 1px dashed var(--wa-color-neutral-100);
     background: transparent;
     cursor: ns-resize;
@@ -269,7 +280,7 @@ export const styles: CSSResultGroup = css`
   }
 
   .preview-resizer {
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
   }
 
   .editor-resizer::before,
@@ -349,18 +360,18 @@ export const styles: CSSResultGroup = css`
     display: flex;
     gap: 0.5rem;
     padding: 0.5rem 0.625rem;
-    border-bottom: 1px solid var(--wa-color-neutral-200);
-    background: var(--wa-color-neutral-50);
+    border-bottom: 1px solid var(--demo-surface-border-subtle);
+    background: var(--demo-toolbar-bg);
   }
 
   .tab-btn {
     appearance: none;
-    border: 1px solid var(--wa-color-neutral-300);
-    background: var(--wa-color-neutral-0);
+    border: 1px solid var(--demo-surface-border);
+    background: var(--demo-surface-bg);
     color: var(--wa-color-neutral-800);
-    border-radius: var(--wa-border-radius-m);
+    border-radius: var(--wa-border-radius-s);
     font: inherit;
-    font-size: 0.8rem;
+    font-size: var(--wa-font-size-xs);
     font-weight: 600;
     padding: 0.4375rem 0.625rem;
     cursor: pointer;
@@ -401,12 +412,12 @@ export const styles: CSSResultGroup = css`
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0.375rem;
       padding: 0.5rem;
-      border-bottom: 1px solid var(--wa-color-neutral-200);
-      background: var(--wa-color-neutral-50);
+      border-bottom: 1px solid var(--demo-surface-border-subtle);
+      background: var(--demo-toolbar-bg);
     }
 
     .tab-btn {
-      font-size: 0.8rem;
+      font-size: var(--wa-font-size-xs);
       padding: 0.4375rem 0.5rem;
     }
   }

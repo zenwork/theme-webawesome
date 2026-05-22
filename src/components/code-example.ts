@@ -13,8 +13,8 @@ class CodeExample extends LitElement {
     :host {
       display: block;
       margin-block-end: 0.875rem;
-      border: 1px solid var(--wa-color-neutral-300);
-      border-radius: var(--wa-border-radius-m);
+      border: 1px solid var(--wa-color-neutral-200);
+      border-radius: var(--wa-border-radius-s);
       overflow: hidden;
       background: var(--wa-color-neutral-0);
     }
@@ -28,12 +28,12 @@ class CodeExample extends LitElement {
     }
 
     .cm-editor {
-      font-size: 0.8125rem;
+      font-size: var(--wa-font-size-xs);
       line-height: 1.45;
     }
 
     .cm-scroller {
-      font-family: Monaco, Menlo, Ubuntu Mono, monospace;
+      font-family: var(--wa-font-family-code);
       line-height: 1.4;
     }
   `
