@@ -11,12 +11,14 @@ import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language'
 class CodeExample extends LitElement {
   static override styles = css`
     :host {
+      --code-example-border-color: var(--docs-color-divider, var(--wa-color-neutral-200));
+      --code-example-surface-bg: var(--docs-color-surface, var(--wa-color-neutral-0));
       display: block;
       margin-block-end: 0.875rem;
-      border: 1px solid var(--wa-color-neutral-200);
+      border: 1px solid var(--code-example-border-color);
       border-radius: var(--wa-border-radius-s);
       overflow: hidden;
-      background: var(--wa-color-neutral-0);
+      background: var(--code-example-surface-bg);
     }
 
     :host(:last-child) {

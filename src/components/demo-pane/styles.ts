@@ -4,10 +4,10 @@ export const styles: CSSResultGroup = css`
   :host {
     --demo-editor-bg: var(--wa-color-neutral-900);
     --demo-editor-min-height: 120px;
-    --demo-surface-border: var(--wa-color-neutral-300);
-    --demo-surface-border-subtle: var(--wa-color-neutral-200);
-    --demo-surface-bg: var(--wa-color-neutral-0);
-    --demo-toolbar-bg: var(--wa-color-neutral-50);
+    --demo-surface-border: var(--docs-color-divider, var(--wa-color-neutral-300));
+    --demo-surface-border-subtle: var(--docs-color-divider, var(--wa-color-neutral-200));
+    --demo-surface-bg: var(--docs-color-surface, var(--wa-color-neutral-0));
+    --demo-toolbar-bg: var(--docs-color-surface-subtle, var(--wa-color-neutral-50));
     --demo-code-font: var(--wa-font-family-code);
     display: block;
     margin-block-end: 0.875rem;

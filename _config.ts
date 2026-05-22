@@ -8,7 +8,7 @@ site.use(theme({
     root: '.',
   },
   webawesome: {
-    customPropertiesCssPath: '/styles/webawesome-theme.css',
+
   },
 }))
 
