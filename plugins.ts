@@ -2,6 +2,7 @@ import lightningcss from 'lume/plugins/lightningcss.ts'
 import basePath from 'lume/plugins/base_path.ts'
 import metas from 'lume/plugins/metas.ts'
 import nav from 'lume/plugins/nav.ts'
+import search from 'lume/plugins/search.ts'
 import { Options as SitemapOptions, sitemap } from 'lume/plugins/sitemap.ts'
 import { favicon, Options as FaviconOptions } from 'lume/plugins/favicon.ts'
 import { merge } from 'lume/core/utils/object.ts'
@@ -530,6 +531,7 @@ export default function (userOptions?: Options) {
       .use(lightningcss())
       .use(basePath())
       .use(nav())
+      .use(search())
       .use(metas())
       .use(toc())
       .use(sitemap(options.sitemap))
