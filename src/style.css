@@ -31,6 +31,10 @@ html {
   display: none;
 }
 
+.site-header wa-dropdown:not(:defined) {
+  display: none;
+}
+
 #site-toc-trigger:not(:defined) {
   min-block-size: 38px;
   padding-inline: 0.75rem;
@@ -64,7 +68,9 @@ a {
   top: 0;
   z-index: 30;
   border-bottom: 1px solid var(--docs-divider-color);
-  background: var(--wa-color-neutral-0);
+  background: color-mix(in srgb, var(--wa-color-neutral-0) 84%, transparent);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
 }
 
 .site-header-inner {
@@ -128,15 +134,27 @@ a {
 
 .site-search {
   display: none;
-  min-inline-size: min(18rem, 32vw);
+  min-inline-size: 0;
 }
 
 .site-search-input {
-  inline-size: clamp(12rem, 24vw, 18rem);
+  inline-size: clamp(7rem, 11vw, 8.5rem);
+  transition: inline-size 160ms ease;
+}
+
+.site-search-dropdown:focus-within .site-search-input {
+  inline-size: clamp(13rem, 22vw, 17.5rem);
 }
 
 .site-search-input::part(base) {
   background: var(--wa-color-neutral-0);
+}
+
+.site-search-dropdown::part(menu) {
+  min-inline-size: clamp(16rem, 26vw, 22rem);
+  max-inline-size: min(34rem, calc(100vw - 1.5rem));
+  max-block-size: min(70vh, 32rem);
+  overflow-y: auto;
 }
 
 .docs-shell {

@@ -65,6 +65,16 @@
       src="{{ webawesome.assetBasePath }}/components/input/input.js"
       data-webawesome="{{ webawesome.assetBasePath }}"
     ></script>
+    <script
+      type="module"
+      src="{{ webawesome.assetBasePath }}/components/dropdown/dropdown.js"
+      data-webawesome="{{ webawesome.assetBasePath }}"
+    ></script>
+    <script
+      type="module"
+      src="{{ webawesome.assetBasePath }}/components/dropdown-item/dropdown-item.js"
+      data-webawesome="{{ webawesome.assetBasePath }}"
+    ></script>
     {{# CUSTOM COMPONENTS #}}
     <script type="module" src="{{ themeComponents.primaryScript }}"></script>
   </head>
@@ -128,16 +138,25 @@
           </nav>
         {{ /if }}
         <div class="site-search">
-          <wa-input
-            class="site-search-input"
-            type="search"
-            size="small"
-            appearance="outlined"
-            placeholder="Search docs"
-            aria-label="Search documentation"
+          <wa-dropdown
+            class="site-search-dropdown"
+            placement="bottom-start"
+            distance="8"
+            data-pagefind-script="{{ '/pagefind/pagefind.js' |> url }}"
           >
-            <wa-icon slot="start" name="magnifying-glass" label="Search"></wa-icon>
-          </wa-input>
+            <wa-input
+              slot="trigger"
+              class="site-search-input"
+              type="search"
+              size="xs"
+              appearance="outlined"
+              placeholder="Search docs"
+              aria-label="Search documentation"
+              autocomplete="off"
+            >
+              <wa-icon slot="start" name="magnifying-glass" label="Search"></wa-icon>
+            </wa-input>
+          </wa-dropdown>
         </div>
         {{ include '../theme-toggle.vto' }}
       </div>
@@ -408,10 +427,417 @@
     </script>
     <script>
       ;(() => {
-        const searchInput = document.querySelector('.site-search-input')
-        if (!searchInput) {
+        const searchDropdown = document.querySelector('.site-search-dropdown')
+        const searchInput = searchDropdown?.querySelector('.site-search-input')
+        if (!searchDropdown || !searchInput) {
           return
         }
+
+        const minSearchLength = 2
+        const maxResults = 8
+        const debounceMs = 150
+        const excerptMaxLength = 72
+        const secondaryLineMaxLength = 84
+        const pagefindScriptPath = searchDropdown.getAttribute('data-pagefind-script') || '/pagefind/pagefind.js'
+
+        let debounceTimer = 0
+        let searchToken = 0
+        let pagefindPromise = null
+        let resultTargets = []
+        let preserveDropdownItemFocus = false
+
+        const restoreSearchInputFocus = () => {
+          searchInput.focus({ preventScroll: true })
+        }
+
+        const getSelectableResultItems = () => (
+          Array.from(searchDropdown.querySelectorAll('wa-dropdown-item'))
+            .filter((item) => !item.hasAttribute('disabled') && Boolean(item.value))
+        )
+
+        const focusFirstResultItem = () => {
+          const items = getSelectableResultItems()
+          if (!items.length) {
+            return false
+          }
+
+          for (const [index, item] of items.entries()) {
+            item.active = index === 0
+          }
+
+          preserveDropdownItemFocus = true
+          items[0].focus({ preventScroll: true })
+          window.setTimeout(() => {
+            preserveDropdownItemFocus = false
+          }, 0)
+
+          return true
+        }
+
+        const removeResultItems = () => {
+          for (const item of Array.from(searchDropdown.querySelectorAll('wa-dropdown-item'))) {
+            item.remove()
+          }
+        }
+
+        const hasResultItems = () => Boolean(searchDropdown.querySelector('wa-dropdown-item'))
+        const hasSelectableResults = () => getSelectableResultItems().length > 0
+
+        const createStatusItem = (label) => {
+          const item = document.createElement('wa-dropdown-item')
+          item.setAttribute('disabled', '')
+          item.textContent = label
+          return item
+        }
+
+        const trimExcerpt = (excerpt) => {
+          const compact = excerpt.replace(/\s+/g, ' ').trim()
+          if (compact.length <= excerptMaxLength) {
+            return compact
+          }
+          return `${compact.slice(0, excerptMaxLength - 1).trimEnd()}…`
+        }
+
+        const trimSecondaryLine = (value) => {
+          const compact = value.replace(/\s+/g, ' ').trim()
+          if (compact.length <= secondaryLineMaxLength) {
+            return compact
+          }
+          return `${compact.slice(0, secondaryLineMaxLength - 1).trimEnd()}…`
+        }
+
+        const toDisplayPath = (url) => {
+          try {
+            const parsed = new URL(url, window.location.origin)
+            const combined = `${parsed.pathname}${parsed.hash}`
+            return combined || '/'
+          } catch {
+            return url
+          }
+        }
+
+        const getSubResults = (item) => (
+          Array.isArray(item.sub_results) ? item.sub_results.filter((entry) => entry && typeof entry === 'object') : []
+        )
+
+        const getPreferredSubResult = (item) => {
+          const subResults = getSubResults(item)
+          const anchored = subResults.find((entry) => Boolean(entry.anchor) || (entry.url && entry.url !== item.url))
+          return anchored || subResults[0] || null
+        }
+
+        const appendAnchorToUrl = (url, anchor) => {
+          const normalizedAnchor = String(anchor || '').trim().replace(/^#/, '')
+          if (!normalizedAnchor) {
+            return url
+          }
+
+          const encodedAnchor = encodeURIComponent(normalizedAnchor)
+          if (!url) {
+            return `#${encodedAnchor}`
+          }
+
+          const [withoutHash] = String(url).split('#', 1)
+          return `${withoutHash}#${encodedAnchor}`
+        }
+
+        const resolveResultUrl = (item) => {
+          const baseUrl = typeof item.url === 'string' ? item.url : ''
+          const preferred = getPreferredSubResult(item)
+
+          if (!preferred) {
+            return baseUrl
+          }
+
+          const preferredUrl = typeof preferred.url === 'string' ? preferred.url : ''
+          const preferredAnchor = typeof preferred.anchor === 'string' ? preferred.anchor : ''
+
+          if (preferredUrl.includes('#')) {
+            return preferredUrl
+          }
+
+          if (preferredUrl && preferredAnchor) {
+            return appendAnchorToUrl(preferredUrl, preferredAnchor)
+          }
+
+          if (preferredUrl && preferredUrl !== baseUrl) {
+            return preferredUrl
+          }
+
+          if (baseUrl && preferredAnchor) {
+            return appendAnchorToUrl(baseUrl, preferredAnchor)
+          }
+
+          return preferredUrl || baseUrl
+        }
+
+        const resolveSecondaryLine = (item) => {
+          const preferred = getPreferredSubResult(item)
+          if (preferred) {
+            const subTitle = (preferred.title || '').replace(/\s+/g, ' ').trim()
+            const subExcerpt = (preferred.plain_excerpt || '').replace(/\s+/g, ' ').trim()
+
+            if (subTitle && subExcerpt && !subExcerpt.startsWith(subTitle)) {
+              return trimSecondaryLine(`${subTitle}: ${subExcerpt}`)
+            }
+
+            if (subTitle) {
+              return trimSecondaryLine(subTitle)
+            }
+
+            if (subExcerpt) {
+              return trimSecondaryLine(subExcerpt)
+            }
+          }
+
+          const fallback = (item.plain_excerpt || '').replace(/\s+/g, ' ').trim()
+          return fallback ? trimSecondaryLine(fallback) : ''
+        }
+
+        const renderState = (message) => {
+          removeResultItems()
+          searchDropdown.append(createStatusItem(message))
+          searchDropdown.open = true
+        }
+
+        const renderResults = (results) => {
+          resultTargets = results
+          removeResultItems()
+
+          if (!results.length) {
+            searchDropdown.append(createStatusItem('No results found'))
+            searchDropdown.open = true
+            return
+          }
+
+          for (const result of results) {
+            const item = document.createElement('wa-dropdown-item')
+            item.value = result.url
+
+            const title = document.createElement('span')
+            title.textContent = result.title
+            title.style.display = 'block'
+            title.style.color = 'var(--wa-color-brand-text-normal)'
+            title.style.fontSize = 'var(--wa-font-size-s)'
+            title.style.fontWeight = '600'
+            title.style.lineHeight = '1.25'
+
+            item.append(title)
+
+            if (result.secondary) {
+              const secondary = document.createElement('span')
+              secondary.textContent = result.secondary
+              secondary.style.display = 'block'
+              secondary.style.marginTop = '0.1rem'
+              secondary.style.fontSize = 'var(--wa-font-size-xs)'
+              secondary.style.color = 'var(--wa-color-text-quiet)'
+              secondary.style.lineHeight = '1.2'
+              item.append(secondary)
+            }
+
+            const details = document.createElement('span')
+            details.slot = 'details'
+            details.textContent = result.path
+            details.title = result.path
+            details.style.fontFamily = 'var(--wa-font-family-code)'
+            details.style.fontSize = 'var(--wa-font-size-2xs)'
+            details.style.color = 'var(--wa-color-text-quiet)'
+            details.style.maxInlineSize = '13.5rem'
+            details.style.whiteSpace = 'nowrap'
+            details.style.overflow = 'hidden'
+            details.style.textOverflow = 'ellipsis'
+            item.append(details)
+
+            searchDropdown.append(item)
+          }
+
+          searchDropdown.open = true
+        }
+
+        const loadPagefind = async () => {
+          if (!pagefindPromise) {
+            pagefindPromise = import(pagefindScriptPath).then(async (module) => {
+              if (typeof module.options === 'function') {
+                await module.options({ excerptLength: 20 })
+              }
+
+              if (typeof module.init === 'function') {
+                await module.init()
+              }
+
+              return module
+            }).catch((error) => {
+              pagefindPromise = null
+              throw error
+            })
+          }
+
+          return pagefindPromise
+        }
+
+        const preloadPagefind = () => {
+          void loadPagefind().catch(() => {})
+        }
+
+        const performSearch = async (query) => {
+          const normalized = query.trim()
+          const token = ++searchToken
+
+          if (normalized.length < minSearchLength) {
+            resultTargets = []
+            searchDropdown.open = false
+            removeResultItems()
+            return
+          }
+
+          renderState('Searching…')
+
+          try {
+            const pagefind = await loadPagefind()
+            const searchResult = await pagefind.search(normalized)
+            if (token !== searchToken) {
+              return
+            }
+
+            const detailed = await Promise.all(searchResult.results.slice(0, maxResults).map((entry) => entry.data()))
+            if (token !== searchToken) {
+              return
+            }
+
+            const mapped = detailed.map((item) => {
+              const targetUrl = resolveResultUrl(item)
+              return {
+                url: targetUrl || item.url,
+                title: item.meta?.title || item.url,
+                secondary: resolveSecondaryLine(item),
+                path: toDisplayPath(targetUrl || item.url),
+              }
+            })
+
+            renderResults(mapped)
+          } catch {
+            if (token !== searchToken) {
+              return
+            }
+            resultTargets = []
+            renderState('Search is temporarily unavailable')
+          }
+        }
+
+        const scheduleSearch = (query) => {
+          clearTimeout(debounceTimer)
+          debounceTimer = window.setTimeout(() => {
+            void performSearch(query)
+          }, debounceMs)
+        }
+
+        searchInput.addEventListener('focus', () => {
+          preloadPagefind()
+          const value = String(searchInput.value || '')
+          if (value.trim().length >= minSearchLength) {
+            scheduleSearch(value)
+          }
+        })
+
+        searchInput.addEventListener('input', () => {
+          const value = String(searchInput.value || '')
+          scheduleSearch(value)
+        })
+
+        searchInput.addEventListener('keydown', (event) => {
+          const allowDropdownArrowDown = event.key === 'ArrowDown' && resultTargets.length > 0
+          if (searchDropdown.open && !allowDropdownArrowDown) {
+            event.stopPropagation()
+          }
+
+          if (event.key === 'Escape') {
+            searchDropdown.open = false
+            return
+          }
+
+          if (event.key === 'ArrowDown') {
+            if (!resultTargets.length) {
+              return
+            }
+
+            event.preventDefault()
+            event.stopPropagation()
+
+            if (!searchDropdown.open) {
+              searchDropdown.open = true
+              requestAnimationFrame(() => {
+                focusFirstResultItem()
+              })
+              return
+            }
+
+            focusFirstResultItem()
+            return
+          }
+
+          if (event.key !== 'Enter') {
+            return
+          }
+
+          if (!resultTargets.length) {
+            return
+          }
+
+          event.preventDefault()
+          const first = resultTargets[0]
+          if (first?.url) {
+            window.location.assign(first.url)
+          }
+        })
+
+        searchDropdown.addEventListener('wa-after-show', () => {
+          if (preserveDropdownItemFocus) {
+            preserveDropdownItemFocus = false
+            return
+          }
+
+          const active = document.activeElement
+          if (!(active instanceof HTMLElement)) {
+            return
+          }
+
+          if (!searchDropdown.contains(active) || active === searchInput) {
+            return
+          }
+
+          requestAnimationFrame(() => restoreSearchInputFocus())
+        })
+
+        searchDropdown.addEventListener('focusin', (event) => {
+          if (preserveDropdownItemFocus || hasSelectableResults()) {
+            return
+          }
+
+          const focused = event.target
+          if (!(focused instanceof HTMLElement) || focused === searchInput) {
+            return
+          }
+
+          requestAnimationFrame(() => restoreSearchInputFocus())
+        })
+
+        searchDropdown.addEventListener('wa-show', (event) => {
+          if (hasResultItems()) {
+            return
+          }
+          event.preventDefault()
+          searchDropdown.open = false
+        })
+
+        searchDropdown.addEventListener('wa-select', (event) => {
+          const selected = event.detail?.item
+          const targetUrl = selected?.value
+          if (!targetUrl) {
+            event.preventDefault()
+            return
+          }
+          window.location.assign(targetUrl)
+        })
 
         document.addEventListener('keydown', (event) => {
           if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {
@@ -441,6 +867,7 @@
 
           event.preventDefault()
           searchInput.focus()
+          preloadPagefind()
         })
       })()
     </script>
