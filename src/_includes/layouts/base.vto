@@ -128,10 +128,36 @@
     <main class="docs-shell">
       <aside class="site-toc-panel">
         <section class="site-toc-shell">
-          <!--          <h2>{{ siteNavigationHeading }}</h2>-->
           {{ include '../section-toc.vto' }}
         </section>
       </aside>
+      {{ if toc?.length }}
+        <section class="page-toc-mobile">
+          <section class="page-toc-shell">
+            <h2>On this page</h2>
+            <nav aria-label="Page table of contents">
+              <ol class="page-toc-list">
+                {{ for item of toc }}
+                  <li>
+                    <a href="{{ item.slug ? `#${item.slug}` : item.url }}" class="toc-link">{{ item.text }}</a>
+                    {{ if item.children.length }}
+                      <ul class="page-toc-list">
+                        {{ for child of item.children }}
+                          <li>
+                            <a href="{{ child.slug ? `#${child.slug}` : child.url }}" class="toc-link">{{
+                              child.text
+                            }}</a>
+                          </li>
+                        {{ /for }}
+                      </ul>
+                    {{ /if }}
+                  </li>
+                {{ /for }}
+              </ol>
+            </nav>
+          </section>
+        </section>
+      {{ /if }}
       <article class="docs-content">
         {{ content }}
       </article>
@@ -190,12 +216,14 @@
         }
 
         const header = document.querySelector('.site-header')
-        const pageToc = document.querySelector('.page-toc-panel')
-        if (!pageToc) {
+        const pageTocRoots = Array.from(document.querySelectorAll('.page-toc-panel, .page-toc-mobile'))
+        if (!pageTocRoots.length) {
           return
         }
 
-        const tocLinks = Array.from(pageToc.querySelectorAll('a.toc-link[href^="#"]'))
+        const tocLinks = pageTocRoots.flatMap((tocRoot) =>
+          Array.from(tocRoot.querySelectorAll('a.toc-link[href^="#"]'))
+        )
         if (!tocLinks.length) {
           return
         }
@@ -221,31 +249,41 @@
           document.documentElement.style.setProperty('--site-header-scroll-offset', `${getHeaderOffset()}px`)
         }
 
-        const tocItems = tocLinks
-          .map((link) => {
-            const id = parseHashId(link.hash)
-            if (!id) {
-              return null
-            }
-            const target = document.getElementById(id)
-            if (!target) {
-              return null
-            }
-            return { id, link, target }
-          })
-          .filter((item) => item !== null)
+        const tocItemsById = new Map()
+        for (const link of tocLinks) {
+          const id = parseHashId(link.hash)
+          if (!id) {
+            continue
+          }
+
+          const target = document.getElementById(id)
+          if (!target) {
+            continue
+          }
+
+          const existing = tocItemsById.get(id)
+          if (existing) {
+            existing.links.push(link)
+            continue
+          }
+
+          tocItemsById.set(id, { id, target, links: [link] })
+        }
+        const tocItems = Array.from(tocItemsById.values())
 
         if (!tocItems.length) {
           return
         }
 
         const setActiveToc = (activeId) => {
-          for (const { id, link } of tocItems) {
-            link.classList.toggle('is-active', id === activeId)
-            if (id === activeId) {
-              link.setAttribute('aria-current', 'location')
-            } else {
-              link.removeAttribute('aria-current')
+          for (const { id, links } of tocItems) {
+            for (const link of links) {
+              link.classList.toggle('is-active', id === activeId)
+              if (id === activeId) {
+                link.setAttribute('aria-current', 'location')
+              } else {
+                link.removeAttribute('aria-current')
+              }
             }
           }
         }
@@ -281,13 +319,15 @@
           setActiveToc(activeId)
         }
 
-        for (const { id, link } of tocItems) {
-          link.addEventListener('click', (event) => {
-            event.preventDefault()
-            scrollToHeading(id, 'smooth')
-            history.pushState(null, '', `#${encodeURIComponent(id)}`)
-            setActiveToc(id)
-          })
+        for (const { id, links } of tocItems) {
+          for (const link of links) {
+            link.addEventListener('click', (event) => {
+              event.preventDefault()
+              scrollToHeading(id, 'smooth')
+              history.pushState(null, '', `#${encodeURIComponent(id)}`)
+              setActiveToc(id)
+            })
+          }
         }
 
         const hashId = parseHashId(window.location.hash)

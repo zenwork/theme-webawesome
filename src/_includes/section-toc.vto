@@ -15,61 +15,72 @@
 {{ set sectionStorageKey = sectionKey ? `section-toc-expanded-v1:${sectionKey}` : 'section-toc-expanded-v1' }}
 <nav class="site-toc-nav" aria-label="Section table of contents">
   <site-toc-tree storage-key="{{ sectionStorageKey }}">
-    <wa-tree>
-      {{ if sectionIndex }}
-        <wa-tree-item data-node-key="{{ sectionIndex.data.url }}">
-          <a
-            href="{{ sectionIndex.data.url }}"
-            class="toc-link {{ if url === sectionIndex.data.url }}is-active{{ /if }}"
-          >
-            {{ sectionIndex.data.title || activeSection?.indexTitle || activeSection?.title || sectionIndex.slug }}
-          </a>
-        </wa-tree-item>
-      {{ /if }}
-      {{ for item of sectionMenu }}
-        {{ if item.data.url }}
-          {{ if item.children?.length }}
-            {{ set parentKey = item.data.url || `group:${item.slug}` }}
-            <wa-tree-item
-              data-node-key="{{ parentKey }}"
-              {{ if item.data.url && url.startsWith(item.data.url) }}expanded{{ /if }}
+    {{ if sectionIndex }}
+      <section class="site-toc-group">
+        <h3 class="site-toc-group-heading">Overview</h3>
+        <wa-tree>
+          <wa-tree-item data-node-key="{{ sectionIndex.data.url }}">
+            <a
+              href="{{ sectionIndex.data.url }}"
+              class="toc-link {{ if url === sectionIndex.data.url }}is-active{{ /if }}"
             >
-              <a href="{{ item.data.url }}" class="toc-link {{ if url === item.data.url }}is-active{{ /if }}">
-                {{ item.data.title || item.slug }}
-              </a>
-              {{ for child of item.children }}
-                {{ if child.data.url }}
+              {{ sectionIndex.data.title || activeSection?.indexTitle || activeSection?.title || sectionIndex.slug }}
+            </a>
+          </wa-tree-item>
+        </wa-tree>
+      </section>
+    {{ /if }}
+
+    {{ for item of sectionMenu }}
+      <section class="site-toc-group">
+        {{ if item.data.url }}
+          <a
+            href="{{ item.data.url }}"
+            class="site-toc-group-heading site-toc-group-link {{ if url.startsWith(item.data.url) }}is-active{{ /if }}"
+          >
+            {{ item.data.title || item.slug }}
+          </a>
+        {{ else }}
+          <h3 class="site-toc-group-heading">{{ item.data.title || item.slug }}</h3>
+        {{ /if }}
+
+        {{ if item.children?.length }}
+          <wa-tree>
+            {{ for child of item.children }}
+              {{ if child.data.url }}
+                {{ if child.children?.length }}
+                  <wa-tree-item
+                    data-node-key="{{ child.data.url }}"
+                    {{ if url.startsWith(child.data.url) }}expanded{{ /if }}
+                  >
+                    <a href="{{ child.data.url }}" class="toc-link {{ if url === child.data.url }}is-active{{ /if }}">
+                      {{ child.data.title || child.slug }}
+                    </a>
+                    {{ for grandchild of child.children }}
+                      {{ if grandchild.data.url }}
+                        <wa-tree-item data-node-key="{{ grandchild.data.url }}">
+                          <a
+                            href="{{ grandchild.data.url }}"
+                            class="toc-link {{ if url === grandchild.data.url }}is-active{{ /if }}"
+                          >
+                            {{ grandchild.data.title || grandchild.slug }}
+                          </a>
+                        </wa-tree-item>
+                      {{ /if }}
+                    {{ /for }}
+                  </wa-tree-item>
+                {{ else }}
                   <wa-tree-item data-node-key="{{ child.data.url }}">
                     <a href="{{ child.data.url }}" class="toc-link {{ if url === child.data.url }}is-active{{ /if }}">
                       {{ child.data.title || child.slug }}
                     </a>
                   </wa-tree-item>
                 {{ /if }}
-              {{ /for }}
-            </wa-tree-item>
-          {{ else }}
-            <wa-tree-item data-node-key="{{ item.data.url }}">
-              <a href="{{ item.data.url }}" class="toc-link {{ if url === item.data.url }}is-active{{ /if }}">
-                {{ item.data.title || item.slug }}
-              </a>
-            </wa-tree-item>
-          {{ /if }}
-        {{ else if item.children?.length }}
-          {{ set parentKey = `group:${item.slug}` }}
-          <wa-tree-item data-node-key="{{ parentKey }}">
-            <span class="toc-link toc-label">{{ item.data.title || item.slug }}</span>
-            {{ for child of item.children }}
-              {{ if child.data.url }}
-                <wa-tree-item data-node-key="{{ child.data.url }}">
-                  <a href="{{ child.data.url }}" class="toc-link {{ if url === child.data.url }}is-active{{ /if }}">
-                    {{ child.data.title || child.slug }}
-                  </a>
-                </wa-tree-item>
               {{ /if }}
             {{ /for }}
-          </wa-tree-item>
+          </wa-tree>
         {{ /if }}
-      {{ /for }}
-    </wa-tree>
+      </section>
+    {{ /for }}
   </site-toc-tree>
 </nav>
