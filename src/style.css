@@ -244,14 +244,17 @@ a {
 }
 
 .site-toc-group-link {
+  opacity: 0.82;
   text-decoration: none;
 }
 
 .site-toc-group-link:hover {
+  opacity: 1;
   color: var(--wa-color-neutral-800);
 }
 
 .site-toc-group-link.is-active {
+  opacity: 1;
   color: var(--wa-color-brand-text-loud);
 }
 
@@ -307,6 +310,7 @@ a {
 }
 
 .site-toc-nav .toc-link {
+  opacity: 0.82;
   border-inline-start-color: transparent;
   border-radius: 0;
   background: transparent;
@@ -345,8 +349,18 @@ wa-tree-item[selected] > .toc-link {
 .site-toc-nav .toc-link:hover,
 .site-toc-nav .toc-link.is-active,
 .site-toc-nav wa-tree-item[selected] > .toc-link {
+  opacity: 1;
   border-inline-start-color: transparent;
   background: transparent;
+}
+
+.page-toc-shell .toc-link {
+  opacity: 0.82;
+}
+
+.page-toc-shell .toc-link:hover,
+.page-toc-shell .toc-link.is-active {
+  opacity: 1;
 }
 
 .docs-content h1 {
