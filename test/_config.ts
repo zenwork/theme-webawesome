@@ -3,7 +3,13 @@ import theme from 'theme/mod.ts'
 
 const site = lume()
 
+site.copy('logos')
+
 site.use(theme({
+  siteLogo: {
+    src: '/logos/test-site-logo.svg',
+    alt: 'Theme test site logo',
+  },
   siteToc: {
     root: '.',
     sections: [
@@ -15,6 +21,7 @@ site.use(theme({
   },
   webawesome: {
     customPropertiesCssPath: '/styles/webawesome-theme.css',
+    // customPropertiesCssPath: '/styles/webawesome-theme-blue.css',
   },
 }))
 

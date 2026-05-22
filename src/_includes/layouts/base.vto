@@ -81,6 +81,7 @@
   <body>
     {{ set currentPathParts = (url || '/').split('/').filter((part) => part.length > 0) }}
     {{ set currentSectionKey = currentPathParts[0] || '' }}
+    {{ set siteLogo = themeBranding ? themeBranding.logo : null }}
     {{ set sectionChoices = themeNavigation?.sections || [] }}
     {{ set sectionNavigation = sectionChoices.length > 1 }}
     {{
@@ -121,7 +122,19 @@
           size="small"
           id="site-toc-trigger"
         ><wa-icon name="bars" label="bars"></wa-icon></wa-button>
-        <a class="site-title" href="/">{{ metas.site }}</a>
+        <a class="site-brand" href="/">
+          {{ if siteLogo }}
+            <img
+              class="site-logo"
+              src="{{ siteLogo.src }}"
+              alt="{{ siteLogo.alt || 'Site logo' }}"
+              width="20"
+              height="20"
+              decoding="async"
+            />
+          {{ /if }}
+          <span class="site-title">{{ metas.site }}</span>
+        </a>
         {{ if sectionChooserVisible }}
           <span class="site-section-drawer">{{ activeSection?.title || siteNavigationHeading }}</span>
         {{ /if }}
@@ -195,12 +208,6 @@
         </section>
       {{ /if }}
       <article class="docs-content">
-        <div class="docs-content-actions">
-          <wa-button id="copy-page-markdown" variant="neutral" appearance="outlined" size="small">
-            <wa-icon name="copy" label="Copy page as markdown" slot="start"></wa-icon>
-            Copy as Markdown
-          </wa-button>
-        </div>
         {{ content }}
       </article>
       {{ if toc?.length }}

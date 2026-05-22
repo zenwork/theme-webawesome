@@ -30,11 +30,17 @@ export interface SiteTocOptions {
   filter?: string
 }
 
+export interface SiteLogoOptions {
+  src: string
+  alt?: string
+}
+
 export interface Options {
   sitemap?: Partial<SitemapOptions>
   favicon?: Partial<FaviconOptions>
   webawesome?: WebAwesomeOptions
   siteToc?: SiteTocOptions
+  siteLogo?: SiteLogoOptions
   componentEntrypoint?: string
   additionalComponentEntrypoints?: string[]
 }
@@ -393,6 +399,12 @@ export default function (userOptions?: Options) {
     ...(options.additionalComponentEntrypoints ?? []),
   ]
   const componentScripts = componentEntrypoints.map(toScriptPath)
+  const siteLogo = options.siteLogo?.src
+    ? {
+      src: options.siteLogo.src,
+      alt: options.siteLogo.alt?.trim() || 'Site logo',
+    }
+    : null
   const configuredSections = (siteTocOptions.sections ?? [])
     .map((section) => ({
       key: normalizeSectionKey(section.folder),
@@ -525,6 +537,9 @@ export default function (userOptions?: Options) {
       entrypoints: componentEntrypoints,
       scripts: componentScripts,
       primaryScript: componentScripts[0],
+    })
+    site.data('themeBranding', {
+      logo: siteLogo,
     })
     site.data('themeNavigation', getThemeNavigationSnapshot())
 
