@@ -159,6 +159,12 @@
         </section>
       {{ /if }}
       <article class="docs-content">
+        <div class="docs-content-actions">
+          <wa-button id="copy-page-markdown" variant="neutral" appearance="outlined" size="small">
+            <wa-icon name="copy" label="Copy page as markdown" slot="start"></wa-icon>
+            Copy as Markdown
+          </wa-button>
+        </div>
         {{ content }}
       </article>
       {{ if toc?.length }}
@@ -189,6 +195,200 @@
         </aside>
       {{ /if }}
     </main>
+    <script>
+      ;(() => {
+        const docsContent = document.querySelector('.docs-content')
+        const copyButton = document.getElementById('copy-page-markdown')
+
+        if (!docsContent || !copyButton || !navigator.clipboard?.writeText) {
+          if (copyButton) {
+            copyButton.setAttribute('disabled', '')
+          }
+          return
+        }
+
+        const skipActionClass = 'docs-content-actions'
+
+        const normalizeInline = (value) => value.replace(/[ \t]+/g, ' ').replace(/\s+\n/g, '\n').trim()
+
+        const toInlineMarkdown = (node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            return node.textContent || ''
+          }
+
+          if (node.nodeType !== Node.ELEMENT_NODE) {
+            return ''
+          }
+
+          const element = /** @type {HTMLElement} */ (node)
+          const tag = element.tagName
+          const content = Array.from(element.childNodes).map(toInlineMarkdown).join('')
+
+          if (tag === 'BR') {
+            return '  \n'
+          }
+
+          if (tag === 'CODE') {
+            const code = normalizeInline(element.textContent || '')
+            return code ? `\`${code}\`` : ''
+          }
+
+          if (tag === 'A') {
+            const label = normalizeInline(content || element.textContent || '')
+            const href = element.getAttribute('href') || ''
+            return label && href ? `[${label}](${href})` : label
+          }
+
+          if (tag === 'STRONG' || tag === 'B') {
+            const value = normalizeInline(content)
+            return value ? `**${value}**` : ''
+          }
+
+          if (tag === 'EM' || tag === 'I') {
+            const value = normalizeInline(content)
+            return value ? `*${value}*` : ''
+          }
+
+          if (tag === 'IMG') {
+            const alt = element.getAttribute('alt') || ''
+            const src = element.getAttribute('src') || ''
+            return src ? `![${alt}](${src})` : ''
+          }
+
+          return content
+        }
+
+        const toListMarkdown = (list, depth = 0) => {
+          const ordered = list.tagName === 'OL'
+          const items = Array.from(list.children).filter((child) => child.tagName === 'LI')
+          const lines = []
+
+          items.forEach((item, index) => {
+            const marker = ordered ? `${index + 1}.` : '-'
+            const prefix = `${'  '.repeat(depth)}${marker} `
+            const inlineParts = []
+            const nestedLists = []
+
+            for (const child of item.childNodes) {
+              if (child.nodeType === Node.ELEMENT_NODE) {
+                const childElement = /** @type {HTMLElement} */ (child)
+                if (childElement.tagName === 'UL' || childElement.tagName === 'OL') {
+                  nestedLists.push(toListMarkdown(childElement, depth + 1))
+                  continue
+                }
+              }
+              inlineParts.push(toInlineMarkdown(child))
+            }
+
+            const line = normalizeInline(inlineParts.join(''))
+            if (line) {
+              lines.push(`${prefix}${line}`)
+            }
+
+            nestedLists.forEach((nested) => {
+              if (nested) {
+                lines.push(nested)
+              }
+            })
+          })
+
+          return lines.join('\n')
+        }
+
+        const toBlockMarkdown = (element) => {
+          const tag = element.tagName
+
+          if (/^H[1-6]$/.test(tag)) {
+            const level = Number(tag.slice(1))
+            const title = normalizeInline(Array.from(element.childNodes).map(toInlineMarkdown).join(''))
+            return title ? `${'#'.repeat(level)} ${title}` : ''
+          }
+
+          if (tag === 'P') {
+            return normalizeInline(Array.from(element.childNodes).map(toInlineMarkdown).join(''))
+          }
+
+          if (tag === 'PRE') {
+            const code = element.querySelector('code')
+            const source = (code?.textContent || element.textContent || '').replace(/\n+$/g, '')
+            const language = code?.className.match(/language-([a-z0-9_-]+)/i)?.[1] || ''
+            return `\`\`\`${language}\n${source}\n\`\`\``
+          }
+
+          if (tag === 'UL' || tag === 'OL') {
+            return toListMarkdown(element)
+          }
+
+          if (tag === 'BLOCKQUOTE') {
+            const quote = normalizeInline(element.textContent || '')
+            return quote
+              .split('\n')
+              .filter(Boolean)
+              .map((line) => `> ${line}`)
+              .join('\n')
+          }
+
+          if (tag === 'HR') {
+            return '---'
+          }
+
+          if (tag === 'TABLE') {
+            return normalizeInline(element.textContent || '')
+          }
+
+          return normalizeInline(Array.from(element.childNodes).map(toInlineMarkdown).join(''))
+        }
+
+        const buildMarkdown = () => {
+          const blocks = []
+          for (const child of docsContent.children) {
+            if (child.classList.contains(skipActionClass)) {
+              continue
+            }
+            const block = toBlockMarkdown(child)
+            if (block) {
+              blocks.push(block)
+            }
+          }
+          return blocks.join('\n\n').replace(/\n{3,}/g, '\n\n').trim()
+        }
+
+        copyButton.addEventListener('click', async () => {
+          const markdown = buildMarkdown()
+          if (!markdown) {
+            return
+          }
+
+          try {
+            await navigator.clipboard.writeText(markdown)
+            const icon = copyButton.querySelector('wa-icon')
+            const textNode = Array.from(copyButton.childNodes).find((node) =>
+              node.nodeType === Node.TEXT_NODE && node.textContent?.trim()
+            )
+            if (icon) {
+              icon.setAttribute('name', 'check')
+            }
+            if (textNode) {
+              textNode.textContent = ' Copied Markdown'
+            }
+            window.setTimeout(() => {
+              if (icon) {
+                icon.setAttribute('name', 'copy')
+              }
+              if (textNode) {
+                textNode.textContent = ' Copy as Markdown'
+              }
+            }, 1400)
+          } catch {
+            const icon = copyButton.querySelector('wa-icon')
+            if (icon) {
+              icon.setAttribute('name', 'xmark')
+              window.setTimeout(() => icon.setAttribute('name', 'copy'), 1400)
+            }
+          }
+        })
+      })()
+    </script>
     <script>
       ;(() => {
         const trigger = document.getElementById('site-toc-trigger')
