@@ -108,7 +108,8 @@ Important context:
 - The documentation structure includes top-level sections for Learn, FHIR Data, Customization, Reference, and Play.
 - Phase 1 should stub the full documentation structure while only publishing public-ready pages.
 - Use Lume `draft: true` pages for unfinished content, with `LUME_DRAFTS=true` in demo/review builds.
-- The theme should support docs that combine narrative guidance, code examples, coverage/status tables, and eventual editable demo/playground surfaces.
+- The theme should support docs that combine narrative guidance, code examples, coverage/status tables, and eventual
+  editable demo/playground surfaces.
 - Syntax highlighting must support JSX/TSX examples (and be extensible for additional languages used in docs, such as
   JSON, TypeScript, Bash, and HTML) so framework-specific snippets render correctly.
 
@@ -161,5 +162,5 @@ Important context:
 
 - `deno.json` currently has `lock: false`; do not assume lockfile enforcement.
 - Remote imports use pinned versions from jsDelivr/npm specifiers; treat version bumps as explicit changes.
-- TOC regression risk: section `index.md` pages must not be auto-labeled or grouped under a forced `Overview`
-  chapter. Preserve explicit page titles/metadata in section navigation.
+- TOC regression risk: section `index.md` pages must not be auto-labeled or grouped under a forced `Overview` chapter.
+  Preserve explicit page titles/metadata in section navigation.

@@ -16,7 +16,7 @@ site.use(theme({
       { folder: 'docs', label: 'Doc', order: 0 },
       { folder: 'guides', label: 'Guides', order: 1 },
       { folder: 'reference', label: 'Reference', order: 2 },
-      { folder: 'platform', label: 'Platform', order: 3 },
+      { folder: 'demo', label: 'Demo', order: 3, icon: 'play' },
     ],
   },
   webawesome: {

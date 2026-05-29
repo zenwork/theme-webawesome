@@ -55,6 +55,23 @@ order: 50
   </section>
 
   <section class="docs-section">
+    <h2>Full-width Layout</h2>
+    <p>
+      Use <code>layouts/full-width.vto</code> for pages that need the full content column, such as playgrounds or
+      screen-sized runnable examples. This layout keeps the same header and drawer navigation as the default layout, but
+      removes the desktop section sidebar and both "On this page" TOCs. It does not suppress horizontal document
+      scrolling, so deliberately wide examples can still extend past the viewport.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="text">
+---
+layout: layouts/full-width.vto
+title: Playground
+---
+    </code-example>
+  </section>
+
+  <section class="docs-section">
     <h2>Header Utilities</h2>
     <p>The header includes section navigation, docs search, theme toggle, and a page-level markdown copy action.</p>
     <ul>

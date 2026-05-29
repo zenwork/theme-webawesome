@@ -65,6 +65,9 @@ class DemoPane extends LitElement {
   @property({ type: Boolean, attribute: 'fit-content', reflect: true })
   fitContent = false
 
+  @property({ type: Boolean, attribute: 'fill-height', reflect: true })
+  fillHeight = false
+
   @property({ type: Boolean, attribute: 'editor-open', reflect: true })
   editorOpen = false
 
@@ -125,6 +128,9 @@ class DemoPane extends LitElement {
   @state()
   private _isResizingPreview = false
 
+  @state()
+  private _hasManualPreviewHeight = false
+
   private _mediaQuery: MediaQueryList | null = null
   private readonly _loadedModules = new Set<string>()
   private _jsonEditor: EditorView | null = null
@@ -138,6 +144,7 @@ class DemoPane extends LitElement {
   private _previewResizeStartY = 0
   private _previewResizeStartHeight = 320
   private _previewHeightBeforeFit = 320
+  private _hadManualPreviewHeightBeforeFit = false
   private _fitContentReflowTimeout: number | null = null
   private _contentResizeObserver: ResizeObserver | null = null
   private readonly _observedContentDOMs = new WeakSet<Element>()
@@ -540,10 +547,13 @@ class DemoPane extends LitElement {
 
   private handlePreviewResizeStart = (event: PointerEvent): void => {
     event.preventDefault()
+    const preview = this.renderRoot.querySelector<HTMLElement>('.editable-preview')
     this._isResizingPreview = true
     this._isPreviewHeightFitted = false
+    this._hasManualPreviewHeight = true
     this._previewResizeStartY = event.clientY
-    this._previewResizeStartHeight = this._previewHeight
+    this._previewResizeStartHeight = preview ? Math.round(preview.getBoundingClientRect().height) : this._previewHeight
+    this._previewHeight = this._previewResizeStartHeight
     this.requestUpdate()
     globalThis.addEventListener('pointermove', this.handlePreviewResizeMove)
     globalThis.addEventListener('pointerup', this.handlePreviewResizeEnd)
@@ -624,14 +634,23 @@ class DemoPane extends LitElement {
 
   private togglePreviewHeightFit = (): void => {
     if (this._isPreviewHeightFitted) {
-      const restoredHeight = this._previewHeightBeforeFit > 0 ? this._previewHeightBeforeFit : 320
-      this._previewHeight = Math.max(this.getMinimumPreviewHeight(), Math.round(restoredHeight))
+      if (this.fillHeight && !this._hadManualPreviewHeightBeforeFit) {
+        this._hasManualPreviewHeight = false
+      } else {
+        const restoredHeight = this._previewHeightBeforeFit > 0 ? this._previewHeightBeforeFit : 320
+        this._previewHeight = Math.max(this.getMinimumPreviewHeight(), Math.round(restoredHeight))
+        this._hasManualPreviewHeight = true
+      }
       this._isPreviewHeightFitted = false
       this.requestUpdate()
       return
     }
 
-    this._previewHeightBeforeFit = this._previewHeight
+    const preview = this.renderRoot.querySelector<HTMLElement>('.editable-preview')
+    this._hadManualPreviewHeightBeforeFit = this._hasManualPreviewHeight || !this.fillHeight
+    this._previewHeightBeforeFit = preview ? Math.round(preview.getBoundingClientRect().height) : this._previewHeight
+    this._previewHeight = this._previewHeightBeforeFit
+    this._hasManualPreviewHeight = true
     this._isPreviewHeightFitted = true
     this.fitPreviewToOutputHeight()
   }
@@ -1276,7 +1295,7 @@ class DemoPane extends LitElement {
   }
 
   private renderEditablePreview(): unknown {
-    const previewStyle = `--demo-preview-height: ${this._previewHeight}px;`
+    const previewStyle = this.getPreviewStyle()
     return html`
       <div class="editable-layout" style="${previewStyle}">
         ${this.renderEditor()}
@@ -1328,13 +1347,20 @@ class DemoPane extends LitElement {
   }
 
   private renderReadOnlyPreview(): unknown {
-    const previewStyle = `--demo-preview-height: ${this._previewHeight}px;`
+    const previewStyle = this.getPreviewStyle()
     return html`
       <div class="editable-layout" style="${previewStyle}">
         ${this.renderReadOnlyEditor()}
         <div class="editable-preview">${this.renderOutputPane({ includeResizer: true })}</div>
       </div>
     `
+  }
+
+  private getPreviewStyle(): string {
+    if (this.fillHeight && !this._hasManualPreviewHeight) {
+      return ''
+    }
+    return `--demo-preview-height: ${this._previewHeight}px;`
   }
 
   protected override render(): unknown {

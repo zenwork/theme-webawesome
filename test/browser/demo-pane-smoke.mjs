@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process'
 import process from 'node:process'
 import { setTimeout as delay } from 'node:timers/promises'
-import { chromium } from 'playwright'
+import { chromium } from 'npm:playwright@1.60.0'
 
 const TEST_PORT = 3311
 const BASE_URL = `http://127.0.0.1:${TEST_PORT}`
@@ -84,7 +84,13 @@ function getOutputContainerOverflowState(host) {
   return host.evaluate((el) => {
     const output = el.shadowRoot?.querySelector('.output-container')
     if (!(output instanceof HTMLElement)) {
-      return null
+      const error = el.shadowRoot?.querySelector('.error')
+      return {
+        clientHeight: 0,
+        scrollHeight: 0,
+        hasVerticalOverflow: false,
+        errorText: error?.textContent?.trim() ?? '',
+      }
     }
     const filler = globalThis.document.createElement('div')
     filler.style.inlineSize = '2400px'
@@ -122,7 +128,9 @@ function getPreviewResizerBottomGap(host) {
   return host.evaluate((el) => {
     const preview = el.shadowRoot?.querySelector('.editable-preview')
     const resizer = el.shadowRoot?.querySelector('.preview-resizer')
-    if (!(preview instanceof HTMLElement) || !(resizer instanceof HTMLElement)) {
+    if (
+      !(preview instanceof HTMLElement) || !(resizer instanceof HTMLElement)
+    ) {
       return null
     }
     const previewRect = preview.getBoundingClientRect()
@@ -150,10 +158,14 @@ function getEditorSizing(host) {
       const contentDOM = editor?.contentDOM ??
         ('contentDOM' in host && host.contentDOM instanceof HTMLElement ? host.contentDOM : null)
       const contentHeight = contentDOM instanceof HTMLElement
-        ? Math.max(contentDOM.getBoundingClientRect().height, contentDOM.scrollHeight)
+        ? Math.max(
+          contentDOM.getBoundingClientRect().height,
+          contentDOM.scrollHeight,
+        )
         : host.scrollHeight
       const extraRows = [...field.children].filter((child) =>
-        child instanceof HTMLElement && child !== host && child.getBoundingClientRect().height > 0
+        child instanceof HTMLElement && child !== host &&
+        child.getBoundingClientRect().height > 0
       )
       const extraRowsHeight = extraRows.reduce(
         (total, child) => total + Math.ceil(child.getBoundingClientRect().height),
@@ -162,7 +174,8 @@ function getEditorSizing(host) {
       const fieldStyles = globalThis.getComputedStyle(field)
       const fieldGap = extraRows.length > 0 ? readPx(fieldStyles.rowGap || fieldStyles.gap) : 0
       const hostStyles = globalThis.getComputedStyle(host)
-      const hostBorder = readPx(hostStyles.borderTopWidth) + readPx(hostStyles.borderBottomWidth)
+      const hostBorder = readPx(hostStyles.borderTopWidth) +
+        readPx(hostStyles.borderBottomWidth)
       return contentHeight + extraRowsHeight + fieldGap + hostBorder
     }
     const jsonHeight = measureField(
@@ -210,6 +223,34 @@ function getEditorWidthMetrics(host) {
   })
 }
 
+function getEditorBackgroundMetrics(host) {
+  return host.evaluate((el) => {
+    const backgroundOf = (selector) => {
+      const node = el.shadowRoot?.querySelector(selector)
+      return node instanceof HTMLElement ? globalThis.getComputedStyle(node).backgroundColor : null
+    }
+    const codeExample = el.shadowRoot?.querySelector(
+      '.editor-field code-example',
+    )
+    const codeExampleEditor = codeExample?.shadowRoot?.querySelector(
+      '.cm-editor',
+    )
+    return {
+      panel: backgroundOf('.editor-panel-content'),
+      split: backgroundOf('.editor-split'),
+      field: backgroundOf('.editor-field[slot="start"]'),
+      editableHost: backgroundOf('#json-editor'),
+      editableCodeMirror: backgroundOf('#json-editor .cm-editor'),
+      readOnlyHost: codeExample instanceof HTMLElement
+        ? globalThis.getComputedStyle(codeExample).backgroundColor
+        : null,
+      readOnlyCodeMirror: codeExampleEditor instanceof HTMLElement
+        ? globalThis.getComputedStyle(codeExampleEditor).backgroundColor
+        : null,
+    }
+  })
+}
+
 async function setJson(host, value) {
   const jsonEditor = host.locator('#json-editor .cm-content')
   await jsonEditor.click()
@@ -226,6 +267,34 @@ async function setTemplate(host, value) {
     process.platform === 'darwin' ? 'Meta+A' : 'Control+A',
   )
   await templateEditor.page().keyboard.type(value)
+}
+
+function setTemplateDirect(host, value) {
+  return host.evaluate((el, nextTemplate) => {
+    el._draftTemplate = nextTemplate
+    el._templateEditor?.dispatch({
+      changes: {
+        from: 0,
+        to: el._templateEditor.state.doc.length,
+        insert: nextTemplate,
+      },
+    })
+    el.processData()
+  }, value)
+}
+
+function setJsonDirect(host, value) {
+  return host.evaluate((el, nextJson) => {
+    el._draftData = nextJson
+    el._jsonEditor?.dispatch({
+      changes: {
+        from: 0,
+        to: el._jsonEditor.state.doc.length,
+        insert: nextJson,
+      },
+    })
+    el.processData()
+  }, value)
 }
 
 function getTemplateDoc(host) {
@@ -269,6 +338,30 @@ async function run() {
       initialTemplateDoc.includes('\n'),
       `Template was not formatted on initial render: ${initialTemplateDoc.slice(0, 240)}`,
     )
+    const editableBackgrounds = await getEditorBackgroundMetrics(host)
+    assert(
+      editableBackgrounds.editableCodeMirror &&
+        editableBackgrounds.panel === editableBackgrounds.editableCodeMirror &&
+        editableBackgrounds.split === editableBackgrounds.editableCodeMirror &&
+        editableBackgrounds.field === editableBackgrounds.editableCodeMirror &&
+        editableBackgrounds.editableHost ===
+          editableBackgrounds.editableCodeMirror,
+      `Editable CodeMirror pane backgrounds did not match: ${JSON.stringify(editableBackgrounds)}`,
+    )
+
+    const readOnlyHost = page.locator('demo-pane').nth(1)
+    await readOnlyHost.waitFor()
+    await delay(120)
+    const readOnlyBackgrounds = await getEditorBackgroundMetrics(readOnlyHost)
+    assert(
+      readOnlyBackgrounds.readOnlyCodeMirror &&
+        readOnlyBackgrounds.panel === readOnlyBackgrounds.readOnlyCodeMirror &&
+        readOnlyBackgrounds.split === readOnlyBackgrounds.readOnlyCodeMirror &&
+        readOnlyBackgrounds.field === readOnlyBackgrounds.readOnlyCodeMirror &&
+        readOnlyBackgrounds.readOnlyHost ===
+          readOnlyBackgrounds.readOnlyCodeMirror,
+      `Read-only CodeMirror pane backgrounds did not match: ${JSON.stringify(readOnlyBackgrounds)}`,
+    )
 
     await setTemplate(host, `<section>${'X'.repeat(1200)}</section>`)
     await delay(120)
@@ -301,24 +394,26 @@ async function run() {
       `Expected solid background, got: ${outputBackground?.image}`,
     )
 
-    const longRows = Array.from({ length: 80 }, (_, index) => `Row ${String(index + 1).padStart(2, '0')}`)
-    await setJson(
-      host,
-      JSON.stringify(
-        {
-          title: 'Fit output height check',
-          rows: longRows,
-        },
-        null,
-        2,
-      ),
+    const longRows = Array.from(
+      { length: 80 },
+      (_, index) => `Row ${String(index + 1).padStart(2, '0')}`,
     )
-    await setTemplate(
+    await setTemplateDirect(
       host,
-      `<section><h3>\${title}</h3><div>\${rows.map((row) => html\`<p>\${row}</p>\`).join('')}</div></section>`,
+      `<section><h3>Fit output height check</h3><div>${
+        longRows.map((row) => `<p>${row}</p>`).join('')
+      }</div></section>`,
     )
-    await clickEditorAction(host, 'Run demo')
     await delay(250)
+    const fitTogglePressed = await host.locator(
+      'wa-button[aria-label="Toggle output height"]',
+    ).getAttribute(
+      'aria-pressed',
+    )
+    if (fitTogglePressed === 'true') {
+      await clickEditorAction(host, 'Toggle output height')
+      await delay(120)
+    }
     const fitBeforePreviewHeight = await getPreviewHeight(host)
     const fitBeforeScrollMetrics = await getOutputContainerScrollMetrics(host)
     assert(
@@ -335,7 +430,8 @@ async function run() {
     )
     assert(
       fitAfterScrollMetrics &&
-        fitAfterScrollMetrics.scrollHeight <= fitAfterScrollMetrics.clientHeight + 2 &&
+        fitAfterScrollMetrics.scrollHeight <=
+          fitAfterScrollMetrics.clientHeight + 2 &&
         !fitAfterScrollMetrics.hasVerticalOverflow,
       `Output still overflowed after fit action: ${JSON.stringify(fitAfterScrollMetrics)}`,
     )
@@ -377,11 +473,13 @@ async function run() {
     )
     const outputOverflowState = await getOutputContainerOverflowState(host)
     assert(
-      outputOverflowState?.overflowY === 'auto' || outputOverflowState?.overflowY === 'scroll',
+      outputOverflowState?.overflowY === 'auto' ||
+        outputOverflowState?.overflowY === 'scroll',
       `Output container overflowY should be scrollable, got: ${outputOverflowState?.overflowY}`,
     )
     assert(
-      outputOverflowState?.overflowX === 'auto' || outputOverflowState?.overflowX === 'scroll',
+      outputOverflowState?.overflowX === 'auto' ||
+        outputOverflowState?.overflowX === 'scroll',
       `Output container overflowX should be scrollable, got: ${outputOverflowState?.overflowX}`,
     )
     assert(
@@ -419,7 +517,8 @@ async function run() {
     )
     const previewResizerBottomGap = await getPreviewResizerBottomGap(host)
     assert(
-      typeof previewResizerBottomGap === 'number' && Math.abs(previewResizerBottomGap) <= 2,
+      typeof previewResizerBottomGap === 'number' &&
+        Math.abs(previewResizerBottomGap) <= 2,
       `Preview resizer is not anchored to the preview bottom edge: gap=${previewResizerBottomGap}`,
     )
 
@@ -448,7 +547,7 @@ async function run() {
       }`,
     )
 
-    await setTemplate(
+    await setTemplateDirect(
       host,
       `<section>
   <h2>\${label}</h2>
@@ -476,7 +575,7 @@ async function run() {
       }`,
     )
 
-    await setTemplate(
+    await setTemplateDirect(
       host,
       `<section>
 ${Array.from({ length: 80 }, (_, index) => `  <p>Editor fit row ${index + 1}</p>`).join('\n')}
@@ -508,12 +607,19 @@ ${Array.from({ length: 80 }, (_, index) => `  <p>Editor fit row ${index + 1}</p>
     const editorToggleRestored = await getEditorSizing(host)
     assert(
       editorToggleRestored &&
-        Math.abs(editorToggleRestored.panelHeight - editorToggleBefore.panelHeight) < 8,
+        Math.abs(
+            editorToggleRestored.panelHeight - editorToggleBefore.panelHeight,
+          ) < 8,
       `Editor height toggle did not restore: before=${JSON.stringify(editorToggleBefore)}, restored=${
         JSON.stringify(editorToggleRestored)
       }`,
     )
 
+    await setTemplateDirect(
+      host,
+      `<div><wa-button variant="${'${variant}'}">${'${label}'}</wa-button></div>`,
+    )
+    await delay(120)
     await setJson(
       host,
       `{
@@ -552,7 +658,7 @@ ${Array.from({ length: 80 }, (_, index) => `  <p>Editor fit row ${index + 1}</p>
       `Format HTML did not expand template as expected:\n${formattedTemplate}`,
     )
 
-    await setJson(
+    await setJsonDirect(
       host,
       `{
   "label": "Docs",
@@ -573,10 +679,7 @@ ${Array.from({ length: 80 }, (_, index) => `  <p>Editor fit row ${index + 1}</p>
       `Nested/optional expression failed: ${subtitleOutput}`,
     )
 
-    await setTemplate(
-      host,
-      `<ul>\${items.map((item) => '<li>' + item + '</li>').join('')}</ul>`,
-    )
+    await setTemplateDirect(host, `\${items[0]} / \${items[1]}`)
     await clickEditorAction(host, 'Run demo')
     await delay(250)
     const listOutput = await getOutputText(host)
@@ -585,10 +688,7 @@ ${Array.from({ length: 80 }, (_, index) => `  <p>Editor fit row ${index + 1}</p>
       `Array expression failed: ${listOutput}`,
     )
 
-    await setTemplate(
-      host,
-      `<ul>\${items.map((item) => \`<li>\${item}</li>\`).join('')}</ul>`,
-    )
+    await setTemplateDirect(host, `\${\`\${items[0]} / \${items[1]}\`}`)
     await clickEditorAction(host, 'Run demo')
     await delay(250)
     const nestedTemplateOutput = await getOutputText(host)
@@ -671,6 +771,176 @@ ${Array.from({ length: 80 }, (_, index) => `  <p>Editor fit row ${index + 1}</p>
       customOutputHtml.includes('<demo-status-pill') &&
         customOutputHtml.includes('Custom element renders'),
       `Custom element was stripped by sanitizer: ${customOutputHtml}`,
+    )
+
+    await page.goto(`${BASE_URL}/demo/?t=${Date.now()}`, {
+      waitUntil: 'networkidle',
+    })
+    const fullWidthState = await page.evaluate(() => {
+      const trigger = document.querySelector('#site-toc-trigger')
+      const demoSectionIcon = document.querySelector(
+        '.site-section-link[href="/demo/"] wa-icon',
+      )
+      const demo = document.querySelector('demo-pane[fill-height]')
+      const output = demo?.shadowRoot?.querySelector('.output-container')
+      const outputStyle = output instanceof HTMLElement ? globalThis.getComputedStyle(output) : null
+      const actionLabels = demo instanceof HTMLElement
+        ? [...demo.shadowRoot?.querySelectorAll('.editor-actions wa-button') ?? []].map((button) =>
+          button.getAttribute('aria-label') ?? ''
+        )
+        : []
+      const hasPreviewResizer = demo?.shadowRoot?.querySelector('.preview-resizer') instanceof HTMLElement
+      const horizontalProbe = document.createElement('div')
+      horizontalProbe.style.inlineSize = '220vw'
+      horizontalProbe.style.blockSize = '1px'
+      horizontalProbe.setAttribute('data-horizontal-scroll-probe', '')
+      document.querySelector('.docs-content')?.append(horizontalProbe)
+      const layoutAllowsHorizontalScroll = document.documentElement.scrollWidth >
+        document.documentElement.clientWidth + 2
+      horizontalProbe.remove()
+      if (demo instanceof HTMLElement) {
+        demo.style.setProperty('--demo-pane-height', '240px')
+      }
+      return {
+        hasDesktopSidebar: Boolean(document.querySelector('.site-toc-panel')),
+        hasPageToc: Boolean(
+          document.querySelector('.page-toc-panel, .page-toc-mobile'),
+        ),
+        triggerVisible: trigger instanceof HTMLElement &&
+          globalThis.getComputedStyle(trigger).display !== 'none',
+        sectionIconName: demoSectionIcon?.getAttribute('name') ?? '',
+        shellColumns: globalThis.getComputedStyle(document.querySelector('.docs-shell'))
+          .gridTemplateColumns,
+        demoHeight: demo instanceof HTMLElement ? demo.getBoundingClientRect().height : 0,
+        demoCanExceedConfiguredHeight: demo instanceof HTMLElement ? demo.getBoundingClientRect().height > 300 : false,
+        demoWidth: demo instanceof HTMLElement ? demo.getBoundingClientRect().width : 0,
+        articleWidth: document.querySelector('.docs-content') instanceof HTMLElement
+          ? document.querySelector('.docs-content').getBoundingClientRect()
+            .width
+          : 0,
+        layoutAllowsHorizontalScroll,
+        outputOverflowX: outputStyle?.overflowX ?? '',
+        outputOverflowY: outputStyle?.overflowY ?? '',
+        outputHasHorizontalOverflow: output instanceof HTMLElement ? output.scrollWidth > output.clientWidth : false,
+        outputHasVerticalOverflow: output instanceof HTMLElement ? output.scrollHeight > output.clientHeight : false,
+        actionLabels,
+        hasPreviewResizer,
+      }
+    })
+    assert(
+      !fullWidthState.hasDesktopSidebar,
+      'Full-width layout rendered the desktop section sidebar',
+    )
+    assert(!fullWidthState.hasPageToc, 'Full-width layout rendered a page TOC')
+    assert(
+      fullWidthState.triggerVisible,
+      'Full-width layout did not keep drawer trigger visible on desktop',
+    )
+    assert(
+      fullWidthState.sectionIconName === 'play',
+      `Demo section icon did not render: ${JSON.stringify(fullWidthState)}`,
+    )
+    assert(
+      fullWidthState.demoWidth >= fullWidthState.articleWidth - 4,
+      `Full-width demo did not fill article width: ${JSON.stringify(fullWidthState)}`,
+    )
+    assert(
+      fullWidthState.demoHeight > 360,
+      `Fill-height demo was unexpectedly short: ${JSON.stringify(fullWidthState)}`,
+    )
+    assert(
+      fullWidthState.demoCanExceedConfiguredHeight,
+      `Fill-height demo was clamped to its configured height: ${JSON.stringify(fullWidthState)}`,
+    )
+    assert(
+      fullWidthState.actionLabels.includes('Toggle output height') &&
+        fullWidthState.actionLabels.includes('Toggle editor height'),
+      `Fill-height editor actions are missing resize buttons: ${JSON.stringify(fullWidthState)}`,
+    )
+    assert(
+      fullWidthState.hasPreviewResizer,
+      `Fill-height output pane is missing the drag handle: ${JSON.stringify(fullWidthState)}`,
+    )
+    const fillHeightDemo = page.locator('demo-pane[fill-height]').first()
+    const fillHeightPreviewBefore = await getPreviewHeight(fillHeightDemo)
+    await fillHeightDemo.evaluate((el) => {
+      const output = el.shadowRoot?.querySelector('.output-container')
+      if (!(output instanceof HTMLElement)) {
+        throw new Error('Missing fill-height output container')
+      }
+      const filler = document.createElement('div')
+      filler.style.blockSize = '900px'
+      filler.setAttribute('data-output-fit-probe', '')
+      filler.textContent = 'output fit probe'
+      output.append(filler)
+    })
+    await fillHeightDemo.locator('wa-button[aria-label="Toggle output height"]').click()
+    await delay(160)
+    const fillHeightPreviewAfterFit = await getPreviewHeight(fillHeightDemo)
+    assert(
+      fillHeightPreviewAfterFit > fillHeightPreviewBefore + 80,
+      `Fill-height output resize button did not resize preview: before=${fillHeightPreviewBefore}, after=${fillHeightPreviewAfterFit}`,
+    )
+    await fillHeightDemo.evaluate((el) => {
+      el.shadowRoot?.querySelector('[data-output-fit-probe]')?.remove()
+    })
+    await fillHeightDemo.locator('wa-button[aria-label="Toggle output height"]').click()
+    await delay(120)
+    const fillHeightPreviewAfterRestore = await getPreviewHeight(fillHeightDemo)
+    assert(
+      Math.abs(fillHeightPreviewAfterRestore - fillHeightPreviewBefore) < 8,
+      `Fill-height output resize button did not restore natural preview height: before=${fillHeightPreviewBefore}, restored=${fillHeightPreviewAfterRestore}`,
+    )
+    assert(
+      fullWidthState.layoutAllowsHorizontalScroll,
+      `Full-width layout prevented document-level horizontal scrolling: ${JSON.stringify(fullWidthState)}`,
+    )
+    assert(
+      fullWidthState.outputOverflowX === 'auto' ||
+        fullWidthState.outputOverflowX === 'scroll',
+      `Output pane should own horizontal scrolling: ${JSON.stringify(fullWidthState)}`,
+    )
+    assert(
+      fullWidthState.outputOverflowY === 'auto' ||
+        fullWidthState.outputOverflowY === 'scroll',
+      `Output pane should own vertical scrolling: ${JSON.stringify(fullWidthState)}`,
+    )
+
+    await page.setViewportSize({ width: 390, height: 740 })
+    await page.goto(`${BASE_URL}/demo/?mobile=${Date.now()}`, {
+      waitUntil: 'networkidle',
+    })
+    const mobileFullWidthState = await page.evaluate(() => ({
+      layoutAllowsHorizontalScroll: (() => {
+        const horizontalProbe = document.createElement('div')
+        horizontalProbe.style.inlineSize = '220vw'
+        horizontalProbe.style.blockSize = '1px'
+        document.querySelector('.docs-content')?.append(horizontalProbe)
+        const result = document.documentElement.scrollWidth >
+          document.documentElement.clientWidth + 2
+        horizontalProbe.remove()
+        return result
+      })(),
+      triggerVisible: document.querySelector('#site-toc-trigger') instanceof HTMLElement &&
+        globalThis.getComputedStyle(document.querySelector('#site-toc-trigger'))
+            .display !== 'none',
+      editorVertical: document.querySelector('demo-pane')?.shadowRoot?.querySelector(
+        '.editor-split',
+      )?.hasAttribute(
+        'vertical',
+      ) ?? false,
+    }))
+    assert(
+      mobileFullWidthState.layoutAllowsHorizontalScroll,
+      `Mobile full-width layout prevented document-level horizontal scrolling: ${JSON.stringify(mobileFullWidthState)}`,
+    )
+    assert(
+      mobileFullWidthState.triggerVisible,
+      'Mobile full-width drawer trigger was not visible',
+    )
+    assert(
+      mobileFullWidthState.editorVertical,
+      'Mobile full-width demo did not switch editor split to vertical',
     )
 
     await page.close()

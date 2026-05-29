@@ -159,6 +159,12 @@ order: 45
         <code>fit-content</code> (boolean, default <code>false</code>): grows/shrinks preview height to match rendered
         output content instead of using the resizable fixed-height preview area
       </li>
+      <li>
+        <code>fill-height</code> (boolean, default <code>false</code>): uses the available height as a minimum pane
+        height while keeping editor/output scrolling inside their panes. Use this for full-width playground pages where
+        the demo pane should occupy most of the viewport, while still being allowed to grow taller when its controls
+        need space.
+      </li>
     </ul>
     <p>
       Notes: JSON must parse to an object. The component sanitizes rendered output while allowing valid custom elements,
