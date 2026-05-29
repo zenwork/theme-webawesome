@@ -7,9 +7,7 @@ site.use(theme({
   siteToc: {
     root: '.',
   },
-  webawesome: {
-
-  },
+  webawesome: {},
 }))
 
 export default site

@@ -1,0 +1,38 @@
+---
+layout: layouts/full-width.vto
+title: Full Width Demo Pane
+order: 0
+---
+<style>
+  .full-width-demo-page {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .full-width-demo-page header {
+    max-inline-size: 72ch;
+  }
+
+  .screen-demo {
+    --demo-pane-height: calc(100dvh - var(--site-header-scroll-offset, 72px) - 8rem);
+  }
+</style>
+<section class="full-width-demo-page">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      Drawer navigation remains available at desktop width, while the content area can host a screen-sized runnable
+      example.
+    </p>
+  </header>
+
+  <demo-pane
+    class="screen-demo"
+    data='{"title":"Full-width playground","columns":["Name","Status","Owner","Notes"],"rows":["Authentication service ready for release","Search indexing pending review","Theme package smoke tests passing","API reference needs final copy","FHIR profile browser prototype","Editable playground viewport behavior","Drawer navigation regression coverage","Long-running output row to force internal scrolling","Another row to keep output scrollable","Final row in the scrollable output region"]}'
+    template='<section style="min-width:72rem"><p style="font-weight:700;font-size:1.1rem;margin:0 0 .75rem">${title}</p><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;border-bottom:1px solid var(--wa-color-neutral-300);padding:.4rem">${columns[0]}</th><th style="text-align:left;border-bottom:1px solid var(--wa-color-neutral-300);padding:.4rem">${columns[1]}</th><th style="text-align:left;border-bottom:1px solid var(--wa-color-neutral-300);padding:.4rem">${columns[2]}</th><th style="text-align:left;border-bottom:1px solid var(--wa-color-neutral-300);padding:.4rem">${columns[3]}</th></tr></thead><tbody><tr><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Item 1</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Ready</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Docs</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">${rows[0]}</td></tr><tr><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Item 2</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Review</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Docs</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">${rows[1]}</td></tr><tr><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Item 3</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Ready</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Theme</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">${rows[2]}</td></tr><tr><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Item 4</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Draft</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Docs</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">${rows[3]}</td></tr><tr><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Item 5</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Ready</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">FHIR</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">${rows[4]}</td></tr><tr><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Item 6</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Ready</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Theme</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">${rows[5]}</td></tr><tr><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Item 7</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Ready</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Theme</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">${rows[6]}</td></tr><tr><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Item 8</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Ready</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Docs</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">${rows[7]}</td></tr><tr><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Item 9</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Ready</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Docs</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">${rows[8]}</td></tr><tr><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Item 10</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Ready</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">Docs</td><td style="padding:.4rem;border-bottom:1px solid var(--wa-color-neutral-200)">${rows[9]}</td></tr></tbody></table></section>'
+    output-background="var(--wa-color-neutral-50)"
+    fill-height
+    editor-open
+  >
+  </demo-pane>
+</section>

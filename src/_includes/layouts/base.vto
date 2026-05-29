@@ -78,7 +78,9 @@
     {{# CUSTOM COMPONENTS #}}
     <script type="module" src="{{ themeComponents.primaryScript }}"></script>
   </head>
-  <body>
+  {{ set docsLayoutMode = docsLayout || layoutMode || '' }}
+  {{ set fullWidthLayout = docsLayoutMode === 'full-width' || fullWidth === true }}
+  <body class="{{ if fullWidthLayout }}docs-layout-full{{ /if }}">
     {{ set currentPathParts = (url || '/').split('/').filter((part) => part.length > 0) }}
     {{ set currentSectionKey = currentPathParts[0] || '' }}
     {{ set siteLogo = themeBranding ? themeBranding.logo : null }}
@@ -103,6 +105,9 @@
                 href="{{ section.url }}"
                 class="site-section-link {{ if activeSection?.key === section.key }}is-active{{ /if }}"
               >
+                {{ if section.icon }}
+                  <wa-icon name="{{ section.icon }}" aria-hidden="true"></wa-icon>
+                {{ /if }}
                 {{ section.title }}
               </a>
             {{ /for }}
@@ -136,7 +141,12 @@
           <span class="site-title">{{ metas.site }}</span>
         </a>
         {{ if sectionChooserVisible }}
-          <span class="site-section-drawer">{{ activeSection?.title || siteNavigationHeading }}</span>
+          <span class="site-section-drawer">
+            {{ if activeSection?.icon }}
+              <wa-icon name="{{ activeSection.icon }}" aria-hidden="true"></wa-icon>
+            {{ /if }}
+            {{ activeSection?.title || siteNavigationHeading }}
+          </span>
         {{ /if }}
         {{ if sectionChooserVisible }}
           <nav class="site-section-nav" aria-label="Sections">
@@ -145,6 +155,9 @@
                 href="{{ section.url }}"
                 class="site-section-link {{ if activeSection?.key === section.key }}is-active{{ /if }}"
               >
+                {{ if section.icon }}
+                  <wa-icon name="{{ section.icon }}" aria-hidden="true"></wa-icon>
+                {{ /if }}
                 {{ section.title }}
               </a>
             {{ /for }}
@@ -174,13 +187,15 @@
         {{ include '../theme-toggle.vto' }}
       </div>
     </header>
-    <main class="docs-shell">
-      <aside class="site-toc-panel">
-        <section class="site-toc-shell">
-          {{ include '../section-toc.vto' }}
-        </section>
-      </aside>
-      {{ if toc?.length }}
+    <main class="docs-shell {{ if fullWidthLayout }}docs-shell-full{{ /if }}">
+      {{ if !fullWidthLayout }}
+        <aside class="site-toc-panel">
+          <section class="site-toc-shell">
+            {{ include '../section-toc.vto' }}
+          </section>
+        </aside>
+      {{ /if }}
+      {{ if !fullWidthLayout && toc?.length }}
         <section class="page-toc-mobile">
           <section class="page-toc-shell">
             <h2>On this page</h2>
@@ -207,10 +222,10 @@
           </section>
         </section>
       {{ /if }}
-      <article class="docs-content">
+      <article class="docs-content {{ if fullWidthLayout }}docs-content-full{{ /if }}">
         {{ content }}
       </article>
-      {{ if toc?.length }}
+      {{ if !fullWidthLayout && toc?.length }}
         <aside class="page-toc-panel">
           <section class="page-toc-shell">
             <h2>On this page</h2>

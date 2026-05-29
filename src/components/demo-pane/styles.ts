@@ -2,7 +2,8 @@ import { css, CSSResultGroup } from 'lit'
 
 export const styles: CSSResultGroup = css`
   :host {
-    --demo-editor-bg: var(--wa-color-neutral-900);
+    --demo-editor-bg: #282c34;
+    --demo-editor-divider: color-mix(in srgb, var(--wa-color-brand-border-loud) 55%, transparent);
     --demo-editor-min-height: 120px;
     --demo-surface-border: var(--docs-color-divider, var(--wa-color-neutral-300));
     --demo-surface-border-subtle: var(--docs-color-divider, var(--wa-color-neutral-200));
@@ -19,6 +20,10 @@ export const styles: CSSResultGroup = css`
 
   :host([fit-content]) {
     --demo-editor-min-height: 0px;
+  }
+
+  :host([fill-height]) {
+    min-block-size: var(--demo-pane-height, calc(100dvh - var(--site-header-scroll-offset, 72px) - 2rem));
   }
 
   :host(:last-child) {
@@ -145,6 +150,7 @@ export const styles: CSSResultGroup = css`
     box-sizing: border-box;
     padding: 0.5rem 0.625rem 0.5rem;
     block-size: var(--demo-editor-height, auto);
+    /*background: var(--demo-editor-bg);*/
   }
 
   .editor-panel-loading {
@@ -162,6 +168,8 @@ export const styles: CSSResultGroup = css`
     background: var(--demo-editor-bg);
     border-radius: var(--wa-border-radius-m);
     overflow: hidden;
+    border-top: .1rem solid var(--demo-editor-divider);
+    border-bottom: .1rem solid var(--demo-editor-divider);
   }
 
   .editor-split::part(divider) {
@@ -206,7 +214,8 @@ export const styles: CSSResultGroup = css`
     block-size: 100%;
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--wa-color-neutral-700);
+    color: var(--wa-color-neutral-200);
+    background: var(--demo-editor-bg);
   }
 
   .editor-host {
@@ -220,6 +229,17 @@ export const styles: CSSResultGroup = css`
     overflow: hidden;
     background: var(--demo-editor-bg);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--demo-surface-border-subtle) 40%, transparent);
+  }
+
+  .editor-field code-example {
+    --code-example-surface-bg: var(--demo-editor-bg);
+    display: block;
+    min-inline-size: 0;
+    min-height: 0;
+    inline-size: 100%;
+    max-inline-size: 100%;
+    block-size: 100%;
+    background: var(--demo-editor-bg);
   }
 
   .editor-host .cm-editor {
@@ -242,13 +262,15 @@ export const styles: CSSResultGroup = css`
   .editor-host .cm-content {
     min-inline-size: 0;
     max-inline-size: 100%;
-  }
+  } 
 
   .editor-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
     margin-top: 0;
+    padding-top: 0.5rem;
+    /*border-top: .1rem solid var(--demo-editor-divider);*/
   }
 
   .editor-actions wa-button::part(base) {
@@ -309,6 +331,7 @@ export const styles: CSSResultGroup = css`
   .editable-layout {
     display: grid;
     grid-template-rows: auto auto;
+    min-block-size: 0;
   }
 
   .editable-preview {
@@ -316,6 +339,17 @@ export const styles: CSSResultGroup = css`
     block-size: var(--demo-preview-height, 320px);
     min-block-size: 220px;
     margin-bottom: 0.875rem;
+  }
+
+  :host([fill-height]) .editable-layout {
+    min-block-size: inherit;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  :host([fill-height]) .editable-preview {
+    block-size: var(--demo-preview-height, auto);
+    min-block-size: 220px;
+    margin-bottom: 0;
   }
 
   .editable-preview .pane {
@@ -354,6 +388,10 @@ export const styles: CSSResultGroup = css`
 
   :host(:not([readonly])) .editor-panel:not([open]) {
     border-bottom: 0;
+  }
+
+  :host([fill-height]) .editor-panel-content {
+    max-block-size: min(var(--demo-editor-height, 220px), 48dvh);
   }
 
   .tabs-toolbar {
@@ -395,12 +433,20 @@ export const styles: CSSResultGroup = css`
   }
 
   @media (max-width: 768px) {
+    :host([fill-height]) {
+      min-block-size: var(--demo-pane-height, calc(100dvh - var(--site-header-scroll-offset, 72px) - 1rem));
+    }
+
     .pane-split {
       display: none;
     }
 
     .editor-panel-content {
       padding: 0.5rem 0.625rem 0.625rem;
+    }
+
+    :host([fill-height]) .editor-panel-content {
+      max-block-size: 42dvh;
     }
 
     .editor-split {

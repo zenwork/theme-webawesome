@@ -89,6 +89,30 @@ Related docs for this project:
 - Lit docs (`src/components/**`): https://lit.dev/docs/
 - WebAwesome docs (custom elements imported via `webawesome`): https://webawesome.com/docs/
 
+## Related Project Context
+
+This theme is intended to support `fhir-beacon-web`, the documentation site for the `fhir-beacon` UI library.
+
+Journal planning docs:
+
+- `/Users/flo/journal/projects/fhir-beacon/documentation.md`
+- `/Users/flo/journal/projects/fhir-beacon/docs-overview.md`
+- `/Users/flo/journal/projects/fhir-beacon/docs-structure.md`
+- `/Users/flo/journal/projects/fhir-beacon/docs-build-plan.md`
+- `/Users/flo/journal/projects/fhir-beacon/docs-technical-requirements.md`
+- `/Users/flo/journal/projects/fhir-beacon/docs-open-questions.md`
+
+Important context:
+
+- `fhir-beacon-web` should use this theme for technical documentation.
+- The documentation structure includes top-level sections for Learn, FHIR Data, Customization, Reference, and Play.
+- Phase 1 should stub the full documentation structure while only publishing public-ready pages.
+- Use Lume `draft: true` pages for unfinished content, with `LUME_DRAFTS=true` in demo/review builds.
+- The theme should support docs that combine narrative guidance, code examples, coverage/status tables, and eventual
+  editable demo/playground surfaces.
+- Syntax highlighting must support JSX/TSX examples (and be extensible for additional languages used in docs, such as
+  JSON, TypeScript, Bash, and HTML) so framework-specific snippets render correctly.
+
 ## What To Verify After Changes
 
 1. Run `deno fmt` and `deno lint`.
@@ -138,3 +162,5 @@ Related docs for this project:
 
 - `deno.json` currently has `lock: false`; do not assume lockfile enforcement.
 - Remote imports use pinned versions from jsDelivr/npm specifiers; treat version bumps as explicit changes.
+- TOC regression risk: section `index.md` pages must not be auto-labeled or grouped under a forced `Overview` chapter.
+  Preserve explicit page titles/metadata in section navigation.

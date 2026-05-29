@@ -50,10 +50,10 @@ site.use(theme({
   siteToc: {
     root: '.',
     sections: [
-      { folder: 'docs', label: 'Platform', order: 0 },
+      { folder: 'docs', label: 'Doc', order: 0 },
       { folder: 'guides', label: 'Guides', order: 1 },
       { folder: 'reference', label: 'Reference', order: 2 },
-      { folder: 'platform', label: 'Foo', order: 3 },
+      { folder: 'demo', label: 'Demo', order: 3, icon: 'play' },
     ],
   },
   webawesome: {
@@ -91,7 +91,8 @@ From [`plugins.ts`](./plugins.ts), `theme()` wires up:
   - `customPropertiesCssPath`
 - `siteToc`
   - `root` (required by interface, defaults to `'.'`)
-  - `sections` (`[{ folder, label, order }]`)
+  - `sections` (`[{ folder, label, order, icon? }]`)
+    - `icon` is an optional WebAwesome icon name shown next to the section title.
   - `includeUrlPrefix` (default: `'/'`)
   - `filter` (advanced nav filter string override)
 - `siteLogo`
@@ -127,6 +128,13 @@ if (!customElements.get('my-card')) {
 }
 ```
 
+## Layouts
+
+- `layouts/base.vto`: default documentation layout with desktop section sidebar and page-level "On this page" TOC.
+- `layouts/full-width.vto`: full-width content layout for playgrounds and large examples. It keeps the header and uses
+  drawer navigation at every viewport size, but omits the desktop section sidebar and page-level TOCs. It does not
+  suppress document-level horizontal scrolling when content is wider than the viewport.
+
 ## Built-in docs components
 
 ### `<demo-pane>`
@@ -158,6 +166,9 @@ Attributes:
 - `data-label` / `template-label` (string): custom labels for editor panes.
 - `output-background` (string): CSS background value for the output area.
 - `fit-content` (boolean, default `false`): auto-size preview height to rendered output.
+- `fill-height` (boolean, default `false`): use the available height as a minimum pane height while keeping
+  editor/output scrolling inside their panes. The demo pane can still grow taller than the viewport when its own
+  controls need space.
 
 Basic usage:
 

@@ -25,7 +25,7 @@ export interface WebAwesomeOptions {
 
 export interface SiteTocOptions {
   root: string
-  sections?: { folder: string; label: string; order: number }[]
+  sections?: { folder: string; label: string; order: number; icon?: string }[]
   includeUrlPrefix?: string
   filter?: string
 }
@@ -66,6 +66,7 @@ interface ThemeSectionLink {
   key: string
   title: string
   indexTitle: string
+  icon?: string
   baseUrl: string
   url: string
   order: number
@@ -291,6 +292,7 @@ function resolveSiteTocOptions(config?: Partial<SiteTocOptions>): SiteTocOptions
       folder: normalizeFolder(section.folder),
       label: section.label.trim(),
       order: section.order,
+      icon: section.icon?.trim() || undefined,
     }))
     .filter((section) => section.folder && section.label)
 
@@ -411,6 +413,7 @@ export default function (userOptions?: Options) {
       folder: normalizeFolder(section.folder),
       title: section.label.trim(),
       order: section.order,
+      icon: section.icon?.trim() || undefined,
     }))
     .filter((section) => section.key && section.folder && section.title)
   if (!configuredSections.length) {
@@ -479,6 +482,7 @@ export default function (userOptions?: Options) {
         key: section.key,
         title: section.title || toTitleCase(section.key),
         indexTitle: entrypoint?.title || section.title || toTitleCase(section.key),
+        icon: section.icon,
         baseUrl: entrypointCandidates.length ? sectionBaseUrl : siteTocRootUrl,
         url: entrypoint?.url || (entrypointCandidates.length ? sectionBaseUrl : siteTocRootUrl),
         order: section.order,
