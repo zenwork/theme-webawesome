@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/zenwork/theme-webawesome/compare/v1.1.0...v1.1.1) (2026-05-29)
+
+
+### Bug Fixes
+
+* **demo-pane:** make the output background customizable ([024511c](https://github.com/zenwork/theme-webawesome/commit/024511c5e0609dd88b0652e6e1517daa64325aa6))
+
 ## [1.1.0](https://github.com/zenwork/theme-webawesome/compare/v1.0.0...v1.1.0) (2026-05-29)
 
 
