@@ -17,17 +17,12 @@
   <site-toc-tree storage-key="{{ sectionStorageKey }}">
     {{ if sectionIndex }}
       <section class="site-toc-group">
-        <h3 class="site-toc-group-heading">Overview</h3>
-        <wa-tree>
-          <wa-tree-item data-node-key="{{ sectionIndex.data.url }}">
-            <a
-              href="{{ sectionIndex.data.url }}"
-              class="toc-link {{ if url === sectionIndex.data.url }}is-active{{ /if }}"
-            >
-              {{ sectionIndex.data.title || activeSection?.indexTitle || activeSection?.title || sectionIndex.slug }}
-            </a>
-          </wa-tree-item>
-        </wa-tree>
+        <a
+          href="{{ sectionIndex.data.url }}"
+          class="site-toc-group-heading site-toc-group-link {{ if url === sectionIndex.data.url }}is-active{{ /if }}"
+        >
+          {{ sectionIndex.data.title || activeSection?.indexTitle || activeSection?.title || sectionIndex.slug }}
+        </a>
       </section>
     {{ /if }}
 
