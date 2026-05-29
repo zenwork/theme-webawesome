@@ -305,6 +305,14 @@ async function clickEditorAction(host, label) {
   await host.locator(`wa-button[aria-label="${label}"]`).click()
 }
 
+async function pressRunShortcut(host) {
+  const templateEditor = host.locator('#template-editor .cm-content')
+  await templateEditor.click()
+  await templateEditor.page().keyboard.press(
+    process.platform === 'darwin' ? 'Meta+Enter' : 'Control+Enter',
+  )
+}
+
 async function run() {
   const server = startServer()
   let browser
@@ -634,6 +642,22 @@ ${Array.from({ length: 80 }, (_, index) => `  <p>Editor fit row ${index + 1}</p>
     assert(
       updated.includes('Updated Label'),
       `Run did not update output: ${updated}`,
+    )
+
+    await setJson(
+      host,
+      `{
+  "label": "Shortcut Label",
+  "variant": "brand",
+  "size": "medium"
+}`,
+    )
+    await pressRunShortcut(host)
+    await delay(300)
+    const shortcutUpdated = await getOutputText(host)
+    assert(
+      shortcutUpdated.includes('Shortcut Label'),
+      `Shortcut run did not update output: ${shortcutUpdated}`,
     )
 
     await setJson(host, `{"label":"Broken"`)

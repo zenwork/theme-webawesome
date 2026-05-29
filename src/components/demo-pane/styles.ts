@@ -9,6 +9,10 @@ export const styles: CSSResultGroup = css`
     --demo-surface-border-subtle: var(--docs-color-divider, var(--wa-color-neutral-200));
     --demo-surface-bg: var(--docs-color-surface, var(--wa-color-neutral-0));
     --demo-toolbar-bg: var(--docs-color-surface-subtle, var(--wa-color-neutral-50));
+    --demo-pane-output-background-default: var(
+      --demo-output-bg,
+      color-mix(in srgb, var(--demo-toolbar-bg) 55%, transparent)
+    );
     --demo-code-font: var(--wa-font-family-code);
     display: block;
     margin-block-end: 0.875rem;
@@ -73,7 +77,7 @@ export const styles: CSSResultGroup = css`
     margin: 0.125rem 0.125rem 0.875rem;
     border: 1px dashed var(--demo-surface-border);
     border-radius: var(--wa-border-radius-s);
-    background: var(--demo-output-bg, color-mix(in srgb, var(--demo-toolbar-bg) 55%, transparent));
+    background: var(--demo-pane-output-background, var(--demo-pane-output-background-default));
   }
 
   .error {
@@ -168,8 +172,8 @@ export const styles: CSSResultGroup = css`
     background: var(--demo-editor-bg);
     border-radius: var(--wa-border-radius-m);
     overflow: hidden;
-    border-top: .1rem solid var(--demo-editor-divider);
-    border-bottom: .1rem solid var(--demo-editor-divider);
+    border-top: 0.1rem solid var(--demo-editor-divider);
+    border-bottom: 0.1rem solid var(--demo-editor-divider);
   }
 
   .editor-split::part(divider) {
@@ -262,7 +266,7 @@ export const styles: CSSResultGroup = css`
   .editor-host .cm-content {
     min-inline-size: 0;
     max-inline-size: 100%;
-  } 
+  }
 
   .editor-actions {
     display: flex;

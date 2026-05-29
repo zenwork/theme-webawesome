@@ -52,7 +52,7 @@ order: 45
       data='{"label":"Deploy","variant":"brand","size":"small"}'
       template='<wa-button variant="${variant}" size="${size}">${label}</wa-button>'
       imports='["button"]'
-      output-background="color-mix(in srgb, var(--wa-color-brand-fill-loud) 10%, white)"
+      style="--demo-pane-output-background: color-mix(in srgb, var(--wa-color-brand-fill-loud) 10%, white)"
       default-tab="output"
       editor-open
     >
@@ -98,7 +98,7 @@ order: 45
       data='{"title":"Changelog Preview","entries":["Authentication update and migration notes","CLI lifecycle and release workflow details","Type-safe config defaults and overrides","CSS token mapping and fallback strategy","Server-side rendering compatibility checklist","Hot reload performance benchmark results","Accessibility audit remediation checklist","Navigation state persistence logic","Code sample rendering edge cases","Semantic versioning and deprecation policy","Error handling and retry semantics","Platform support matrix and caveats","Extension registration lifecycle","Theme customization and variable scoping","Diagnostic logging and tracing strategy","Testing strategy with smoke and integration coverage","Runtime dependency graph review","Build output and asset pipeline notes","Preview rendering and sanitization behavior","Component API compatibility guidance","Deployment rollout and rollback procedure","Documentation publishing workflow","Localization and translation notes","Telemetry event payload examples","Caching strategy for static assets","Contributor workflow and branch policy","UI state machine transition table","Feature flag lifecycle management","Template parser expression examples","Security hardening and input validation","Dependency update policy and cadence","Long-running task progress reporting","Schema migration ordering and safeguards","Performance budget and monitoring baselines","Read-only mode interaction rules","Split pane behavior and resize constraints","Browser support and known limitations","Troubleshooting guide and quick fixes","Recovery procedure for failed releases","Final release checklist and sign-off"]}'
       template='<section><h3>${title}</h3><div style="display:grid;gap:.375rem">${entries.map((entry, index) => html`<p style="margin:0">${index + 1}. ${entry}</p>`)}</div></section>'
       editor-open
-      output-background="var(--wa-color-neutral-50)"
+      style="--demo-pane-output-background: var(--wa-color-neutral-50)"
     >
     </demo-pane>
   </section>
@@ -151,9 +151,9 @@ order: 45
         <code>data-label</code> / <code>template-label</code> (string, default empty): editor field labels
       </li>
       <li>
-        <code>output-background</code> (string, default empty): optional CSS background value for the rendered output
-        area (for example
-        <code>#fff</code> or <code>var(--wa-color-neutral-50)</code>)
+        <code>--demo-pane-output-background</code> (CSS custom property): background for the rendered output area. Set
+        it on a specific <code>&lt;demo-pane&gt;</code> or in a parent scope. The legacy
+        <code>output-background</code> attribute is still supported as a per-instance shortcut.
       </li>
       <li>
         <code>fit-content</code> (boolean, default <code>false</code>): grows/shrinks preview height to match rendered

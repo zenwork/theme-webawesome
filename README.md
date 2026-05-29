@@ -164,11 +164,15 @@ Attributes:
 - `default-tab` (`data | markup | output`, default `output`): initial active tab.
 - `editor-open` (boolean, default `false`): opens editor panel on load.
 - `data-label` / `template-label` (string): custom labels for editor panes.
-- `output-background` (string): CSS background value for the output area.
+- `output-background` (string): legacy per-instance shortcut for the output area background.
 - `fit-content` (boolean, default `false`): auto-size preview height to rendered output.
 - `fill-height` (boolean, default `false`): use the available height as a minimum pane height while keeping
   editor/output scrolling inside their panes. The demo pane can still grow taller than the viewport when its own
   controls need space.
+
+CSS custom properties:
+
+- `--demo-pane-output-background`: CSS background value for the rendered output area.
 
 Basic usage:
 
@@ -177,6 +181,7 @@ Basic usage:
   data='{"label":"Deploy","variant":"brand"}'
   template='<wa-button variant="${variant}">${label}</wa-button>'
   imports='["button"]'
+  style="--demo-pane-output-background: var(--wa-color-neutral-50)"
   default-tab="output"
   editor-open
 ></demo-pane>

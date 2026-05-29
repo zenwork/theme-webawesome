@@ -416,14 +416,10 @@ class DemoPane extends LitElement {
       extensions: [
         lineNumbers(),
         history(),
+        EditorView.domEventHandlers({
+          keydown: (event) => this.handleRunShortcut(event),
+        }),
         keymap.of([
-          {
-            key: 'Mod-Enter',
-            run: () => {
-              this.runDemo()
-              return true
-            },
-          },
           ...defaultKeymap,
           ...historyKeymap,
         ]),
@@ -441,6 +437,16 @@ class DemoPane extends LitElement {
       ],
     })
     return new EditorView({ state, parent })
+  }
+
+  private handleRunShortcut(event: KeyboardEvent): boolean {
+    if (event.key !== 'Enter' || event.shiftKey || event.altKey || !(event.metaKey || event.ctrlKey)) {
+      return false
+    }
+
+    event.preventDefault()
+    this.runDemo()
+    return true
   }
 
   private destroyEditors(): void {
@@ -1230,7 +1236,9 @@ class DemoPane extends LitElement {
 
   private renderOutputPane(options: { includeResizer?: boolean } = {}): unknown {
     const includeResizer = options.includeResizer ?? false
-    const outputContainerStyle = this.outputBackground.trim() ? `--demo-output-bg: ${this.outputBackground};` : ''
+    const outputContainerStyle = this.outputBackground.trim()
+      ? `--demo-pane-output-background: ${this.outputBackground};`
+      : ''
 
     return html`
       <div class="pane">

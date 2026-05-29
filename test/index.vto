@@ -93,7 +93,7 @@ if (!customElements.get('release-callout')) {
       data='{"title":"Release v0.2.0","state":"Ready","items":["Navigation offsets","TOC active state","Resizable editors"]}'
       template='<wa-card><strong>${title}</strong><div style="margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap"><wa-badge variant="success">${state}</wa-badge></div><ul style="margin:.75rem 0 0 1rem">${items.map((item) => html`<li>${item}</li>`)}</ul></wa-card>'
       imports='["card","badge"]'
-      output-background="var(--wa-color-neutral-50)"
+      style="--demo-pane-output-background: var(--wa-color-neutral-50)"
       editor-open
     >
     </demo-pane>
