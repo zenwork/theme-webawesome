@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/zenwork/theme-webawesome/compare/v1.0.0...v1.1.0) (2026-05-29)
+
+
+### Features
+
+* **layout:** support full-width layout ([#4](https://github.com/zenwork/theme-webawesome/issues/4)) ([5b03ab5](https://github.com/zenwork/theme-webawesome/commit/5b03ab5c19818f5138b133a36b0858062d151541))
+
 ## 1.0.0 (2026-05-22)
 
 ### Features
