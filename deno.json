@@ -14,7 +14,12 @@
     "@codemirror/lang-json": "npm:@codemirror/lang-json@^6.0.2",
     "@codemirror/lang-html": "npm:@codemirror/lang-html@^6.4.11",
     "@codemirror/lang-javascript": "npm:@codemirror/lang-javascript@^6.2.4",
+    "@codemirror/lang-css": "npm:@codemirror/lang-css@^6.3.1",
     "@codemirror/theme-one-dark": "npm:@codemirror/theme-one-dark@^6.1.3",
+    "@vitest/browser": "npm:@vitest/browser@^3.0.3",
+    "playwright": "npm:playwright@1.60.0",
+    "vitest": "npm:vitest@^3.0.3",
+    "vitest/": "npm:vitest@^3.0.3/",
     "lume/": "https://cdn.jsdelivr.net/gh/lumeland/lume@3.1.0/",
     "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.13.0/",
     "lume/jsx-runtime": "https://cdn.jsdelivr.net/gh/oscarotero/ssx@0.1.12/jsx-runtime.ts"
@@ -37,6 +42,10 @@
       "description": "Run browser-level smoke tests for demo pane",
       "command": "deno run --allow-env --allow-read --allow-write --allow-run --allow-net --allow-sys test/browser/demo-pane-smoke.mjs"
     },
+    "test:unit": {
+      "description": "Run unit tests with Vitest",
+      "command": "deno run -A npm:vitest --run"
+    },
     "changelog": {
       "description": "Run the changelog utility to format the CHANGELOG.md file",
       "command": "deno run --allow-read --allow-write https://deno.land/x/changelog@v2.6.2/bin.ts"
@@ -51,7 +60,9 @@
     "experimentalDecorators": true
   },
   "exclude": [
-    "./_site"
+    "./_site",
+    "./.vite",
+    "./src/components/__screenshots__"
   ],
   "unstable": [
     "temporal",

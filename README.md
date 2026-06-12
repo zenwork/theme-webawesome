@@ -206,13 +206,15 @@ Key features:
 
 - theme-consistent syntax highlighting,
 - indentation normalization for slotted multiline content,
+- optional one-line padding before and after snippets,
 - optional language inference from slotted content (`data-language`, `language-*` class, or HTML element content).
 
 Attributes:
 
 - `code` (string, default empty): explicit snippet text.
-- `language` (`json | html | javascript | typescript | text`, default inferred or `text`).
-- `line-numbers` (boolean, default `true`).
+- `language` (`json | html | javascript | typescript | jsx | tsx | css | text`, default inferred or `text`).
+- `no-line-numbers` (boolean, default `false`): hide the line number gutter.
+- `padded` (boolean, default `false`): render exactly one blank line before and after the snippet.
 
 Basic usage (slotted code):
 
@@ -231,6 +233,15 @@ Basic usage (explicit `code` value):
 ></code-example>
 ```
 
+Padded JSX example:
+
+```html
+<code-example language="tsx" padded>
+  export function StatusBadge() { return <wa-badge variant="success">Ready</wa-badge>
+  }
+</code-example>
+```
+
 ## Development commands
 
 Theme repo root:
@@ -239,6 +250,7 @@ Theme repo root:
 deno task serve
 deno task build
 deno lint
+deno task test:unit
 deno task test:browser
 ```
 

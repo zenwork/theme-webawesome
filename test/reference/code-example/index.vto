@@ -1,0 +1,138 @@
+---
+layout: layouts/base.vto
+title: Code Example Reference
+order: 3
+---
+<section class="docs-stack">
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="lead">
+      API reference and integration examples for the <code>&lt;code-example&gt;</code> documentation component.
+    </p>
+  </header>
+
+  <section class="docs-section">
+    <h2>Purpose</h2>
+    <p>
+      Use <code>&lt;code-example&gt;</code> for static code samples that should render with CodeMirror syntax
+      highlighting, optional line numbers, indentation normalization, and language inference from slotted content.
+    </p>
+  </section>
+
+  <section class="docs-section">
+    <h2>Attributes</h2>
+    <dl>
+      <dt><code>code</code></dt>
+      <dd>
+        Explicit snippet text. When set, this value is rendered instead of slotted content.
+      </dd>
+
+      <dt><code>language</code></dt>
+      <dd>
+        Syntax language. Supported values are <code>json</code>, <code>html</code>, <code>javascript</code>,
+        <code>typescript</code>, <code>jsx</code>, <code>tsx</code>, <code>css</code>, and <code>text</code>.
+      </dd>
+
+      <dt><code>no-line-numbers</code></dt>
+      <dd>
+        Boolean attribute. Add it to static HTML to hide line numbers.
+      </dd>
+
+      <dt><code>padded</code></dt>
+      <dd>
+        Boolean attribute. Adds exactly one blank line before and after the displayed snippet.
+      </dd>
+    </dl>
+  </section>
+
+  <section class="docs-section">
+    <h2>Slotted Content</h2>
+    <p>
+      Multiline slotted code is normalized by trimming empty outer lines and removing common indentation.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+import { html } from 'lit'
+
+const status = {
+  label: 'Ready',
+  variant: 'success',
+}
+
+export const view = html`<wa-badge variant="${status.variant}">${status.label}</wa-badge>`
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Padded Content</h2>
+    <p>
+      Use <code>padded</code> when the first and last lines need visual breathing room inside the editor surface.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="html" padded>
+    <code-example language="tsx">
+      export function ReleaseStatus() {
+        return <wa-badge variant="success">Ready</wa-badge>
+      }
+    </code-example>
+    </code-example>
+    <!-- deno-fmt-ignore -->
+    <code-example language="tsx" padded>
+export function ReleaseStatus() {
+  return &lt;wa-badge variant="success"&gt;Ready&lt;/wa-badge&gt;
+}
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Language Inference</h2>
+    <p>
+      When <code>language</code> is omitted, the component can infer from <code>data-language</code>,
+      <code>language</code>, <code>language-*</code> classes, or raw element content.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="html" padded>
+    <code-example>
+      <pre><code class="language-jsx">const badge = &lt;wa-badge variant="brand"&gt;Preview&lt;/wa-badge&gt;</code></pre>
+    </code-example>
+    </code-example>
+    <!-- deno-fmt-ignore -->
+    <code-example>
+      <pre><code class="language-jsx">const badge = &lt;wa-badge variant="brand"&gt;Preview&lt;/wa-badge&gt;</code></pre>
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Explicit Code Value</h2>
+    <p>
+      Use the <code>code</code> attribute or property when generated content should be passed directly instead of
+      slotted.
+    </p>
+
+    <code-example language="html" padded>
+    <code-example language="json" code='{"component":"code-example","mode":"explicit","noLineNumbers":false}' ></code-example>
+    </code-example>
+
+    <code-example language="json" code='{"component":"code-example","mode":"explicit","noLineNumbers":false}' ></code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>No Line Numbers</h2>
+    <p>
+      Add <code>no-line-numbers</code> in static HTML when the line number gutter should be hidden.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="html" padded>
+    <code-example language="javascript" no-line-numbers>
+      const compact = true
+      console.log({ compact })
+    </code-example>
+    </code-example>
+
+    <!-- deno-fmt-ignore -->
+    <code-example language="javascript" no-line-numbers>
+      const compact = true
+      console.log({ compact })
+    </code-example>
+  </section>
+</section>

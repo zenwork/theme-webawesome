@@ -41,6 +41,15 @@ order: 45
   console.log('Hello, world!')
 &lt;/code-example&gt;
     </code-example>
+    <p>
+      Use <code>padded</code> when a snippet needs breathing room inside the CodeMirror surface.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="tsx" padded>
+export function StatusBadge() {
+  return &lt;wa-badge variant="success"&gt;Ready&lt;/wa-badge&gt;
+}
+    </code-example>
   </section>
 
   <section class="docs-section">
@@ -180,9 +189,11 @@ order: 45
     <ul>
       <li>
         <code>language</code> (<code>json</code> | <code>html</code> | <code>javascript</code> |
-        <code>typescript</code> | <code>text</code>, default inferred from slot content or <code>text</code>)
+        <code>typescript</code> | <code>jsx</code> | <code>tsx</code> | <code>css</code> | <code>text</code>, default
+        inferred from slot content or <code>text</code>)
       </li>
-      <li><code>line-numbers</code> (boolean, default <code>true</code>)</li>
+      <li><code>no-line-numbers</code> (boolean, default <code>false</code>): hide the line number gutter</li>
+      <li><code>padded</code> (boolean, default <code>false</code>): render one blank line before and after code</li>
       <li><code>code</code> (string, default empty): explicit snippet text</li>
     </ul>
     <p>
