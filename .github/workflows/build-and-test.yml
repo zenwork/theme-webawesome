@@ -37,8 +37,12 @@ jobs:
         run: deno task test:unit
 
       - name: Build theme site
+        env:
+          XDG_CACHE_HOME: ${{ github.workspace }}/_cache/xdg
         run: deno task build
 
       - name: Build integration test site
         working-directory: test
+        env:
+          XDG_CACHE_HOME: ${{ github.workspace }}/test/_cache/xdg
         run: deno task build
