@@ -64,6 +64,10 @@ order: 40
       <code>&lt;code-example&gt;</code> during preprocessing. Unlabeled and unsupported fences remain regular Markdown
       code blocks.
     </p>
+    <p>
+      Use an HTML comment immediately before a supported fence to pass boolean attributes:
+      <code>&lt;!-- code-example padded no-line-numbers --&gt;</code>.
+    </p>
     <!-- deno-fmt-ignore -->
     <code-example language="typescript">
 site.use(

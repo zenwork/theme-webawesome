@@ -47,6 +47,39 @@ describe('convertMarkdownCodeFencesToCodeExamples', () => {
     expect(convertMarkdownCodeFencesToCodeExamples(html)).toBe(html)
   })
 
+  it('adds padded from an immediately preceding code-example comment', () => {
+    const html = '<!-- code-example padded -->\n<pre><code class="language-ts">const ready = true\n</code></pre>'
+
+    expect(convertMarkdownCodeFencesToCodeExamples(html)).toBe(
+      '<code-example language="typescript" padded>const ready = true\n</code-example>',
+    )
+  })
+
+  it('adds no-line-numbers from an immediately preceding code-example comment', () => {
+    const html =
+      '<!-- code-example no-line-numbers -->\n<pre><code class="language-js">const ready = true\n</code></pre>'
+
+    expect(convertMarkdownCodeFencesToCodeExamples(html)).toBe(
+      '<code-example language="javascript" no-line-numbers>const ready = true\n</code-example>',
+    )
+  })
+
+  it('adds multiple supported option attributes from a code-example comment', () => {
+    const html =
+      '<!-- code-example: padded no-line-numbers -->\n<pre><code class="language-json">{&quot;ready&quot;:true}\n</code></pre>'
+
+    expect(convertMarkdownCodeFencesToCodeExamples(html)).toBe(
+      '<code-example language="json" padded no-line-numbers>{&quot;ready&quot;:true}\n</code-example>',
+    )
+  })
+
+  it('keeps code-example option comments when the code block language is unsupported', () => {
+    const html =
+      '<!-- code-example padded no-line-numbers -->\n<pre><code class="language-bash">deno task build\n</code></pre>'
+
+    expect(convertMarkdownCodeFencesToCodeExamples(html)).toBe(html)
+  })
+
   it('leaves unlabeled code blocks unchanged', () => {
     const html = '<pre><code>plain code\n</code></pre>'
 

@@ -255,6 +255,17 @@ console.log(status)
 ```
 ````
 
+Use an HTML comment immediately before a supported fence to pass boolean attributes:
+
+````md
+<!-- code-example padded no-line-numbers -->
+
+```ts
+const status = 'ready'
+console.log(status)
+```
+````
+
 Set `codeExamples.markdownFences: false` to keep Markdown-generated `<pre><code>` output.
 
 ## Development commands
