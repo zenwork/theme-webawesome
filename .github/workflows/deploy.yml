@@ -12,6 +12,9 @@ on:
 permissions:
   contents: write
 
+env:
+  PAGES_BASE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+
 concurrency:
   group: deploy-${{ github.workflow }}-${{ github.event.pull_request.number || 'main' }}
   cancel-in-progress: true
@@ -24,6 +27,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate GitHub Pages token
+        env:
+          GH_PAGES_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
+        run: |
+          if [ -z "$GH_PAGES_TOKEN" ]; then
+            echo "::error::Set GH_PAGES_TOKEN to a token that can push gh-pages and manage GitHub Pages settings."
+            echo "::error::Use a classic PAT with repo scope, or a fine-grained token with Contents write, Pages write, and Administration write for this repository."
+            echo "::error::The default GITHUB_TOKEN can create the gh-pages branch, but it does not trigger a Pages build."
+            exit 1
+          fi
+
       # Clean up PR Preview when PR is closed
       - name: Checkout gh-pages branch (Cleanup)
         if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -31,6 +45,7 @@ jobs:
         continue-on-error: true
         with:
           ref: gh-pages
+          token: ${{ secrets.GH_PAGES_TOKEN }}
 
       - name: Clean up PR Preview Directory
         if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -59,7 +74,7 @@ jobs:
         env:
           XDG_CACHE_HOME: ${{ github.workspace }}/test/_cache/xdg
         run: |
-          deno task build --location "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/preview/PR-${{ github.event.pull_request.number }}/"
+          deno task build --location "${PAGES_BASE_URL}/preview/PR-${{ github.event.pull_request.number }}/"
 
       - name: List _site contents for PR Preview
         if: github.event_name == 'pull_request' && github.event.action != 'closed'
@@ -74,13 +89,13 @@ jobs:
         env:
           XDG_CACHE_HOME: ${{ github.workspace }}/test/_cache/xdg
         run: |
-          deno task build --location "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          deno task build --location "${PAGES_BASE_URL}/"
 
       - name: Deploy PR Preview
         if: github.event_name == 'pull_request' && github.event.action != 'closed'
         uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          personal_token: ${{ secrets.GH_PAGES_TOKEN }}
           publish_dir: test/_site
           publish_branch: gh-pages
           destination_dir: preview/PR-${{ github.event.pull_request.number }}
@@ -90,7 +105,41 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          personal_token: ${{ secrets.GH_PAGES_TOKEN }}
           publish_dir: test/_site
           publish_branch: gh-pages
           keep_files: true
+
+      - name: Configure GitHub Pages source
+        if: github.event.action != 'closed'
+        env:
+          GH_PAGES_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
+        run: |
+          pages_api="https://api.github.com/repos/${{ github.repository }}/pages"
+          pages_source='{"source":{"branch":"gh-pages","path":"/"}}'
+          status="$(
+            curl -sS -o /tmp/pages-response.json -w "%{http_code}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GH_PAGES_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "$pages_api"
+          )"
+
+          if [ "$status" = "404" ]; then
+            curl -fsS -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GH_PAGES_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "$pages_api" \
+              -d "$pages_source"
+          elif [ "$status" = "200" ]; then
+            curl -fsS -X PUT \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GH_PAGES_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "$pages_api" \
+              -d "$pages_source"
+          else
+            cat /tmp/pages-response.json
+            exit 1
+          fi
