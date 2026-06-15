@@ -61,6 +61,13 @@ jobs:
         run: |
           deno task build --location "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/preview/PR-${{ github.event.pull_request.number }}/"
 
+      - name: List _site contents for PR Preview
+        if: github.event_name == 'pull_request' && github.event.action != 'closed'
+        working-directory: test
+        run: |
+          echo "Contents of test/_site:"
+          ls -R _site
+
       - name: Build test site for Production
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         working-directory: test
