@@ -1,0 +1,89 @@
+name: Deploy Test Site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ github.event.pull_request.number || 'main' }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Build and Deploy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Clean up PR Preview when PR is closed
+      - name: Checkout gh-pages branch (Cleanup)
+        if: github.event_name == 'pull_request' && github.event.action == 'closed'
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: gh-pages
+
+      - name: Clean up PR Preview Directory
+        if: github.event_name == 'pull_request' && github.event.action == 'closed'
+        run: |
+          PR_DIR="preview/PR-${{ github.event.pull_request.number }}"
+          if [ -d "$PR_DIR" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git rm -rf "$PR_DIR"
+            git commit -m "chore(cleanup): remove preview for PR #${{ github.event.pull_request.number }}"
+            git push origin gh-pages
+          else
+            echo "No preview directory found for PR #${{ github.event.pull_request.number }}"
+          fi
+
+      # Build & Deploy steps for Push and Active PRs
+      - name: Setup Deno
+        if: github.event.action != 'closed'
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Build test site for PR Preview
+        if: github.event_name == 'pull_request' && github.event.action != 'closed'
+        working-directory: test
+        env:
+          XDG_CACHE_HOME: ${{ github.workspace }}/test/_cache/xdg
+        run: |
+          deno task build --location "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/preview/PR-${{ github.event.pull_request.number }}/"
+
+      - name: Build test site for Production
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: test
+        env:
+          XDG_CACHE_HOME: ${{ github.workspace }}/test/_cache/xdg
+        run: |
+          deno task build --location "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+
+      - name: Deploy PR Preview
+        if: github.event_name == 'pull_request' && github.event.action != 'closed'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: test/_site
+          publish_branch: gh-pages
+          destination_dir: preview/PR-${{ github.event.pull_request.number }}
+          keep_files: true
+
+      - name: Deploy Production Site
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: test/_site
+          publish_branch: gh-pages
+          keep_files: true
