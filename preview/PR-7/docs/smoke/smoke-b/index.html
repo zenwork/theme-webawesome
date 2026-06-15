@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang=""><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Black Smoke - My Doco Site</title>
+    <meta name="color-scheme" content="light dark">
+    <script>
+      ;(() => {
+        const lightTheme = 'wa-light'
+        const darkTheme = 'wa-dark'
+        const saved = window.localStorage.getItem('theme')
+        const preferredDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        const next = saved === darkTheme || saved === lightTheme ? saved : preferredDark ? darkTheme : lightTheme
+        document.documentElement.classList.add(next)
+      })()
+    </script>
+    <style>
+      wa-drawer:not(:defined),
+      site-toc-tree:not(:defined),
+      wa-tree:not(:defined),
+      wa-tree-item:not(:defined) {
+        display: none;
+      }
+
+      site-toc-tree:defined:not([data-ready]) {
+        visibility: hidden;
+      }
+    </style>
+    <link rel="preload" href="/theme-webawesome/preview/PR-7/lib/webawesome/dist-cdn/styles/webawesome.css" as="style">
+      <link rel="preload" href="/theme-webawesome/preview/PR-7/styles/webawesome-theme.css" as="style">
+    <link rel="preload" href="/theme-webawesome/preview/PR-7/lib/webawesome/dist-cdn/webawesome.loader.js" as="script">
+    <link rel="stylesheet" href="/theme-webawesome/preview/PR-7/style.css">
+    <link rel="canonical" href="https://zenwork.github.io/theme-webawesome/preview/PR-7/docs/smoke/smoke-b/">
+    <link rel="stylesheet" href="/theme-webawesome/preview/PR-7/lib/webawesome/dist-cdn/styles/webawesome.css">
+      <link rel="stylesheet" href="/theme-webawesome/preview/PR-7/styles/webawesome-theme.css">
+    <script type="module" src="/theme-webawesome/preview/PR-7/lib/webawesome/dist-cdn/webawesome.loader.js" data-webawesome="/lib/webawesome/dist-cdn"></script>
+    <script type="module" src="/theme-webawesome/preview/PR-7/lib/webawesome/dist-cdn/components/split-panel/split-panel.js" data-webawesome="/lib/webawesome/dist-cdn"></script>
+    <script type="module" src="/theme-webawesome/preview/PR-7/lib/webawesome/dist-cdn/components/details/details.js" data-webawesome="/lib/webawesome/dist-cdn"></script>
+    <script type="module" src="/theme-webawesome/preview/PR-7/lib/webawesome/dist-cdn/components/button/button.js" data-webawesome="/lib/webawesome/dist-cdn"></script>
+    <script type="module" src="/theme-webawesome/preview/PR-7/lib/webawesome/dist-cdn/components/icon/icon.js" data-webawesome="/lib/webawesome/dist-cdn"></script>
+    <script type="module" src="/theme-webawesome/preview/PR-7/lib/webawesome/dist-cdn/components/input/input.js" data-webawesome="/lib/webawesome/dist-cdn"></script>
+    <script type="module" src="/theme-webawesome/preview/PR-7/lib/webawesome/dist-cdn/components/dropdown/dropdown.js" data-webawesome="/lib/webawesome/dist-cdn"></script>
+    <script type="module" src="/theme-webawesome/preview/PR-7/lib/webawesome/dist-cdn/components/dropdown-item/dropdown-item.js" data-webawesome="/lib/webawesome/dist-cdn"></script>
+    <script type="module" src="/theme-webawesome/preview/PR-7/components/index.js"></script>
+  <meta property="og:type" content="website">
+<meta property="og:site_name" content="My Doco Site">
+<meta property="og:url" content="https://zenwork.github.io/theme-webawesome/preview/PR-7/docs/smoke/smoke-b/">
+<meta name="twitter:card" content="summary">
+<meta name="generator" content="Lume 3.1.0">
+<link rel="icon" sizes="32x32" href="/theme-webawesome/preview/PR-7/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/theme-webawesome/preview/PR-7/apple-touch-icon.png">
+<link rel="icon" sizes="any" href="/theme-webawesome/preview/PR-7/uploads/favicon.svg" type="image/svg+xml">
+</head>
+  <body class="">
+
+    <wa-drawer id="site-toc-drawer" label="Menu" placement="start">
+      <section>
+          <nav class="site-section-drawer" aria-label="Sections">
+              <a href="/theme-webawesome/preview/PR-7/docs/" class="site-section-link is-active">
+                Doc
+              </a>
+              <a href="/theme-webawesome/preview/PR-7/guides/" class="site-section-link ">
+                Guides
+              </a>
+              <a href="/theme-webawesome/preview/PR-7/reference/start/" class="site-section-link ">
+                Reference
+              </a>
+              <a href="/theme-webawesome/preview/PR-7/demo/" class="site-section-link ">
+                  <wa-icon name="play" aria-hidden="true"></wa-icon>
+                Demo
+              </a>
+          </nav>
+      </section>
+      <section class="site-toc-shell">
+        
+<nav class="site-toc-nav" aria-label="Section table of contents">
+  <site-toc-tree storage-key="section-toc-expanded-v1:docs">
+      <section class="site-toc-group">
+        <a href="/theme-webawesome/preview/PR-7/docs/" class="site-toc-group-heading site-toc-group-link ">
+          Doc (Index)
+        </a>
+      </section>
+
+      <section class="site-toc-group">
+          <a href="/theme-webawesome/preview/PR-7/docs/smoke/" class="site-toc-group-heading site-toc-group-link is-active">
+            Lorem Ipsum Example
+          </a>
+
+          <wa-tree>
+                  <wa-tree-item data-node-key="/docs/smoke/smoke-b/">
+                    <a href="/theme-webawesome/preview/PR-7/docs/smoke/smoke-b/" class="toc-link is-active">
+                      Black Smoke
+                    </a>
+                  </wa-tree-item>
+                  <wa-tree-item data-node-key="/docs/smoke/smoke-a/">
+                    <a href="/theme-webawesome/preview/PR-7/docs/smoke/smoke-a/" class="toc-link ">
+                      White Smoke
+                    </a>
+                  </wa-tree-item>
+          </wa-tree>
+      </section>
+      <section class="site-toc-group">
+          <a href="/theme-webawesome/preview/PR-7/docs/examples/" class="site-toc-group-heading site-toc-group-link ">
+            Component Examples
+          </a>
+
+          <wa-tree>
+                  <wa-tree-item data-node-key="/docs/examples/example-1/">
+                    <a href="/theme-webawesome/preview/PR-7/docs/examples/example-1/" class="toc-link ">
+                      Examples One
+                    </a>
+                  </wa-tree-item>
+                  <wa-tree-item data-node-key="/docs/examples/example-2/">
+                    <a href="/theme-webawesome/preview/PR-7/docs/examples/example-2/" class="toc-link ">
+                      Examples Two
+                    </a>
+                  </wa-tree-item>
+          </wa-tree>
+      </section>
+  </site-toc-tree>
+</nav>
+
+      </section>
+    </wa-drawer>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <wa-button class="site-toc-trigger" appearance="outlined" variant="brand" size="small" id="site-toc-trigger"><wa-icon name="bars" label="bars"></wa-icon></wa-button>
+        <a class="site-brand" href="/theme-webawesome/preview/PR-7/">
+            <img class="site-logo" src="/theme-webawesome/preview/PR-7/logos/test-site-logo.svg" alt="Theme test site logo" width="20" height="20" decoding="async">
+          <span class="site-title">My Doco Site</span>
+        </a>
+          <span class="site-section-drawer">
+            Doc
+          </span>
+          <nav class="site-section-nav" aria-label="Sections">
+              <a href="/theme-webawesome/preview/PR-7/docs/" class="site-section-link is-active">
+                Doc
+              </a>
+              <a href="/theme-webawesome/preview/PR-7/guides/" class="site-section-link ">
+                Guides
+              </a>
+              <a href="/theme-webawesome/preview/PR-7/reference/start/" class="site-section-link ">
+                Reference
+              </a>
+              <a href="/theme-webawesome/preview/PR-7/demo/" class="site-section-link ">
+                  <wa-icon name="play" aria-hidden="true"></wa-icon>
+                Demo
+              </a>
+          </nav>
+        <div class="site-search">
+          <wa-dropdown class="site-search-dropdown" placement="bottom-start" distance="8" data-pagefind-script="/theme-webawesome/preview/PR-7/pagefind/pagefind.js">
+            <wa-input slot="trigger" class="site-search-input" type="search" size="xs" appearance="outlined" placeholder="Search docs" aria-label="Search documentation" autocomplete="off">
+              <wa-icon slot="start" name="magnifying-glass" label="Search"></wa-icon>
+            </wa-input>
+          </wa-dropdown>
+        </div>
+        <script type="module">
+  const lightTheme = 'wa-light'
+  const darkTheme = 'wa-dark'
+  const html = document.documentElement
+  const button = document.querySelector('wa-button.theme-button')
+  const icon = document.querySelector('wa-icon.theme-button')
+
+  function syncIcon() {
+    if (!icon) return
+    icon.setAttribute('name', html.classList.contains(darkTheme) ? 'sun' : 'moon')
+  }
+
+  function toggleTheme() {
+    const next = html.classList.contains(darkTheme) ? lightTheme : darkTheme
+    html.classList.remove(lightTheme, darkTheme)
+    html.classList.add(next)
+    window.localStorage.setItem('theme', next)
+    syncIcon()
+  }
+
+  if (button) {
+    button.addEventListener('click', toggleTheme)
+  }
+
+  syncIcon()
+</script>
+<wa-button class="theme-button" variant="neutral" appearance="plain" size="small" aria-label="Toggle theme">
+  <wa-icon class="theme-button" name="sun" label="Toggle theme"></wa-icon>
+</wa-button>
+
+      </div>
+    </header>
+    <main class="docs-shell ">
+        <aside class="site-toc-panel">
+          <section class="site-toc-shell">
+            
+<nav class="site-toc-nav" aria-label="Section table of contents">
+  <site-toc-tree storage-key="section-toc-expanded-v1:docs">
+      <section class="site-toc-group">
+        <a href="/theme-webawesome/preview/PR-7/docs/" class="site-toc-group-heading site-toc-group-link ">
+          Doc (Index)
+        </a>
+      </section>
+
+      <section class="site-toc-group">
+          <a href="/theme-webawesome/preview/PR-7/docs/smoke/" class="site-toc-group-heading site-toc-group-link is-active">
+            Lorem Ipsum Example
+          </a>
+
+          <wa-tree>
+                  <wa-tree-item data-node-key="/docs/smoke/smoke-b/">
+                    <a href="/theme-webawesome/preview/PR-7/docs/smoke/smoke-b/" class="toc-link is-active">
+                      Black Smoke
+                    </a>
+                  </wa-tree-item>
+                  <wa-tree-item data-node-key="/docs/smoke/smoke-a/">
+                    <a href="/theme-webawesome/preview/PR-7/docs/smoke/smoke-a/" class="toc-link ">
+                      White Smoke
+                    </a>
+                  </wa-tree-item>
+          </wa-tree>
+      </section>
+      <section class="site-toc-group">
+          <a href="/theme-webawesome/preview/PR-7/docs/examples/" class="site-toc-group-heading site-toc-group-link ">
+            Component Examples
+          </a>
+
+          <wa-tree>
+                  <wa-tree-item data-node-key="/docs/examples/example-1/">
+                    <a href="/theme-webawesome/preview/PR-7/docs/examples/example-1/" class="toc-link ">
+                      Examples One
+                    </a>
+                  </wa-tree-item>
+                  <wa-tree-item data-node-key="/docs/examples/example-2/">
+                    <a href="/theme-webawesome/preview/PR-7/docs/examples/example-2/" class="toc-link ">
+                      Examples Two
+                    </a>
+                  </wa-tree-item>
+          </wa-tree>
+      </section>
+  </site-toc-tree>
+</nav>
+
+          </section>
+        </aside>
+      <article class="docs-content ">
+        <h1>Black Smoke</h1>
+
+<p>This is an example of a page with a custom layout.</p>
+
+      </article>
+    </main>
+    <script>
+      ;(() => {
+        const docsContent = document.querySelector('.docs-content')
+        const copyButton = document.getElementById('copy-page-markdown')
+
+        if (!docsContent || !copyButton || !navigator.clipboard?.writeText) {
+          if (copyButton) {
+            copyButton.setAttribute('disabled', '')
+          }
+          return
+        }
+
+        const skipActionClass = 'docs-content-actions'
+
+        const normalizeInline = (value) => value.replace(/[ \t]+/g, ' ').replace(/\s+\n/g, '\n').trim()
+
+        const toInlineMarkdown = (node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            return node.textContent || ''
+          }
+
+          if (node.nodeType !== Node.ELEMENT_NODE) {
+            return ''
+          }
+
+          const element = /** @type {HTMLElement} */ (node)
+          const tag = element.tagName
+          const content = Array.from(element.childNodes).map(toInlineMarkdown).join('')
+
+          if (tag === 'BR') {
+            return '  \n'
+          }
+
+          if (tag === 'CODE') {
+            const code = normalizeInline(element.textContent || '')
+            return code ? `\`${code}\`` : ''
+          }
+
+          if (tag === 'A') {
+            const label = normalizeInline(content || element.textContent || '')
+            const href = element.getAttribute('href') || ''
+            return label && href ? `[${label}](${href})` : label
+          }
+
+          if (tag === 'STRONG' || tag === 'B') {
+            const value = normalizeInline(content)
+            return value ? `**${value}**` : ''
+          }
+
+          if (tag === 'EM' || tag === 'I') {
+            const value = normalizeInline(content)
+            return value ? `*${value}*` : ''
+          }
+
+          if (tag === 'IMG') {
+            const alt = element.getAttribute('alt') || ''
+            const src = element.getAttribute('src') || ''
+            return src ? `![${alt}](${src})` : ''
+          }
+
+          return content
+        }
+
+        const toListMarkdown = (list, depth = 0) => {
+          const ordered = list.tagName === 'OL'
+          const items = Array.from(list.children).filter((child) => child.tagName === 'LI')
+          const lines = []
+
+          items.forEach((item, index) => {
+            const marker = ordered ? `${index + 1}.` : '-'
+            const prefix = `${'  '.repeat(depth)}${marker} `
+            const inlineParts = []
+            const nestedLists = []
+
+            for (const child of item.childNodes) {
+              if (child.nodeType === Node.ELEMENT_NODE) {
+                const childElement = /** @type {HTMLElement} */ (child)
+                if (childElement.tagName === 'UL' || childElement.tagName === 'OL') {
+                  nestedLists.push(toListMarkdown(childElement, depth + 1))
+                  continue
+                }
+              }
+              inlineParts.push(toInlineMarkdown(child))
+            }
+
+            const line = normalizeInline(inlineParts.join(''))
+            if (line) {
+              lines.push(`${prefix}${line}`)
+            }
+
+            nestedLists.forEach((nested) => {
+              if (nested) {
+                lines.push(nested)
+              }
+            })
+          })
+
+          return lines.join('\n')
+        }
+
+        const toBlockMarkdown = (element) => {
+          const tag = element.tagName
+
+          if (/^H[1-6]$/.test(tag)) {
+            const level = Number(tag.slice(1))
+            const title = normalizeInline(Array.from(element.childNodes).map(toInlineMarkdown).join(''))
+            return title ? `${'#'.repeat(level)} ${title}` : ''
+          }
+
+          if (tag === 'P') {
+            return normalizeInline(Array.from(element.childNodes).map(toInlineMarkdown).join(''))
+          }
+
+          if (tag === 'PRE') {
+            const code = element.querySelector('code')
+            const source = (code?.textContent || element.textContent || '').replace(/\n+$/g, '')
+            const language = code?.className.match(/language-([a-z0-9_-]+)/i)?.[1] || ''
+            return `\`\`\`${language}\n${source}\n\`\`\``
+          }
+
+          if (tag === 'UL' || tag === 'OL') {
+            return toListMarkdown(element)
+          }
+
+          if (tag === 'BLOCKQUOTE') {
+            const quote = normalizeInline(element.textContent || '')
+            return quote
+              .split('\n')
+              .filter(Boolean)
+              .map((line) => `> ${line}`)
+              .join('\n')
+          }
+
+          if (tag === 'HR') {
+            return '---'
+          }
+
+          if (tag === 'TABLE') {
+            return normalizeInline(element.textContent || '')
+          }
+
+          return normalizeInline(Array.from(element.childNodes).map(toInlineMarkdown).join(''))
+        }
+
+        const buildMarkdown = () => {
+          const blocks = []
+          for (const child of docsContent.children) {
+            if (child.classList.contains(skipActionClass)) {
+              continue
+            }
+            const block = toBlockMarkdown(child)
+            if (block) {
+              blocks.push(block)
+            }
+          }
+          return blocks.join('\n\n').replace(/\n{3,}/g, '\n\n').trim()
+        }
+
+        copyButton.addEventListener('click', async () => {
+          const markdown = buildMarkdown()
+          if (!markdown) {
+            return
+          }
+
+          try {
+            await navigator.clipboard.writeText(markdown)
+            const icon = copyButton.querySelector('wa-icon')
+            const textNode = Array.from(copyButton.childNodes).find((node) =>
+              node.nodeType === Node.TEXT_NODE && node.textContent?.trim()
+            )
+            if (icon) {
+              icon.setAttribute('name', 'check')
+            }
+            if (textNode) {
+              textNode.textContent = ' Copied Markdown'
+            }
+            window.setTimeout(() => {
+              if (icon) {
+                icon.setAttribute('name', 'copy')
+              }
+              if (textNode) {
+                textNode.textContent = ' Copy as Markdown'
+              }
+            }, 1400)
+          } catch {
+            const icon = copyButton.querySelector('wa-icon')
+            if (icon) {
+              icon.setAttribute('name', 'xmark')
+              window.setTimeout(() => icon.setAttribute('name', 'copy'), 1400)
+            }
+          }
+        })
+      })()
+    </script>
+    <script>
+      ;(() => {
+        const searchDropdown = document.querySelector('.site-search-dropdown')
+        const searchInput = searchDropdown?.querySelector('.site-search-input')
+        if (!searchDropdown || !searchInput) {
+          return
+        }
+
+        const minSearchLength = 2
+        const maxResults = 8
+        const debounceMs = 150
+        const excerptMaxLength = 72
+        const secondaryLineMaxLength = 84
+        const pagefindScriptPath = searchDropdown.getAttribute('data-pagefind-script') || '/pagefind/pagefind.js'
+
+        let debounceTimer = 0
+        let searchToken = 0
+        let pagefindPromise = null
+        let resultTargets = []
+        let preserveDropdownItemFocus = false
+
+        const restoreSearchInputFocus = () => {
+          searchInput.focus({ preventScroll: true })
+        }
+
+        const getSelectableResultItems = () => (
+          Array.from(searchDropdown.querySelectorAll('wa-dropdown-item'))
+            .filter((item) => !item.hasAttribute('disabled') && Boolean(item.value))
+        )
+
+        const focusFirstResultItem = () => {
+          const items = getSelectableResultItems()
+          if (!items.length) {
+            return false
+          }
+
+          for (const [index, item] of items.entries()) {
+            item.active = index === 0
+          }
+
+          preserveDropdownItemFocus = true
+          items[0].focus({ preventScroll: true })
+          window.setTimeout(() => {
+            preserveDropdownItemFocus = false
+          }, 0)
+
+          return true
+        }
+
+        const removeResultItems = () => {
+          for (const item of Array.from(searchDropdown.querySelectorAll('wa-dropdown-item'))) {
+            item.remove()
+          }
+        }
+
+        const hasResultItems = () => Boolean(searchDropdown.querySelector('wa-dropdown-item'))
+        const hasSelectableResults = () => getSelectableResultItems().length > 0
+
+        const createStatusItem = (label) => {
+          const item = document.createElement('wa-dropdown-item')
+          item.setAttribute('disabled', '')
+          item.textContent = label
+          return item
+        }
+
+        const trimExcerpt = (excerpt) => {
+          const compact = excerpt.replace(/\s+/g, ' ').trim()
+          if (compact.length <= excerptMaxLength) {
+            return compact
+          }
+          return `${compact.slice(0, excerptMaxLength - 1).trimEnd()}…`
+        }
+
+        const trimSecondaryLine = (value) => {
+          const compact = value.replace(/\s+/g, ' ').trim()
+          if (compact.length <= secondaryLineMaxLength) {
+            return compact
+          }
+          return `${compact.slice(0, secondaryLineMaxLength - 1).trimEnd()}…`
+        }
+
+        const toDisplayPath = (url) => {
+          try {
+            const parsed = new URL(url, window.location.origin)
+            const combined = `${parsed.pathname}${parsed.hash}`
+            return combined || '/'
+          } catch {
+            return url
+          }
+        }
+
+        const getSubResults = (item) => (
+          Array.isArray(item.sub_results) ? item.sub_results.filter((entry) => entry && typeof entry === 'object') : []
+        )
+
+        const getPreferredSubResult = (item) => {
+          const subResults = getSubResults(item)
+          const anchored = subResults.find((entry) => Boolean(entry.anchor) || (entry.url && entry.url !== item.url))
+          return anchored || subResults[0] || null
+        }
+
+        const appendAnchorToUrl = (url, anchor) => {
+          const normalizedAnchor = String(anchor || '').trim().replace(/^#/, '')
+          if (!normalizedAnchor) {
+            return url
+          }
+
+          const encodedAnchor = encodeURIComponent(normalizedAnchor)
+          if (!url) {
+            return `#${encodedAnchor}`
+          }
+
+          const [withoutHash] = String(url).split('#', 1)
+          return `${withoutHash}#${encodedAnchor}`
+        }
+
+        const resolveResultUrl = (item) => {
+          const baseUrl = typeof item.url === 'string' ? item.url : ''
+          const preferred = getPreferredSubResult(item)
+
+          if (!preferred) {
+            return baseUrl
+          }
+
+          const preferredUrl = typeof preferred.url === 'string' ? preferred.url : ''
+          const preferredAnchor = typeof preferred.anchor === 'string' ? preferred.anchor : ''
+
+          if (preferredUrl.includes('#')) {
+            return preferredUrl
+          }
+
+          if (preferredUrl && preferredAnchor) {
+            return appendAnchorToUrl(preferredUrl, preferredAnchor)
+          }
+
+          if (preferredUrl && preferredUrl !== baseUrl) {
+            return preferredUrl
+          }
+
+          if (baseUrl && preferredAnchor) {
+            return appendAnchorToUrl(baseUrl, preferredAnchor)
+          }
+
+          return preferredUrl || baseUrl
+        }
+
+        const resolveSecondaryLine = (item) => {
+          const preferred = getPreferredSubResult(item)
+          if (preferred) {
+            const subTitle = (preferred.title || '').replace(/\s+/g, ' ').trim()
+            const subExcerpt = (preferred.plain_excerpt || '').replace(/\s+/g, ' ').trim()
+
+            if (subTitle && subExcerpt && !subExcerpt.startsWith(subTitle)) {
+              return trimSecondaryLine(`${subTitle}: ${subExcerpt}`)
+            }
+
+            if (subTitle) {
+              return trimSecondaryLine(subTitle)
+            }
+
+            if (subExcerpt) {
+              return trimSecondaryLine(subExcerpt)
+            }
+          }
+
+          const fallback = (item.plain_excerpt || '').replace(/\s+/g, ' ').trim()
+          return fallback ? trimSecondaryLine(fallback) : ''
+        }
+
+        const renderState = (message) => {
+          removeResultItems()
+          searchDropdown.append(createStatusItem(message))
+          searchDropdown.open = true
+        }
+
+        const renderResults = (results) => {
+          resultTargets = results
+          removeResultItems()
+
+          if (!results.length) {
+            searchDropdown.append(createStatusItem('No results found'))
+            searchDropdown.open = true
+            return
+          }
+
+          for (const result of results) {
+            const item = document.createElement('wa-dropdown-item')
+            item.value = result.url
+
+            const title = document.createElement('span')
+            title.textContent = result.title
+            title.style.display = 'block'
+            title.style.color = 'var(--wa-color-brand-text-normal)'
+            title.style.fontSize = 'var(--wa-font-size-s)'
+            title.style.fontWeight = '600'
+            title.style.lineHeight = '1.25'
+
+            item.append(title)
+
+            if (result.secondary) {
+              const secondary = document.createElement('span')
+              secondary.textContent = result.secondary
+              secondary.style.display = 'block'
+              secondary.style.marginTop = '0.1rem'
+              secondary.style.fontSize = 'var(--wa-font-size-xs)'
+              secondary.style.color = 'var(--wa-color-text-quiet)'
+              secondary.style.lineHeight = '1.2'
+              item.append(secondary)
+            }
+
+            const details = document.createElement('span')
+            details.slot = 'details'
+            details.textContent = result.path
+            details.title = result.path
+            details.style.fontFamily = 'var(--wa-font-family-code)'
+            details.style.fontSize = 'var(--wa-font-size-2xs)'
+            details.style.color = 'var(--wa-color-text-quiet)'
+            details.style.maxInlineSize = '13.5rem'
+            details.style.whiteSpace = 'nowrap'
+            details.style.overflow = 'hidden'
+            details.style.textOverflow = 'ellipsis'
+            item.append(details)
+
+            searchDropdown.append(item)
+          }
+
+          searchDropdown.open = true
+        }
+
+        const loadPagefind = async () => {
+          if (!pagefindPromise) {
+            pagefindPromise = import(pagefindScriptPath).then(async (module) => {
+              if (typeof module.options === 'function') {
+                await module.options({ excerptLength: 20 })
+              }
+
+              if (typeof module.init === 'function') {
+                await module.init()
+              }
+
+              return module
+            }).catch((error) => {
+              pagefindPromise = null
+              throw error
+            })
+          }
+
+          return pagefindPromise
+        }
+
+        const preloadPagefind = () => {
+          void loadPagefind().catch(() => {})
+        }
+
+        const performSearch = async (query) => {
+          const normalized = query.trim()
+          const token = ++searchToken
+
+          if (normalized.length < minSearchLength) {
+            resultTargets = []
+            searchDropdown.open = false
+            removeResultItems()
+            return
+          }
+
+          renderState('Searching…')
+
+          try {
+            const pagefind = await loadPagefind()
+            const searchResult = await pagefind.search(normalized)
+            if (token !== searchToken) {
+              return
+            }
+
+            const detailed = await Promise.all(searchResult.results.slice(0, maxResults).map((entry) => entry.data()))
+            if (token !== searchToken) {
+              return
+            }
+
+            const mapped = detailed.map((item) => {
+              const targetUrl = resolveResultUrl(item)
+              return {
+                url: targetUrl || item.url,
+                title: item.meta?.title || item.url,
+                secondary: resolveSecondaryLine(item),
+                path: toDisplayPath(targetUrl || item.url),
+              }
+            })
+
+            renderResults(mapped)
+          } catch {
+            if (token !== searchToken) {
+              return
+            }
+            resultTargets = []
+            renderState('Search is temporarily unavailable')
+          }
+        }
+
+        const scheduleSearch = (query) => {
+          clearTimeout(debounceTimer)
+          debounceTimer = window.setTimeout(() => {
+            void performSearch(query)
+          }, debounceMs)
+        }
+
+        searchInput.addEventListener('focus', () => {
+          preloadPagefind()
+          const value = String(searchInput.value || '')
+          if (value.trim().length >= minSearchLength) {
+            scheduleSearch(value)
+          }
+        })
+
+        searchInput.addEventListener('input', () => {
+          const value = String(searchInput.value || '')
+          scheduleSearch(value)
+        })
+
+        searchInput.addEventListener('keydown', (event) => {
+          const allowDropdownArrowDown = event.key === 'ArrowDown' && resultTargets.length > 0
+          if (searchDropdown.open && !allowDropdownArrowDown) {
+            event.stopPropagation()
+          }
+
+          if (event.key === 'Escape') {
+            searchDropdown.open = false
+            return
+          }
+
+          if (event.key === 'ArrowDown') {
+            if (!resultTargets.length) {
+              return
+            }
+
+            event.preventDefault()
+            event.stopPropagation()
+
+            if (!searchDropdown.open) {
+              searchDropdown.open = true
+              requestAnimationFrame(() => {
+                focusFirstResultItem()
+              })
+              return
+            }
+
+            focusFirstResultItem()
+            return
+          }
+
+          if (event.key !== 'Enter') {
+            return
+          }
+
+          if (!resultTargets.length) {
+            return
+          }
+
+          event.preventDefault()
+          const first = resultTargets[0]
+          if (first?.url) {
+            window.location.assign(first.url)
+          }
+        })
+
+        searchDropdown.addEventListener('wa-after-show', () => {
+          if (preserveDropdownItemFocus) {
+            preserveDropdownItemFocus = false
+            return
+          }
+
+          const active = document.activeElement
+          if (!(active instanceof HTMLElement)) {
+            return
+          }
+
+          if (!searchDropdown.contains(active) || active === searchInput) {
+            return
+          }
+
+          requestAnimationFrame(() => restoreSearchInputFocus())
+        })
+
+        searchDropdown.addEventListener('focusin', (event) => {
+          if (preserveDropdownItemFocus || hasSelectableResults()) {
+            return
+          }
+
+          const focused = event.target
+          if (!(focused instanceof HTMLElement) || focused === searchInput) {
+            return
+          }
+
+          requestAnimationFrame(() => restoreSearchInputFocus())
+        })
+
+        searchDropdown.addEventListener('wa-show', (event) => {
+          if (hasResultItems()) {
+            return
+          }
+          event.preventDefault()
+          searchDropdown.open = false
+        })
+
+        searchDropdown.addEventListener('wa-select', (event) => {
+          const selected = event.detail?.item
+          const targetUrl = selected?.value
+          if (!targetUrl) {
+            event.preventDefault()
+            return
+          }
+          window.location.assign(targetUrl)
+        })
+
+        document.addEventListener('keydown', (event) => {
+          if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {
+            return
+          }
+
+          if (event.key !== '/') {
+            return
+          }
+
+          const active = document.activeElement
+          const inEditableContext = active instanceof HTMLElement &&
+            (
+              active.isContentEditable ||
+              active.tagName === 'INPUT' ||
+              active.tagName === 'TEXTAREA' ||
+              active.tagName === 'SELECT'
+            )
+
+          if (inEditableContext) {
+            return
+          }
+
+          if (!(searchInput instanceof HTMLElement) || searchInput.offsetParent === null) {
+            return
+          }
+
+          event.preventDefault()
+          searchInput.focus()
+          preloadPagefind()
+        })
+      })()
+    </script>
+    <script>
+      ;(() => {
+        const trigger = document.getElementById('site-toc-trigger')
+        const drawer = document.getElementById('site-toc-drawer')
+        if (trigger && drawer) {
+          let openedAt = 0
+          const stopEvent = (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+
+          trigger.addEventListener('pointerdown', stopEvent, { capture: true })
+          trigger.addEventListener('pointerup', stopEvent, { capture: true })
+          trigger.addEventListener('click', (event) => {
+            stopEvent(event)
+            openedAt = Date.now()
+            window.setTimeout(() => drawer.show(), 0)
+          }, { capture: true })
+
+          drawer.addEventListener('wa-hide', (event) => {
+            if (Date.now() - openedAt < 400) {
+              event.preventDefault()
+            }
+          })
+        }
+
+        const header = document.querySelector('.site-header')
+        const pageTocRoots = Array.from(document.querySelectorAll('.page-toc-panel, .page-toc-mobile'))
+        if (!pageTocRoots.length) {
+          return
+        }
+
+        const tocLinks = pageTocRoots.flatMap((tocRoot) =>
+          Array.from(tocRoot.querySelectorAll('a.toc-link[href^="#"]'))
+        )
+        if (!tocLinks.length) {
+          return
+        }
+
+        const parseHashId = (hash) => {
+          if (!hash || hash[0] !== '#') {
+            return ''
+          }
+          const raw = hash.slice(1)
+          try {
+            return decodeURIComponent(raw)
+          } catch {
+            return raw
+          }
+        }
+
+        const getHeaderOffset = () => {
+          const headerHeight = header?.getBoundingClientRect().height ?? 0
+          return Math.round(headerHeight + 12)
+        }
+
+        const syncHeaderOffsetVar = () => {
+          document.documentElement.style.setProperty('--site-header-scroll-offset', `${getHeaderOffset()}px`)
+        }
+
+        const tocItemsById = new Map()
+        for (const link of tocLinks) {
+          const id = parseHashId(link.hash)
+          if (!id) {
+            continue
+          }
+
+          const target = document.getElementById(id)
+          if (!target) {
+            continue
+          }
+
+          const existing = tocItemsById.get(id)
+          if (existing) {
+            existing.links.push(link)
+            continue
+          }
+
+          tocItemsById.set(id, { id, target, links: [link] })
+        }
+        const tocItems = Array.from(tocItemsById.values())
+
+        if (!tocItems.length) {
+          return
+        }
+
+        const setActiveToc = (activeId) => {
+          for (const { id, links } of tocItems) {
+            for (const link of links) {
+              link.classList.toggle('is-active', id === activeId)
+              if (id === activeId) {
+                link.setAttribute('aria-current', 'location')
+              } else {
+                link.removeAttribute('aria-current')
+              }
+            }
+          }
+        }
+
+        const scrollToHeading = (id, behavior = 'smooth') => {
+          const item = tocItems.find((entry) => entry.id === id)
+          if (!item) {
+            return
+          }
+          const targetTop = item.target.getBoundingClientRect().top + window.scrollY - getHeaderOffset()
+          window.scrollTo({ top: Math.max(0, targetTop), behavior })
+        }
+
+        const updateActiveFromScroll = () => {
+          const offset = getHeaderOffset()
+          const activationOffset = offset + 24
+          const viewportHeight = window.innerHeight || 0
+          const atPageBottom = window.scrollY + viewportHeight >= document.documentElement.scrollHeight - 2
+
+          if (atPageBottom) {
+            setActiveToc(tocItems[tocItems.length - 1].id)
+            return
+          }
+
+          let activeId = tocItems[0].id
+          for (const { id, target } of tocItems) {
+            if (target.getBoundingClientRect().top <= activationOffset) {
+              activeId = id
+            } else {
+              break
+            }
+          }
+          setActiveToc(activeId)
+        }
+
+        for (const { id, links } of tocItems) {
+          for (const link of links) {
+            link.addEventListener('click', (event) => {
+              event.preventDefault()
+              scrollToHeading(id, 'smooth')
+              history.pushState(null, '', `#${encodeURIComponent(id)}`)
+              setActiveToc(id)
+            })
+          }
+        }
+
+        const hashId = parseHashId(window.location.hash)
+        syncHeaderOffsetVar()
+        if (hashId) {
+          const item = tocItems.find((entry) => entry.id === hashId)
+          if (item) {
+            requestAnimationFrame(() => scrollToHeading(hashId, 'auto'))
+            setActiveToc(hashId)
+          } else {
+            updateActiveFromScroll()
+          }
+        } else {
+          updateActiveFromScroll()
+        }
+
+        window.addEventListener('scroll', updateActiveFromScroll, { passive: true })
+        window.addEventListener('resize', () => {
+          syncHeaderOffsetVar()
+          updateActiveFromScroll()
+        })
+        window.addEventListener('hashchange', () => {
+          const nextId = parseHashId(window.location.hash)
+          if (!nextId) {
+            updateActiveFromScroll()
+            return
+          }
+          scrollToHeading(nextId, 'auto')
+          setActiveToc(nextId)
+        })
+      })()
+    </script>
+  
+
+</body></html>
