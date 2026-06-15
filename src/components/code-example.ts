@@ -1,14 +1,113 @@
 import { css, html, LitElement } from 'lit'
 import { property } from 'lit/decorators.js'
-import { EditorState } from '@codemirror/state'
-import { EditorView, lineNumbers } from '@codemirror/view'
-import { json as jsonLanguage } from '@codemirror/lang-json'
+import { css as cssLanguage } from '@codemirror/lang-css'
 import { html as htmlLanguage } from '@codemirror/lang-html'
 import { javascript } from '@codemirror/lang-javascript'
+import { json as jsonLanguage } from '@codemirror/lang-json'
+import { EditorState, type Extension } from '@codemirror/state'
+import { EditorView, lineNumbers } from '@codemirror/view'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language'
+import { type CodeExampleLanguage, normalizeLanguage } from './code-example-language.ts'
 
-class CodeExample extends LitElement {
+export { type CodeExampleLanguage, codeExampleLanguages, normalizeLanguage } from './code-example-language.ts'
+
+type HighlightedCodeExampleLanguage = Exclude<CodeExampleLanguage, 'text'>
+type MeasuredEditorView = EditorView & { readonly contentHeight?: number }
+
+const languageExtensions = {
+  css: () => cssLanguage(),
+  html: () => htmlLanguage(),
+  javascript: () => javascript(),
+  json: () => jsonLanguage(),
+  jsx: () => javascript({ jsx: true }),
+  tsx: () => javascript({ jsx: true, typescript: true }),
+  typescript: () => javascript({ typescript: true }),
+} satisfies Record<HighlightedCodeExampleLanguage, () => Extension>
+
+const interpolationAttributeValuePattern = /^(?:\{[\s\S]*\}|\$\{[\s\S]*\})$/
+
+export function normalizeCode(source: string): string {
+  const lines = source.replaceAll('\r\n', '\n').split('\n')
+  while (lines.length > 0 && lines[0].trim() === '') {
+    lines.shift()
+  }
+  while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+    lines.pop()
+  }
+
+  let minIndent = Number.POSITIVE_INFINITY
+  for (const line of lines) {
+    if (!line.trim()) continue
+    const indent = line.match(/^[\t ]*/)?.[0].length ?? 0
+    minIndent = Math.min(minIndent, indent)
+  }
+
+  if (!Number.isFinite(minIndent)) {
+    return ''
+  }
+
+  return lines.map((line) => line.slice(minIndent)).join('\n')
+}
+
+export function withOneLinePadding(source: string): string {
+  const code = normalizeCode(source)
+  return code ? `\n${code}\n` : ''
+}
+
+export function inferLanguageFromSlottedContent(
+  firstElement: Element | undefined,
+  hasElementNode: boolean,
+): CodeExampleLanguage {
+  const explicit = firstElement?.getAttribute('data-language') || firstElement?.getAttribute('language')
+  const normalizedExplicit = normalizeLanguage(explicit)
+  if (normalizedExplicit) {
+    return normalizedExplicit
+  }
+
+  const codeElement = firstElement?.matches('code') ? firstElement : firstElement?.querySelector('code')
+  const className = typeof codeElement?.className === 'string' ? codeElement.className : ''
+  const classHint = className.match(/(?:^|\s)language-([a-z0-9-]+)(?:\s|$)/i)?.[1]
+  const normalizedClassHint = normalizeLanguage(classHint)
+  if (normalizedClassHint) {
+    return normalizedClassHint
+  }
+
+  return hasElementNode ? 'html' : 'text'
+}
+
+function escapeAttributeValue(value: string): string {
+  return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+}
+
+function getSerializedAttribute(attribute: Attr): string {
+  const { name, value } = attribute
+  if (interpolationAttributeValuePattern.test(value)) {
+    return `${name}=${value}`
+  }
+  return value === '' ? name : `${name}="${escapeAttributeValue(value)}"`
+}
+
+function getSerializedNodeSource(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent ?? ''
+  }
+  if (node.nodeType === Node.COMMENT_NODE) {
+    return `<!--${node.textContent ?? ''}-->`
+  }
+
+  if (!(node instanceof Element)) {
+    return node.textContent ?? ''
+  }
+
+  const tagName = node.tagName.toLowerCase()
+  const attributes = Array.from(node.attributes).map(getSerializedAttribute).join(' ')
+  const openTag = attributes ? `<${tagName} ${attributes}>` : `<${tagName}>`
+  const children = Array.from(node.childNodes).map(getSerializedNodeSource).join('')
+  return `${openTag}${children}</${tagName}>`
+}
+
+export class CodeExample extends LitElement {
   static override styles = css`
     :host {
       --code-example-border-color: var(--docs-color-divider, var(--wa-color-neutral-200));
@@ -44,12 +143,18 @@ class CodeExample extends LitElement {
   code = ''
 
   @property({ type: String })
-  language: 'json' | 'html' | 'javascript' | 'typescript' | 'text' = 'text'
+  language: CodeExampleLanguage = 'text'
 
-  @property({ type: Boolean, attribute: 'line-numbers' })
-  lineNumbers = true
+  @property({ type: Boolean, attribute: 'no-line-numbers' })
+  noLineNumbers = false
+
+  @property({ type: Boolean })
+  padded = false
 
   private _editor: EditorView | null = null
+  private _codeCameFromSlot = false
+  private _slottedCodeValue: string | null = null
+  private _hasInitializedLightDom = false
 
   get contentHeight(): number {
     const editor = this._editor
@@ -63,8 +168,7 @@ class CodeExample extends LitElement {
     if (contentDOMHeight > 0) {
       return contentDOMHeight
     }
-    // @ts-ignore: contentHeight is a valid property of EditorView in CM6
-    const measured = editor.contentHeight
+    const measured = (editor as MeasuredEditorView).contentHeight
     if (typeof measured === 'number' && measured > 0) {
       return measured
     }
@@ -75,17 +179,37 @@ class CodeExample extends LitElement {
     return this._editor?.contentDOM ?? null
   }
 
+  get displayCode(): string {
+    return this.padded ? withOneLinePadding(this.code) : this.code
+  }
+
+  get lineNumbers(): boolean {
+    return !this.noLineNumbers
+  }
+
+  set lineNumbers(value: boolean) {
+    this.noLineNumbers = !value
+  }
+
   override disconnectedCallback(): void {
     this._editor?.destroy()
     this._editor = null
     super.disconnectedCallback()
   }
 
-  protected override firstUpdated(): void {
+  override connectedCallback(): void {
+    super.connectedCallback()
+    if (this._hasInitializedLightDom) {
+      return
+    }
+    this._hasInitializedLightDom = true
     if (!this.code) {
-      this.code = this.getNormalizedSlottedCode()
+      this.setCodeFromSlot()
     }
     this.applyInferredLanguage()
+  }
+
+  protected override firstUpdated(): void {
     this.mountEditor()
   }
 
@@ -94,16 +218,22 @@ class CodeExample extends LitElement {
       return
     }
 
-    if (changed.has('code')) {
+    if (changed.has('code') && this.code !== this._slottedCodeValue) {
+      this._codeCameFromSlot = false
+      this._slottedCodeValue = null
+    }
+
+    if (changed.has('code') || changed.has('padded')) {
       const current = this._editor.state.doc.toString()
-      if (current !== this.code) {
+      const next = this.displayCode
+      if (current !== next) {
         this._editor.dispatch({
-          changes: { from: 0, to: current.length, insert: this.code },
+          changes: { from: 0, to: current.length, insert: next },
         })
       }
     }
 
-    if (changed.has('language') || changed.has('lineNumbers')) {
+    if (changed.has('language') || changed.has('noLineNumbers')) {
       this._editor.destroy()
       this._editor = null
       this.mountEditor()
@@ -116,12 +246,12 @@ class CodeExample extends LitElement {
       return
     }
 
-    const extensions: unknown[] = [
+    const extensions: Extension[] = [
       oneDark,
       syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
       EditorView.editable.of(false),
     ]
-    if (this.lineNumbers) {
+    if (!this.noLineNumbers) {
       extensions.unshift(lineNumbers())
     }
     const language = this.getLanguageExtension()
@@ -130,8 +260,8 @@ class CodeExample extends LitElement {
     }
 
     const state = EditorState.create({
-      doc: this.code,
-      extensions: extensions as never[],
+      doc: this.displayCode,
+      extensions,
     })
 
     this._editor = new EditorView({
@@ -141,41 +271,28 @@ class CodeExample extends LitElement {
   }
 
   private handleSlotChange = (): void => {
-    if (this.hasAttribute('code')) {
+    if (this.hasAttribute('code') || (this.code && !this._codeCameFromSlot)) {
       return
     }
-    this.code = this.getNormalizedSlottedCode()
+    this.setCodeFromSlot()
     this.applyInferredLanguage()
   }
 
+  private setCodeFromSlot(): void {
+    const code = this.getNormalizedSlottedCode()
+    this._slottedCodeValue = code
+    this._codeCameFromSlot = true
+    this.code = code
+  }
+
   private getNormalizedSlottedCode(): string {
-    const slot = this.renderRoot.querySelector<HTMLSlotElement>('slot')
-    const assigned = slot?.assignedNodes({ flatten: true }) ?? []
+    const assigned = Array.from(this.childNodes)
     const hasElementNode = assigned.some((node) => node.nodeType === Node.ELEMENT_NODE)
     const raw = hasElementNode
-      ? this.innerHTML
+      ? assigned.map(getSerializedNodeSource).join('')
       : assigned.map((node) => node.textContent ?? '').join('') || this.textContent || ''
 
-    const lines = raw.replaceAll('\r\n', '\n').split('\n')
-    while (lines.length > 0 && lines[0].trim() === '') {
-      lines.shift()
-    }
-    while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
-      lines.pop()
-    }
-
-    let minIndent = Number.POSITIVE_INFINITY
-    for (const line of lines) {
-      if (!line.trim()) continue
-      const indent = line.match(/^[\t ]*/)?.[0].length ?? 0
-      minIndent = Math.min(minIndent, indent)
-    }
-
-    if (!Number.isFinite(minIndent)) {
-      return ''
-    }
-
-    return lines.map((line) => line.slice(minIndent)).join('\n')
+    return normalizeCode(raw)
   }
 
   private applyInferredLanguage(): void {
@@ -188,48 +305,17 @@ class CodeExample extends LitElement {
     this.language = this.inferLanguageFromSlot()
   }
 
-  private inferLanguageFromSlot(): 'json' | 'html' | 'javascript' | 'typescript' | 'text' {
-    const slot = this.renderRoot.querySelector<HTMLSlotElement>('slot')
-    const firstElement = slot?.assignedElements({ flatten: true })[0]
-    const explicit = firstElement?.getAttribute('data-language') || firstElement?.getAttribute('language')
-    const normalizedExplicit = this.toKnownLanguage(explicit)
-    if (normalizedExplicit) {
-      return normalizedExplicit
-    }
-
-    const codeElement = firstElement?.matches('code') ? firstElement : firstElement?.querySelector('code')
-    const classHint = codeElement?.className.match(/(?:^|\s)language-([a-z0-9-]+)(?:\s|$)/i)?.[1]
-    const normalizedClassHint = this.toKnownLanguage(classHint)
-    if (normalizedClassHint) {
-      return normalizedClassHint
-    }
-
-    if (slot?.assignedNodes({ flatten: true }).some((node) => node.nodeType === Node.ELEMENT_NODE)) {
-      return 'html'
-    }
-
-    return 'text'
+  private inferLanguageFromSlot(): CodeExampleLanguage {
+    const firstElement = this.firstElementChild ?? undefined
+    const hasElementNode = Array.from(this.childNodes).some((node) => node.nodeType === Node.ELEMENT_NODE)
+    return inferLanguageFromSlottedContent(firstElement, hasElementNode)
   }
 
-  private toKnownLanguage(value?: string | null): 'json' | 'html' | 'javascript' | 'typescript' | 'text' | null {
-    if (!value) {
+  private getLanguageExtension(): Extension | null {
+    if (this.language === 'text') {
       return null
     }
-    const normalized = value.trim().toLowerCase()
-    if (normalized === 'js' || normalized === 'javascript') return 'javascript'
-    if (normalized === 'ts' || normalized === 'typescript') return 'typescript'
-    if (normalized === 'json') return 'json'
-    if (normalized === 'html' || normalized === 'markup') return 'html'
-    if (normalized === 'text' || normalized === 'txt' || normalized === 'plaintext') return 'text'
-    return null
-  }
-
-  private getLanguageExtension(): unknown | null {
-    if (this.language === 'json') return jsonLanguage()
-    if (this.language === 'html') return htmlLanguage()
-    if (this.language === 'javascript') return javascript()
-    if (this.language === 'typescript') return javascript({ typescript: true })
-    return null
+    return languageExtensions[this.language]()
   }
 
   protected override render() {

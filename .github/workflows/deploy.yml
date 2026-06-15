@@ -1,0 +1,141 @@
+name: Deploy Test Site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request_target:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+env:
+  PAGES_BASE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ github.event.pull_request.number || 'main' }}
+  cancel-in-progress: true
+
+jobs:
+  update-gh-pages:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    name: Build and Update gh-pages
+    steps:
+      - name: Checkout
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+
+      - name: Checkout PR head
+        if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      # Clean up PR Preview when PR is closed
+      - name: Checkout gh-pages branch (Cleanup)
+        if: github.event_name == 'pull_request_target' && github.event.action == 'closed'
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: gh-pages
+
+      - name: Clean up PR Preview Directory
+        if: github.event_name == 'pull_request_target' && github.event.action == 'closed'
+        run: |
+          PR_DIR="preview/PR-${{ github.event.pull_request.number }}"
+          if [ -d "$PR_DIR" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git rm -rf "$PR_DIR"
+            git commit -m "chore(cleanup): remove preview for PR #${{ github.event.pull_request.number }}"
+            git push origin gh-pages
+          else
+            echo "No preview directory found for PR #${{ github.event.pull_request.number }}"
+          fi
+
+      # Build & Deploy steps for Push and Active PRs
+      - name: Setup Deno
+        if: github.event.action != 'closed'
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Build test site for PR Preview
+        if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
+        working-directory: test
+        env:
+          XDG_CACHE_HOME: ${{ github.workspace }}/test/_cache/xdg
+        run: |
+          deno task build --location "${PAGES_BASE_URL}/preview/PR-${{ github.event.pull_request.number }}/"
+
+      - name: List _site contents for PR Preview
+        if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
+        working-directory: test
+        run: |
+          echo "Contents of test/_site:"
+          ls -R _site
+
+      - name: Build test site for Production
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: test
+        env:
+          XDG_CACHE_HOME: ${{ github.workspace }}/test/_cache/xdg
+        run: |
+          deno task build --location "${PAGES_BASE_URL}/"
+
+      - name: Deploy PR Preview
+        if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: test/_site
+          publish_branch: gh-pages
+          destination_dir: preview/PR-${{ github.event.pull_request.number }}
+          keep_files: true
+
+      - name: Deploy Production Site
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: test/_site
+          publish_branch: gh-pages
+          keep_files: true
+
+  deploy-pages:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    name: Deploy GitHub Pages
+    needs: update-gh-pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout gh-pages branch for Pages artifact
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: pages
+
+      - name: Prepare Pages artifact
+        run: |
+          rm -rf pages/.git
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: pages
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

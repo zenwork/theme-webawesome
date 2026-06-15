@@ -41,6 +41,39 @@ order: 45
   console.log('Hello, world!')
 &lt;/code-example&gt;
     </code-example>
+    <p>
+      Use <code>padded</code> when a snippet needs breathing room inside the CodeMirror surface.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="tsx" padded>
+export function StatusBadge() {
+  return &lt;wa-badge variant="success"&gt;Ready&lt;/wa-badge&gt;
+}
+    </code-example>
+    <p>
+      Markdown fences with supported languages are converted automatically after Markdown rendering. Supported aliases
+      include <code>js</code>, <code>ts</code>, <code>jsx</code>, <code>tsx</code>, <code>plaintext</code>, and
+      <code>txt</code>. Unlabeled or unsupported fences remain regular Markdown code blocks.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="text">
+```ts
+const status = 'ready'
+console.log(status)
+```
+    </code-example>
+    <p>
+      Add a <code>code-example</code> HTML comment immediately before the fence to pass boolean attributes such as
+      <code>padded</code> and <code>no-line-numbers</code>.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="text">
+&lt;!-- code-example padded no-line-numbers --&gt;
+```ts
+const status = 'ready'
+console.log(status)
+```
+    </code-example>
   </section>
 
   <section class="docs-section">
@@ -180,9 +213,11 @@ order: 45
     <ul>
       <li>
         <code>language</code> (<code>json</code> | <code>html</code> | <code>javascript</code> |
-        <code>typescript</code> | <code>text</code>, default inferred from slot content or <code>text</code>)
+        <code>typescript</code> | <code>jsx</code> | <code>tsx</code> | <code>css</code> | <code>text</code>, default
+        inferred from slot content or <code>text</code>)
       </li>
-      <li><code>line-numbers</code> (boolean, default <code>true</code>)</li>
+      <li><code>no-line-numbers</code> (boolean, default <code>false</code>): hide the line number gutter</li>
+      <li><code>padded</code> (boolean, default <code>false</code>): render one blank line before and after code</li>
       <li><code>code</code> (string, default empty): explicit snippet text</li>
     </ul>
     <p>
@@ -192,6 +227,11 @@ order: 45
     <p>
       You can slot real HTML without escaping. If <code>language</code> is omitted, the component auto-detects from
       slotted content (for example element nodes, <code>data-language</code>, or <code>language-*</code> classes).
+    </p>
+    <p>
+      In Markdown pages, fenced code blocks with supported language labels are converted to
+      <code>&lt;code-example&gt;</code> by default. Disable this with
+      <code>codeExamples.markdownFences: false</code> in theme options.
     </p>
   </section>
 
