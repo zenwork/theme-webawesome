@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, closed]
     branches:
       - main
@@ -22,26 +22,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  update-gh-pages:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    name: Build and Deploy
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    name: Build and Update gh-pages
     steps:
       - name: Checkout
+        if: github.event_name == 'push'
         uses: actions/checkout@v4
+
+      - name: Checkout PR head
+        if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
 
       # Clean up PR Preview when PR is closed
       - name: Checkout gh-pages branch (Cleanup)
-        if: github.event_name == 'pull_request' && github.event.action == 'closed'
+        if: github.event_name == 'pull_request_target' && github.event.action == 'closed'
         uses: actions/checkout@v4
         continue-on-error: true
         with:
           ref: gh-pages
 
       - name: Clean up PR Preview Directory
-        if: github.event_name == 'pull_request' && github.event.action == 'closed'
+        if: github.event_name == 'pull_request_target' && github.event.action == 'closed'
         run: |
           PR_DIR="preview/PR-${{ github.event.pull_request.number }}"
           if [ -d "$PR_DIR" ]; then
@@ -62,7 +68,7 @@ jobs:
           deno-version: v2.x
 
       - name: Build test site for PR Preview
-        if: github.event_name == 'pull_request' && github.event.action != 'closed'
+        if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
         working-directory: test
         env:
           XDG_CACHE_HOME: ${{ github.workspace }}/test/_cache/xdg
@@ -70,7 +76,7 @@ jobs:
           deno task build --location "${PAGES_BASE_URL}/preview/PR-${{ github.event.pull_request.number }}/"
 
       - name: List _site contents for PR Preview
-        if: github.event_name == 'pull_request' && github.event.action != 'closed'
+        if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
         working-directory: test
         run: |
           echo "Contents of test/_site:"
@@ -85,7 +91,7 @@ jobs:
           deno task build --location "${PAGES_BASE_URL}/"
 
       - name: Deploy PR Preview
-        if: github.event_name == 'pull_request' && github.event.action != 'closed'
+        if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -103,6 +109,15 @@ jobs:
           publish_branch: gh-pages
           keep_files: true
 
+  deploy-pages:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    name: Deploy GitHub Pages
+    needs: update-gh-pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Checkout gh-pages branch for Pages artifact
         uses: actions/checkout@v4
         with:
