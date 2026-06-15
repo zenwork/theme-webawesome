@@ -8,29 +8,12 @@ import { EditorState, type Extension } from '@codemirror/state'
 import { EditorView, lineNumbers } from '@codemirror/view'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language'
+import { type CodeExampleLanguage, normalizeLanguage } from './code-example-language.ts'
 
-export const codeExampleLanguages = ['json', 'html', 'javascript', 'typescript', 'jsx', 'tsx', 'css', 'text'] as const
-
-export type CodeExampleLanguage = typeof codeExampleLanguages[number]
+export { type CodeExampleLanguage, codeExampleLanguages, normalizeLanguage } from './code-example-language.ts'
 
 type HighlightedCodeExampleLanguage = Exclude<CodeExampleLanguage, 'text'>
 type MeasuredEditorView = EditorView & { readonly contentHeight?: number }
-
-const languageAliases = {
-  css: 'css',
-  html: 'html',
-  javascript: 'javascript',
-  js: 'javascript',
-  json: 'json',
-  jsx: 'jsx',
-  markup: 'html',
-  plaintext: 'text',
-  text: 'text',
-  ts: 'typescript',
-  tsx: 'tsx',
-  txt: 'text',
-  typescript: 'typescript',
-} as const satisfies Record<string, CodeExampleLanguage>
 
 const languageExtensions = {
   css: () => cssLanguage(),
@@ -43,14 +26,6 @@ const languageExtensions = {
 } satisfies Record<HighlightedCodeExampleLanguage, () => Extension>
 
 const interpolationAttributeValuePattern = /^(?:\{[\s\S]*\}|\$\{[\s\S]*\})$/
-
-export function normalizeLanguage(value?: string | null): CodeExampleLanguage | null {
-  if (!value) {
-    return null
-  }
-  const normalized = value.trim().toLowerCase()
-  return languageAliases[normalized as keyof typeof languageAliases] ?? null
-}
 
 export function normalizeCode(source: string): string {
   const lines = source.replaceAll('\r\n', '\n').split('\n')

@@ -50,6 +50,18 @@ export function StatusBadge() {
   return &lt;wa-badge variant="success"&gt;Ready&lt;/wa-badge&gt;
 }
     </code-example>
+    <p>
+      Markdown fences with supported languages are converted automatically after Markdown rendering. Supported aliases
+      include <code>js</code>, <code>ts</code>, <code>jsx</code>, <code>tsx</code>, <code>plaintext</code>, and
+      <code>txt</code>. Unlabeled or unsupported fences remain regular Markdown code blocks.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="text">
+```ts
+const status = 'ready'
+console.log(status)
+```
+    </code-example>
   </section>
 
   <section class="docs-section">
@@ -203,6 +215,11 @@ export function StatusBadge() {
     <p>
       You can slot real HTML without escaping. If <code>language</code> is omitted, the component auto-detects from
       slotted content (for example element nodes, <code>data-language</code>, or <code>language-*</code> classes).
+    </p>
+    <p>
+      In Markdown pages, fenced code blocks with supported language labels are converted to
+      <code>&lt;code-example&gt;</code> by default. Disable this with
+      <code>codeExamples.markdownFences: false</code> in theme options.
     </p>
   </section>
 

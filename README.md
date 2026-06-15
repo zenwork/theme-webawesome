@@ -89,6 +89,8 @@ From [`plugins.ts`](./plugins.ts), `theme()` wires up:
   - `mode`: `'free' | 'pro'` (default: `'free'`)
   - `assetBasePath`, `cssPath`, `loaderPath`, `splitPanelPath`
   - `customPropertiesCssPath`
+- `codeExamples`
+  - `markdownFences`: `boolean` (default: `true`) converts supported Markdown fenced code blocks to `<code-example>`
 - `siteToc`
   - `root` (required by interface, defaults to `'.'`)
   - `sections` (`[{ folder, label, order, icon? }]`)
@@ -206,6 +208,7 @@ Key features:
 
 - theme-consistent syntax highlighting,
 - indentation normalization for slotted multiline content,
+- automatic conversion from supported Markdown fenced code blocks,
 - optional one-line padding before and after snippets,
 - optional language inference from slotted content (`data-language`, `language-*` class, or HTML element content).
 
@@ -241,6 +244,18 @@ Padded JSX example:
   }
 </code-example>
 ```
+
+Markdown pages can use supported fenced code languages directly. The theme converts these blocks to `<code-example>`
+during preprocessing:
+
+````md
+```ts
+const status = 'ready'
+console.log(status)
+```
+````
+
+Set `codeExamples.markdownFences: false` to keep Markdown-generated `<pre><code>` output.
 
 ## Development commands
 

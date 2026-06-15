@@ -47,8 +47,30 @@ order: 40
       loaderPath: '/lib/webawesome/dist-cdn/webawesome.loader.js',
       splitPanelPath: '/lib/webawesome/dist-cdn/components/split-panel/split-panel.js',
     },
+    codeExamples: {
+      markdownFences: true,
+    },
     componentEntrypoint: 'components/index.ts',
     additionalComponentEntrypoints: ['components/custom.ts'],
+  }),
+)
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Markdown Code Fences</h2>
+    <p>
+      By default, Markdown fenced code blocks with supported language labels are converted to
+      <code>&lt;code-example&gt;</code> during preprocessing. Unlabeled and unsupported fences remain regular Markdown
+      code blocks.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+site.use(
+  theme({
+    codeExamples: {
+      markdownFences: false,
+    },
   }),
 )
     </code-example>
