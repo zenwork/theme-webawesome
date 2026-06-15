@@ -42,6 +42,8 @@ const languageExtensions = {
   typescript: () => javascript({ typescript: true }),
 } satisfies Record<HighlightedCodeExampleLanguage, () => Extension>
 
+const interpolationAttributeValuePattern = /^(?:\{[\s\S]*\}|\$\{[\s\S]*\})$/
+
 export function normalizeLanguage(value?: string | null): CodeExampleLanguage | null {
   if (!value) {
     return null
@@ -97,6 +99,37 @@ export function inferLanguageFromSlottedContent(
   }
 
   return hasElementNode ? 'html' : 'text'
+}
+
+function escapeAttributeValue(value: string): string {
+  return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+}
+
+function getSerializedAttribute(attribute: Attr): string {
+  const { name, value } = attribute
+  if (interpolationAttributeValuePattern.test(value)) {
+    return `${name}=${value}`
+  }
+  return value === '' ? name : `${name}="${escapeAttributeValue(value)}"`
+}
+
+function getSerializedNodeSource(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent ?? ''
+  }
+  if (node.nodeType === Node.COMMENT_NODE) {
+    return `<!--${node.textContent ?? ''}-->`
+  }
+
+  if (!(node instanceof Element)) {
+    return node.textContent ?? ''
+  }
+
+  const tagName = node.tagName.toLowerCase()
+  const attributes = Array.from(node.attributes).map(getSerializedAttribute).join(' ')
+  const openTag = attributes ? `<${tagName} ${attributes}>` : `<${tagName}>`
+  const children = Array.from(node.childNodes).map(getSerializedNodeSource).join('')
+  return `${openTag}${children}</${tagName}>`
 }
 
 export class CodeExample extends LitElement {
@@ -281,7 +314,7 @@ export class CodeExample extends LitElement {
     const assigned = Array.from(this.childNodes)
     const hasElementNode = assigned.some((node) => node.nodeType === Node.ELEMENT_NODE)
     const raw = hasElementNode
-      ? this.innerHTML
+      ? assigned.map(getSerializedNodeSource).join('')
       : assigned.map((node) => node.textContent ?? '').join('') || this.textContent || ''
 
     return normalizeCode(raw)

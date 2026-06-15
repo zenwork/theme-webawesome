@@ -10,6 +10,7 @@ type CodeExampleElement = HTMLElement & {
   padded: boolean
   updateComplete: Promise<boolean>
   contentDOM: HTMLElement | null
+  renderRoot: HTMLElement | ShadowRoot
 }
 
 const nextTask = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -64,6 +65,24 @@ describe('code-example', () => {
 
     expect(example.code).toContain('<wa-callout variant="brand">')
     expect(example.code).toContain('<strong>Heads up</strong>')
+    expect(editorText(example)).toBe(example.code)
+  })
+
+  it('preserves JSX interpolation attributes without adding quotes', async () => {
+    const example = await renderCodeExample(`<code-example language="tsx">
+      <fhir-patient data={patient} summaryonly={true}></fhir-patient>
+    </code-example>`)
+
+    expect(example.code).toBe('<fhir-patient data={patient} summaryonly={true}></fhir-patient>')
+    expect(editorText(example)).toBe(example.code)
+  })
+
+  it('preserves Lit interpolation attributes without adding quotes', async () => {
+    const example = await renderCodeExample(`<code-example language="typescript">
+      <fhir-patient .data=\${patient} summaryonly=\${true}></fhir-patient>
+    </code-example>`)
+
+    expect(example.code).toBe('<fhir-patient .data=${patient} summaryonly=${true}></fhir-patient>')
     expect(editorText(example)).toBe(example.code)
   })
 
