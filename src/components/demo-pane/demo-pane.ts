@@ -75,6 +75,9 @@ class DemoPane extends LitElement {
   @property({ type: String, attribute: 'default-tab' })
   defaultTab: 'data' | 'markup' | 'output' = 'output'
 
+  @property({ type: String, attribute: 'editor-title' })
+  editorTitle = 'Data & template'
+
   @property({ type: String, attribute: 'data-label' })
   dataLabel = ''
 
@@ -1283,7 +1286,7 @@ class DemoPane extends LitElement {
         @wa-show="${() => (this.editorOpen = true)}"
         @wa-hide="${() => (this.editorOpen = false)}"
       >
-        <span slot="summary">Data & template</span>
+        <span slot="summary">${this.editorTitle}</span>
         <div class="editor-panel-content" style="${editorContentStyle}">
           <wa-split-panel
             class="editor-split"
@@ -1301,20 +1304,24 @@ class DemoPane extends LitElement {
                 <div id="json-editor" class="editor-host"></div>
                 <div class="editor-field-actions" role="group" aria-label="JSON editor actions">
                   ${this.renderTooltipButton('format-json-action', 'Format JSON', 'code', () => this.formatJson())}
-                  ${this.renderTooltipButton(
-                    'open-json-action',
-                    'Open JSON file',
-                    'folder-open',
-                    () => this.openDataFile(),
-                    { disabled: !this.canOpenFiles },
-                  )}
-                  ${this.renderTooltipButton(
-                    'save-json-action',
-                    'Save JSON file',
-                    'floppy-disk',
-                    () => this.saveDataFile(),
-                    { disabled: !this.canSaveFiles },
-                  )}
+                  ${this.fileAccess
+                    ? this.renderTooltipButton(
+                      'open-json-action',
+                      'Open JSON file',
+                      'folder-open',
+                      () => this.openDataFile(),
+                      { disabled: !this.canOpenFiles },
+                    )
+                    : nothing}
+                  ${this.fileAccess
+                    ? this.renderTooltipButton(
+                      'save-json-action',
+                      'Save JSON file',
+                      'floppy-disk',
+                      () => this.saveDataFile(),
+                      { disabled: !this.canSaveFiles },
+                    )
+                    : nothing}
                 </div>
               </div>
             </label>
@@ -1334,20 +1341,24 @@ class DemoPane extends LitElement {
                     'file-code',
                     () => this.formatHtml(),
                   )}
-                  ${this.renderTooltipButton(
-                    'open-markup-action',
-                    'Open markup file',
-                    'folder-open',
-                    () => this.openTemplateFile(),
-                    { disabled: !this.canOpenFiles },
-                  )}
-                  ${this.renderTooltipButton(
-                    'save-markup-action',
-                    'Save markup file',
-                    'floppy-disk',
-                    () => this.saveTemplateFile(),
-                    { disabled: !this.canSaveFiles },
-                  )}
+                  ${this.fileAccess
+                    ? this.renderTooltipButton(
+                      'open-markup-action',
+                      'Open markup file',
+                      'folder-open',
+                      () => this.openTemplateFile(),
+                      { disabled: !this.canOpenFiles },
+                    )
+                    : nothing}
+                  ${this.fileAccess
+                    ? this.renderTooltipButton(
+                      'save-markup-action',
+                      'Save markup file',
+                      'floppy-disk',
+                      () => this.saveTemplateFile(),
+                      { disabled: !this.canSaveFiles },
+                    )
+                    : nothing}
                 </div>
               </div>
             </label>
@@ -1550,7 +1561,7 @@ class DemoPane extends LitElement {
 
     return html`
       <wa-details class="editor-panel" appearance="plain" open>
-        <span slot="summary">Data & template</span>
+        <span slot="summary">${this.editorTitle}</span>
         <div class="editor-panel-content" style="${editorContentStyle}">
           <wa-split-panel
             class="editor-split"

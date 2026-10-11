@@ -92,6 +92,27 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+describe('demo-pane editor title', () => {
+  it('sets the editor heading with the editor-title attribute', async () => {
+    const pane = await createDemoPane()
+    pane.setAttribute('editor-title', 'Patient example')
+    await pane.updateComplete
+
+    expect(pane.shadowRoot?.querySelector('[slot="summary"]')?.textContent).toBe('Patient example')
+    expect(pane.shadowRoot?.querySelector('input[aria-label="Demo pane title"]')).toBeNull()
+  })
+
+  it('keeps the configured heading in read-only mode', async () => {
+    const pane = await createDemoPane()
+    pane.setAttribute('editor-title', 'Patient example')
+    pane.setAttribute('readonly', '')
+    await pane.updateComplete
+
+    expect(pane.shadowRoot?.querySelector('input[aria-label="Demo pane title"]')).toBeNull()
+    expect(pane.shadowRoot?.querySelector('[slot="summary"]')?.textContent).toBe('Patient example')
+  })
+})
+
 describe('demo-pane local file loading', () => {
   it('loads JSON into only the data editor and retains its handle', async () => {
     const contents = '{"patient":{"resourceType":"Observation"}}'
@@ -178,15 +199,17 @@ describe('demo-pane local file loading', () => {
       .toContain('JSON parse error')
   })
 
-  it('keeps file actions disabled by default when the browser supports file access', async () => {
+  it('hides file actions by default when the browser supports file access', async () => {
     vi.stubGlobal('showOpenFilePicker', vi.fn())
     vi.stubGlobal('showSaveFilePicker', vi.fn())
     const pane = await createDemoPane()
 
-    expect(pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Open JSON file"]')
-      ?.hasAttribute('disabled')).toBe(true)
-    expect(pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Save JSON file"]')
-      ?.hasAttribute('disabled')).toBe(true)
+    expect(pane.shadowRoot?.querySelector('wa-button[aria-label="Open JSON file"]')).toBeNull()
+    expect(pane.shadowRoot?.querySelector('wa-button[aria-label="Save JSON file"]')).toBeNull()
+    expect(pane.shadowRoot?.querySelector('wa-button[aria-label="Open markup file"]')).toBeNull()
+    expect(pane.shadowRoot?.querySelector('wa-button[aria-label="Save markup file"]')).toBeNull()
+    expect(pane.shadowRoot?.querySelector('wa-button[aria-label="Format JSON"]')).not.toBeNull()
+    expect(pane.shadowRoot?.querySelector('wa-button[aria-label="Format HTML"]')).not.toBeNull()
     expect(pane.hasAttribute('file-access')).toBe(false)
     expect(pane.shadowRoot?.querySelector('.file-access-status')).toBeNull()
   })
@@ -196,10 +219,22 @@ describe('demo-pane local file loading', () => {
     vi.stubGlobal('showSaveFilePicker', vi.fn())
     const pane = await createDemoPane(true)
 
-    expect(pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Open JSON file"]')
-      ?.hasAttribute('disabled')).toBe(false)
-    expect(pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Save JSON file"]')
-      ?.hasAttribute('disabled')).toBe(false)
+    expect(
+      pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Open JSON file"]')
+        ?.hasAttribute('disabled'),
+    ).toBe(false)
+    expect(
+      pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Save JSON file"]')
+        ?.hasAttribute('disabled'),
+    ).toBe(false)
+    expect(
+      pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Open markup file"]')
+        ?.hasAttribute('disabled'),
+    ).toBe(false)
+    expect(
+      pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Save markup file"]')
+        ?.hasAttribute('disabled'),
+    ).toBe(false)
     expect(pane.hasAttribute('file-access')).toBe(true)
   })
 
@@ -228,10 +263,14 @@ describe('demo-pane local file loading', () => {
     vi.stubGlobal('showSaveFilePicker', vi.fn())
     const pane = await createDemoPane(true, false)
 
-    expect(pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Open JSON file"]')
-      ?.hasAttribute('disabled')).toBe(true)
-    expect(pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Save JSON file"]')
-      ?.hasAttribute('disabled')).toBe(true)
+    expect(
+      pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Open JSON file"]')
+        ?.hasAttribute('disabled'),
+    ).toBe(true)
+    expect(
+      pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Save JSON file"]')
+        ?.hasAttribute('disabled'),
+    ).toBe(true)
     expect(pane.shadowRoot?.querySelector('.file-access-status')?.classList.contains('visually-hidden'))
       .toBe(true)
   })

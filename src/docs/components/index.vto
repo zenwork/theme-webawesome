@@ -31,208 +31,306 @@ order: 45
   </section>
 
   <section class="docs-section">
-    <h2>Using Code Examples</h2>
-    <p>
+    <h2>Components</h2>
+    <section class="docs-section">
+      <h3><code>code-example</code></h3>
+      <p>
       Use <code>&lt;code-example&gt;</code> when you want static snippets with theme-consistent syntax styling.
     </p>
-    <!-- deno-fmt-ignore -->
-    <code-example language="html">
+      <!-- deno-fmt-ignore -->
+      <code-example language="html">
 &lt;code-example language="typescript"&gt;
   console.log('Hello, world!')
 &lt;/code-example&gt;
     </code-example>
-    <p>
+      <p>
       Use <code>padded</code> when a snippet needs breathing room inside the CodeMirror surface.
     </p>
-    <!-- deno-fmt-ignore -->
-    <code-example language="tsx" padded>
+      <!-- deno-fmt-ignore -->
+      <code-example language="tsx" padded>
 export function StatusBadge() {
   return &lt;wa-badge variant="success"&gt;Ready&lt;/wa-badge&gt;
 }
     </code-example>
-    <p>
+      <p>
       Markdown fences with supported languages are converted automatically after Markdown rendering. Supported aliases
       include <code>js</code>, <code>ts</code>, <code>jsx</code>, <code>tsx</code>, <code>plaintext</code>, and
       <code>txt</code>. Unlabeled or unsupported fences remain regular Markdown code blocks.
     </p>
-    <!-- deno-fmt-ignore -->
-    <code-example language="text">
+      <!-- deno-fmt-ignore -->
+      <code-example language="text">
 ```ts
 const status = 'ready'
 console.log(status)
 ```
     </code-example>
-    <p>
+      <p>
       Add a <code>code-example</code> HTML comment immediately before the fence to pass boolean attributes such as
       <code>padded</code> and <code>no-line-numbers</code>.
     </p>
-    <!-- deno-fmt-ignore -->
-    <code-example language="text">
+      <!-- deno-fmt-ignore -->
+      <code-example language="text">
 &lt;!-- code-example padded no-line-numbers --&gt;
 ```ts
 const status = 'ready'
 console.log(status)
 ```
     </code-example>
-  </section>
+      <h4>API</h4>
+      <ul>
+        <li>
+        <code>code</code> (string, default empty): explicit snippet text; when omitted, content is read from the element
+        slot and normalized for indentation
+      </li>
+        <li>
+        <code>language</code> (<code>json</code> | <code>html</code> | <code>javascript</code> |
+        <code>typescript</code> | <code>jsx</code> | <code>tsx</code> | <code>css</code> | <code>text</code>, default
+        inferred from slot content or <code>text</code>)
+      </li>
+        <li><code>no-line-numbers</code> (boolean, default <code>false</code>): hide the line number gutter</li>
+        <li><code>padded</code> (boolean, default <code>false</code>): render one blank line before and after code</li>
+      </ul>
+      <p>
+      Slotted content is rendered in a read-only CodeMirror view. You can slot real HTML without escaping. If
+      <code>language</code> is omitted, the component infers it from slotted content, including element nodes,
+      <code>data-language</code> or <code>language</code> attributes, and <code>language-*</code> classes; content with
+      no element nodes defaults to <code>text</code>.
+    </p>
+      <p>
+      In Markdown pages, fenced code blocks with supported language labels are converted to
+      <code>&lt;code-example&gt;</code> by default. Disable this with
+      <code>codeExamples.markdownFences: false</code> in theme options. A <code>code-example</code> HTML comment
+      immediately before a fence can pass boolean attributes such as <code>padded</code> and
+      <code>no-line-numbers</code>.
+    </p>
+    </section>
 
-  <section class="docs-section">
-    <h2>Runnable Docs with Demo Pane</h2>
-    <p>
+    <section class="docs-section">
+      <h3><code>demo-pane</code></h3>
+      <section class="docs-section">
+        <h4>Complete Attribute Example</h4>
+        <p>
+      This example shows the configurable <code>demo-pane</code> attributes together. The second pane demonstrates the
+      alternative read-only mode; it does not show editor controls.
+    </p>
+        <code-example language="html">
+&lt;demo-pane
+  data='{"label":"Deploy","variant":"brand"}'
+  template='&lt;wa-button variant="${variant}"&gt;${label}&lt;/wa-button&gt;'
+  imports='["button"]'
+  editable="true"
+  file-access
+  layout="tabs"
+  default-tab="output"
+  editor-title="Button playground"
+  data-label="JSON data"
+  template-label="HTML template"
+  output-background="var(--wa-color-neutral-50)"
+  fit-content
+  fill-height
+  editor-open
+&gt;&lt;/demo-pane&gt;
+
+&lt;demo-pane
+  data='{"label":"Deploy","variant":"brand"}'
+  template='&lt;wa-button variant="${variant}"&gt;${label}&lt;/wa-button&gt;'
+  imports='["button"]'
+  readonly
+&gt;&lt;/demo-pane&gt;
+        </code-example>
+      </section>
+      <section class="docs-section">
+        <h4>Runnable Docs with Demo Pane</h4>
+        <p>
       Use <code>&lt;demo-pane&gt;</code> when readers should modify data or templates and see immediate output.
     </p>
-    <demo-pane
-      data='{"label":"Deploy","variant":"brand","size":"small"}'
-      template='<wa-button variant="${variant}" size="${size}">${label}</wa-button>'
-      imports='["button"]'
-      style="--demo-pane-output-background: color-mix(in srgb, var(--wa-color-brand-fill-loud) 10%, white)"
-      default-tab="output"
-      editor-open
-    >
-    </demo-pane>
-  </section>
+        <demo-pane
+          data='{"label":"Deploy","variant":"brand","size":"small"}'
+          template='<wa-button variant="${variant}" size="${size}">${label}</wa-button>'
+          imports='["button"]'
+          style="--demo-pane-output-background: color-mix(in srgb, var(--wa-color-brand-fill-loud) 10%, white)"
+          default-tab="output"
+          editor-open
+        ></demo-pane>
+      </section>
 
-  <section class="docs-section">
-    <h2>Recipe: Status Row (Explicit Imports)</h2>
-    <p>
+      <section class="docs-section">
+        <h4>Recipe: Status Row (Explicit Imports)</h4>
+        <p>
       Use explicit imports when you want predictable module loading for components that may not already be loaded in the
       page.
     </p>
-    <demo-pane
-      data='{"status":"Stable","build":"Passing","version":"v0.1.0"}'
-      template='<div style="display:flex;gap:.5rem;flex-wrap:wrap"><wa-badge variant="success">${status}</wa-badge><wa-badge variant="brand">${build}</wa-badge><wa-badge variant="neutral">${version}</wa-badge></div>'
-      imports='["badge"]'
-      editor-open
-    >
-    </demo-pane>
-  </section>
+        <demo-pane
+          data='{"status":"Stable","build":"Passing","version":"v0.1.0"}'
+          template='<div style="display:flex;gap:.5rem;flex-wrap:wrap"><wa-badge variant="success">${status}</wa-badge><wa-badge variant="brand">${build}</wa-badge><wa-badge variant="neutral">${version}</wa-badge></div>'
+          imports='["badge"]'
+          editor-open
+        ></demo-pane>
+      </section>
 
-  <section class="docs-section">
-    <h2>Recipe: Release Notes Summary (Auto Detection)</h2>
-    <p>
+      <section class="docs-section">
+        <h4>Recipe: Release Notes Summary (Auto Detection)</h4>
+        <p>
       Omit <code>imports</code> when your template already contains <code>wa-*</code> tags and you want the demo pane to
       load them automatically.
     </p>
-    <demo-pane
-      data='{"title":"Release 0.2.0","items":["Navigation persistence","Page TOC fixes","Docs API references"]}'
-      template='<wa-card><h3>${title}</h3><ul>${items.map((item) => html`<li><wa-badge variant="brand">${item}</wa-badge></li>`)}</ul></wa-card>'
-      editor-open
-    >
-    </demo-pane>
-  </section>
+        <demo-pane
+          data='{"title":"Release 0.2.0","items":["Navigation persistence","Page TOC fixes","Docs API references"]}'
+          template='<wa-card>&lt;h3&gt;${title}&lt;/h3&gt;<ul>${items.map((item) => html`<li><wa-badge variant="brand">${item}</wa-badge></li>`)}</ul></wa-card>'
+          editor-open
+        ></demo-pane>
+      </section>
 
-  <section class="docs-section">
-    <h2>Recipe: Long Output + Fit Action</h2>
-    <p>
+      <section class="docs-section">
+        <h4>Recipe: Long Output + Fit Action</h4>
+        <p>
       Use this when a runnable example renders many rows. The editor toolbar includes a fit action that resizes the
       output preview to the full rendered height.
     </p>
-    <demo-pane
-      data='{"title":"Changelog Preview","entries":["Authentication update and migration notes","CLI lifecycle and release workflow details","Type-safe config defaults and overrides","CSS token mapping and fallback strategy","Server-side rendering compatibility checklist","Hot reload performance benchmark results","Accessibility audit remediation checklist","Navigation state persistence logic","Code sample rendering edge cases","Semantic versioning and deprecation policy","Error handling and retry semantics","Platform support matrix and caveats","Extension registration lifecycle","Theme customization and variable scoping","Diagnostic logging and tracing strategy","Testing strategy with smoke and integration coverage","Runtime dependency graph review","Build output and asset pipeline notes","Preview rendering and sanitization behavior","Component API compatibility guidance","Deployment rollout and rollback procedure","Documentation publishing workflow","Localization and translation notes","Telemetry event payload examples","Caching strategy for static assets","Contributor workflow and branch policy","UI state machine transition table","Feature flag lifecycle management","Template parser expression examples","Security hardening and input validation","Dependency update policy and cadence","Long-running task progress reporting","Schema migration ordering and safeguards","Performance budget and monitoring baselines","Read-only mode interaction rules","Split pane behavior and resize constraints","Browser support and known limitations","Troubleshooting guide and quick fixes","Recovery procedure for failed releases","Final release checklist and sign-off"]}'
-      template='<section><h3>${title}</h3><div style="display:grid;gap:.375rem">${entries.map((entry, index) => html`<p style="margin:0">${index + 1}. ${entry}</p>`)}</div></section>'
-      editor-open
-      style="--demo-pane-output-background: var(--wa-color-neutral-50)"
-    >
-    </demo-pane>
-  </section>
+        <demo-pane
+          data='{"title":"Changelog Preview","entries":["Authentication update and migration notes","CLI lifecycle and release workflow details","Type-safe config defaults and overrides","CSS token mapping and fallback strategy","Server-side rendering compatibility checklist","Hot reload performance benchmark results","Accessibility audit remediation checklist","Navigation state persistence logic","Code sample rendering edge cases","Semantic versioning and deprecation policy","Error handling and retry semantics","Platform support matrix and caveats","Extension registration lifecycle","Theme customization and variable scoping","Diagnostic logging and tracing strategy","Testing strategy with smoke and integration coverage","Runtime dependency graph review","Build output and asset pipeline notes","Preview rendering and sanitization behavior","Component API compatibility guidance","Deployment rollout and rollback procedure","Documentation publishing workflow","Localization and translation notes","Telemetry event payload examples","Caching strategy for static assets","Contributor workflow and branch policy","UI state machine transition table","Feature flag lifecycle management","Template parser expression examples","Security hardening and input validation","Dependency update policy and cadence","Long-running task progress reporting","Schema migration ordering and safeguards","Performance budget and monitoring baselines","Read-only mode interaction rules","Split pane behavior and resize constraints","Browser support and known limitations","Troubleshooting guide and quick fixes","Recovery procedure for failed releases","Final release checklist and sign-off"]}'
+          template='<section>&lt;h3&gt;${title}&lt;/h3&gt;<div style="display:grid;gap:.375rem">${entries.map((entry, index) => html`<p style="margin:0">${index + 1}. ${entry}</p>`)}</div></section>'
+          editor-open
+          style="--demo-pane-output-background: var(--wa-color-neutral-50)"
+        ></demo-pane>
+      </section>
 
-  <section class="docs-section">
-    <h2>Recipe: Static Preview (Non-Editable)</h2>
-    <p>
+      <section class="docs-section">
+        <h4>Recipe: Static Preview (Non-Editable)</h4>
+        <p>
       This example disables editing while keeping the full data/template/output preview visible.
     </p>
-    <demo-pane
-      id="tabs-static-preview"
-      data='{"label":"Deploy","variant":"brand"}'
-      template='<wa-button variant="${variant}">${label}</wa-button>'
-      imports='["button"]'
-      editable="false"
-      fit-content
-    >
-    </demo-pane>
-  </section>
+        <demo-pane
+          id="tabs-static-preview"
+          data='{"label":"Deploy","variant":"brand"}'
+          template='<wa-button variant="${variant}">${label}</wa-button>'
+          imports='["button"]'
+          editable="false"
+          fit-content
+        ></demo-pane>
+      </section>
 
-  <section class="docs-section">
-    <h2><code>demo-pane</code> API</h2>
-    <ul>
-      <li>
+      <section class="docs-section">
+        <h4>Enable or Disable Local File Access</h4>
+        <p>
+      File access is disabled by default. Add the boolean <code>file-access</code> attribute to show the open and save
+      controls beside both the JSON data editor and the HTML markup editor. Readers can use those controls to load or
+      save their data and markup files. The file picker opens only after a reader activates a control, and the feature
+      requires a Chromium-based browser on a secure origin such as HTTPS or localhost.
+    </p>
+        <code-example language="html">
+&lt;demo-pane
+  file-access
+  data='{"label":"Deploy"}'
+  template='&lt;wa-button&gt;${label}&lt;/wa-button&gt;'
+&gt;&lt;/demo-pane&gt;
+        </code-example>
+        <p>
+      To disable file access, omit the <code>file-access</code> attribute. Do not write
+      <code>file-access="false"</code>: HTML boolean attributes are enabled by their presence, regardless of their
+      text value.
+    </p>
+        <code-example language="html">
+&lt;demo-pane
+  data='{"label":"Deploy"}'
+  template='&lt;wa-button&gt;${label}&lt;/wa-button&gt;'
+&gt;&lt;/demo-pane&gt;
+        </code-example>
+      </section>
+
+      <section class="docs-section">
+        <h4>API</h4>
+        <ul>
+          <li>
         <code>data</code> (string, default <code>{}</code>): JSON object string used as template scope
       </li>
-      <li>
+          <li>
         <code>template</code> (string, default empty): HTML template with <code>${...}</code> expressions
       </li>
-      <li>
+          <li>
         <code>imports</code> (string, default <code>[]</code>): JSON array of WebAwesome component names to import
       </li>
-      <li>
-        <code>editable</code> (boolean, default <code>true</code>): enables editors and run/format/reset actions. Set
-        <code>editable="false"</code> for read-only tabs/split previews.
+          <li>
+        <code>editable</code> (boolean, default <code>true</code>): enables the editors and their actions. Set
+        <code>editable="false"</code> to keep the preview available without editor controls.
       </li>
-      <li>
+          <li>
+        <code>readonly</code> (boolean, default <code>false</code>): forces read-only mode. Editing is available only
+        when <code>editable</code> is true and <code>readonly</code> is false.
+      </li>
+          <li>
+        <code>file-access</code> (boolean, default <code>false</code>): opts in to the browser File System Access API
+        for local JSON and markup file actions. The actions are enabled only when this attribute is present, the page is
+        in a secure context, and both <code>showOpenFilePicker</code> and <code>showSaveFilePicker</code> are available.
+        This is currently supported in Chromium-based browsers on secure origins such as HTTPS or localhost; elsewhere
+        the file actions remain disabled.
+      </li>
+          <li>
         <code>layout</code> (<code>horizontal</code> | <code>tabs</code>, default <code>horizontal</code>): non-editable
         previews always show data/template/output together.
       </li>
-      <li>
+          <li>
         <code>default-tab</code> (<code>data</code> | <code>markup</code> |
         <code>output</code>, default
         <code>output</code>)
       </li>
-      <li>
+          <li>
+        <code>editor-title</code> (string, default <code>Data &amp; template</code>): editor panel heading
+      </li>
+          <li>
         <code>editor-open</code> (boolean, default <code>false</code>): opens the editor details panel on load
       </li>
-      <li>
+          <li>
         <code>data-label</code> / <code>template-label</code> (string, default empty): editor field labels
       </li>
-      <li>
+          <li>
         <code>--demo-pane-output-background</code> (CSS custom property): background for the rendered output area. Set
         it on a specific <code>&lt;demo-pane&gt;</code> or in a parent scope. The legacy
         <code>output-background</code> attribute is still supported as a per-instance shortcut.
       </li>
-      <li>
+          <li>
         <code>fit-content</code> (boolean, default <code>false</code>): grows/shrinks preview height to match rendered
         output content instead of using the resizable fixed-height preview area
       </li>
-      <li>
+          <li>
         <code>fill-height</code> (boolean, default <code>false</code>): uses the available height as a minimum pane
         height while keeping editor/output scrolling inside their panes. Use this for full-width playground pages where
         the demo pane should occupy most of the viewport, while still being allowed to grow taller when its controls
         need space.
       </li>
-    </ul>
-    <p>
+        </ul>
+        <p>
+      JSON format/open/save actions are grouped beside the data editor; HTML format/open/save actions are grouped beside
+      the markup editor. Their tooltips appear on hover and keyboard focus, and the icon buttons retain accessible
+      labels. Run, sizing, and reset remain in the shared action row.
+    </p>
+        <p>
       Notes: JSON must parse to an object. The component sanitizes rendered output while allowing valid custom elements,
       supports Lit-style bindings in templates (for example <code>.prop</code>, <code>?attr</code>, and
       <code>@event</code>), auto-detects <code>wa-*</code> tags for imports, supports <code>Mod+Enter</code> to run from
       editors, provides toolbar actions for run/format/reset and toggle fit/restore for output and editor heights, and
       lets readers drag the output panel’s bottom edge to resize preview height.
     </p>
-  </section>
+      </section>
+    </section>
 
-  <section class="docs-section">
-    <h2><code>code-example</code> API</h2>
-    <ul>
-      <li>
-        <code>language</code> (<code>json</code> | <code>html</code> | <code>javascript</code> |
-        <code>typescript</code> | <code>jsx</code> | <code>tsx</code> | <code>css</code> | <code>text</code>, default
-        inferred from slot content or <code>text</code>)
-      </li>
-      <li><code>no-line-numbers</code> (boolean, default <code>false</code>): hide the line number gutter</li>
-      <li><code>padded</code> (boolean, default <code>false</code>): render one blank line before and after code</li>
-      <li><code>code</code> (string, default empty): explicit snippet text</li>
-    </ul>
-    <p>
-      If <code>code</code> is not provided, content is read from the element slot, normalized for indentation, and then
-      rendered in a read-only CodeMirror view.
+    <section class="docs-section">
+      <h3><code>site-toc-tree</code></h3>
+      <p>
+      Use <code>&lt;site-toc-tree&gt;</code> around the Web Awesome tree items that make up the page navigation. Each
+      linked tree item is matched against the current page path and the matching item is marked selected; selecting a
+      different linked item navigates to that page.
     </p>
-    <p>
-      You can slot real HTML without escaping. If <code>language</code> is omitted, the component auto-detects from
-      slotted content (for example element nodes, <code>data-language</code>, or <code>language-*</code> classes).
+      <p>
+      Expanded items persist in local storage. Add a <code>data-node-key</code> to each <code>wa-tree-item</code> whose
+      expanded state should be saved. The component stores the expanded keys as a JSON array and reapplies them when
+      the page loads.
     </p>
-    <p>
-      In Markdown pages, fenced code blocks with supported language labels are converted to
-      <code>&lt;code-example&gt;</code> by default. Disable this with
-      <code>codeExamples.markdownFences: false</code> in theme options.
+      <p>
+      The <code>storage-key</code> attribute (default <code>site-toc-expanded-v1</code>) selects the local-storage key.
+      Set a different value when a site needs an independent expansion-state namespace.
     </p>
+    </section>
   </section>
 
   <section class="docs-section">

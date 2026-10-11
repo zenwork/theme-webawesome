@@ -115,8 +115,22 @@ console.log(summarize(states[2]))
       imports='["callout"]'
       readonly
       fit-content
-    >
-    </demo-pane>
+    ></demo-pane>
+  </section>
+
+  <section class="docs-section">
+    <h2>Opted-In Local File Access</h2>
+    <p>
+      The file controls are available in Chromium-based browsers on a secure context. This example opts in, but no file
+      picker opens unless you activate one of its editor controls.
+    </p>
+    <demo-pane
+      file-access
+      data='{"message":"Smoke page file example","status":"Ready"}'
+      template='<wa-callout variant="brand"><strong>${status}</strong>: ${message}</wa-callout>'
+      imports='["callout"]'
+      editor-open
+    ></demo-pane>
   </section>
 
   <section class="docs-section">
