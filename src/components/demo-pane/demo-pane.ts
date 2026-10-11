@@ -66,6 +66,9 @@ class DemoPane extends LitElement {
   @property({ type: Boolean, attribute: 'readonly', reflect: true })
   readOnly = false
 
+  @property({ type: Boolean, attribute: 'file-access', reflect: true })
+  fileAccess = false
+
   @property({ type: String })
   layout: 'horizontal' | 'tabs' = 'horizontal'
 
@@ -356,12 +359,18 @@ class DemoPane extends LitElement {
     return globalThis as typeof globalThis & FilePickerWindow
   }
 
+  private get isFileAccessSupported(): boolean {
+    return globalThis.isSecureContext === true &&
+      typeof this.filePickerWindow.showOpenFilePicker === 'function' &&
+      typeof this.filePickerWindow.showSaveFilePicker === 'function'
+  }
+
   private get canOpenFiles(): boolean {
-    return typeof this.filePickerWindow.showOpenFilePicker === 'function'
+    return this.fileAccess && this.isFileAccessSupported
   }
 
   private get canSaveFiles(): boolean {
-    return typeof this.filePickerWindow.showSaveFilePicker === 'function'
+    return this.fileAccess && this.isFileAccessSupported
   }
 
   private isPickerCancellation(error: unknown): boolean {
@@ -1362,9 +1371,9 @@ class DemoPane extends LitElement {
               { pressed: this._isEditorHeightFitted, title: editorHeightToggleLabel },
             )}
             ${this.renderTooltipButton('reset-demo-action', 'Reset demo', 'arrows-rotate', () => this.resetDemo())}
-            ${!this.canOpenFiles || !this.canSaveFiles
+            ${!this.isFileAccessSupported
               ? html`
-                <span class="file-access-status" role="status">
+                <span class="visually-hidden file-access-status" role="status">
                   Local file access requires Chromium on a secure connection.
                 </span>
               `

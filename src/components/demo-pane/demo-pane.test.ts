@@ -17,6 +17,7 @@ type DemoPaneElement = HTMLElement & {
   data: string
   template: string
   editorOpen: boolean
+  fileAccess: boolean
   updateComplete: Promise<boolean>
   _draftData: string
   _draftTemplate: string
@@ -57,11 +58,13 @@ function createWritableFileHandle(contents: string, failure?: 'write' | 'close')
   return { handle, writable }
 }
 
-async function createDemoPane(): Promise<DemoPaneElement> {
+async function createDemoPane(fileAccess = false, secureContext = true): Promise<DemoPaneElement> {
+  vi.stubGlobal('isSecureContext', secureContext)
   const pane = document.createElement('demo-pane') as DemoPaneElement
   pane.data = initialData
   pane.template = initialTemplate
   pane.editorOpen = true
+  pane.fileAccess = fileAccess
   document.body.append(pane)
   await pane.updateComplete
   return pane
@@ -95,7 +98,7 @@ describe('demo-pane local file loading', () => {
     const handle = createFileHandle(contents)
     const picker = vi.fn(() => Promise.resolve([handle]))
     vi.stubGlobal('showOpenFilePicker', picker)
-    const pane = await createDemoPane()
+    const pane = await createDemoPane(true)
 
     await clickAction(pane, 'Open JSON file')
 
@@ -117,7 +120,7 @@ describe('demo-pane local file loading', () => {
     const handle = createFileHandle(contents)
     const picker = vi.fn(() => Promise.resolve([handle]))
     vi.stubGlobal('showOpenFilePicker', picker)
-    const pane = await createDemoPane()
+    const pane = await createDemoPane(true)
 
     await clickAction(pane, 'Open markup file')
 
@@ -136,7 +139,7 @@ describe('demo-pane local file loading', () => {
 
   it('keeps drafts and handles unchanged when the picker is canceled', async () => {
     vi.stubGlobal('showOpenFilePicker', vi.fn().mockRejectedValue(new DOMException('Canceled', 'AbortError')))
-    const pane = await createDemoPane()
+    const pane = await createDemoPane(true)
 
     await clickAction(pane, 'Open JSON file')
 
@@ -152,7 +155,7 @@ describe('demo-pane local file loading', () => {
       getFile: () => Promise.reject(new Error('Permission denied')),
     }
     vi.stubGlobal('showOpenFilePicker', vi.fn(() => Promise.resolve([handle])))
-    const pane = await createDemoPane()
+    const pane = await createDemoPane(true)
 
     await clickAction(pane, 'Open JSON file')
 
@@ -166,7 +169,7 @@ describe('demo-pane local file loading', () => {
   it('routes invalid JSON through the visible preview validation error', async () => {
     const handle = createFileHandle('{ invalid JSON')
     vi.stubGlobal('showOpenFilePicker', vi.fn(() => Promise.resolve([handle])))
-    const pane = await createDemoPane()
+    const pane = await createDemoPane(true)
 
     await clickAction(pane, 'Open JSON file')
 
@@ -175,24 +178,68 @@ describe('demo-pane local file loading', () => {
       .toContain('JSON parse error')
   })
 
-  it('shows an unsupported state when the open picker API is absent', async () => {
+  it('keeps file actions disabled by default when the browser supports file access', async () => {
+    vi.stubGlobal('showOpenFilePicker', vi.fn())
+    vi.stubGlobal('showSaveFilePicker', vi.fn())
+    const pane = await createDemoPane()
+
+    expect(pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Open JSON file"]')
+      ?.hasAttribute('disabled')).toBe(true)
+    expect(pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Save JSON file"]')
+      ?.hasAttribute('disabled')).toBe(true)
+    expect(pane.hasAttribute('file-access')).toBe(false)
+    expect(pane.shadowRoot?.querySelector('.file-access-status')).toBeNull()
+  })
+
+  it('enables file actions when opted in and supported in a secure context', async () => {
+    vi.stubGlobal('showOpenFilePicker', vi.fn())
+    vi.stubGlobal('showSaveFilePicker', vi.fn())
+    const pane = await createDemoPane(true)
+
+    expect(pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Open JSON file"]')
+      ?.hasAttribute('disabled')).toBe(false)
+    expect(pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Save JSON file"]')
+      ?.hasAttribute('disabled')).toBe(false)
+    expect(pane.hasAttribute('file-access')).toBe(true)
+  })
+
+  it('keeps opted-in file actions disabled and status visually hidden when picker APIs are absent', async () => {
     vi.stubGlobal('showOpenFilePicker', undefined)
     vi.stubGlobal('showSaveFilePicker', undefined)
-    const pane = await createDemoPane()
+    const pane = await createDemoPane(true)
 
     const openButton = pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Open JSON file"]')
     const saveButton = pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Save JSON file"]')
+    const status = pane.shadowRoot?.querySelector<HTMLElement>('.file-access-status')
 
     expect(openButton?.hasAttribute('disabled')).toBe(true)
     expect(saveButton?.hasAttribute('disabled')).toBe(true)
-    expect(pane.shadowRoot?.querySelector('[role="status"]')?.textContent)
+    expect(status?.getAttribute('role')).toBe('status')
+    expect(status?.classList.contains('visually-hidden')).toBe(true)
+    expect(status?.textContent)
       .toContain('Local file access requires Chromium')
+    const cssText = (styles as { cssText: string }).cssText
+    expect(cssText).toContain('position: absolute')
+    expect(cssText).toContain('clip: rect(0, 0, 0, 0)')
+  })
+
+  it('keeps opted-in file actions disabled outside a secure context', async () => {
+    vi.stubGlobal('showOpenFilePicker', vi.fn())
+    vi.stubGlobal('showSaveFilePicker', vi.fn())
+    const pane = await createDemoPane(true, false)
+
+    expect(pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Open JSON file"]')
+      ?.hasAttribute('disabled')).toBe(true)
+    expect(pane.shadowRoot?.querySelector<HTMLElement>('wa-button[aria-label="Save JSON file"]')
+      ?.hasAttribute('disabled')).toBe(true)
+    expect(pane.shadowRoot?.querySelector('.file-access-status')?.classList.contains('visually-hidden'))
+      .toBe(true)
   })
 
   it('saves the latest JSON and markup drafts to their separate handles', async () => {
     const dataFile = createWritableFileHandle('')
     const markupFile = createWritableFileHandle('')
-    const pane = await createDemoPane()
+    const pane = await createDemoPane(true)
     pane._dataFileHandle = dataFile.handle
     pane._templateFileHandle = markupFile.handle
     const latestData = '{"patient":{"resourceType":"Observation"}}'
@@ -218,7 +265,7 @@ describe('demo-pane local file loading', () => {
     const file = createWritableFileHandle('')
     const picker = vi.fn(() => Promise.resolve(file.handle))
     vi.stubGlobal('showSaveFilePicker', picker)
-    const pane = await createDemoPane()
+    const pane = await createDemoPane(true)
 
     await clickAction(pane, 'Save JSON file')
 
@@ -232,7 +279,7 @@ describe('demo-pane local file loading', () => {
 
   it('keeps drafts and handles unchanged when the save picker is canceled', async () => {
     vi.stubGlobal('showSaveFilePicker', vi.fn().mockRejectedValue(new DOMException('Canceled', 'AbortError')))
-    const pane = await createDemoPane()
+    const pane = await createDemoPane(true)
 
     await clickAction(pane, 'Save JSON file')
 
@@ -243,7 +290,7 @@ describe('demo-pane local file loading', () => {
 
   it.each(['write', 'close'] as const)('shows %s failures when saving', async (failure) => {
     const file = createWritableFileHandle('', failure)
-    const pane = await createDemoPane()
+    const pane = await createDemoPane(true)
     pane._dataFileHandle = file.handle
 
     await clickAction(pane, 'Save JSON file')
@@ -257,7 +304,7 @@ describe('demo-pane local file loading', () => {
 
 describe('demo-pane editor actions', () => {
   it('groups JSON, markup, and shared actions with their respective editors', async () => {
-    const pane = await createDemoPane()
+    const pane = await createDemoPane(true)
     const shadowRoot = pane.shadowRoot
 
     const actionLabels = (selector: string) =>
