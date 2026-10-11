@@ -1,4 +1,4 @@
-import { html, LitElement, PropertyValueMap } from 'lit'
+import { html, LitElement, nothing, PropertyValueMap } from 'lit'
 import { property, state } from 'lit/decorators.js'
 import { unsafeHTML } from 'lit/directives/unsafe-html.js'
 import { EditorState } from '@codemirror/state'
@@ -14,6 +14,25 @@ import 'prismjs/components/prism-markup.js'
 import '../code-example.ts'
 import { styles } from './styles.ts'
 import { formatHtmlTemplate, parseJSON, RenderedTemplate, renderTemplate, TemplateData } from './template-renderer.ts'
+
+interface LocalFileHandle {
+  getFile(): Promise<{ text(): Promise<string> }>
+  createWritable(): Promise<{
+    write(contents: string): Promise<void>
+    close(): Promise<void>
+    abort?(): Promise<void>
+  }>
+}
+
+interface FilePickerType {
+  description: string
+  accept: Record<string, string[]>
+}
+
+interface FilePickerWindow {
+  showOpenFilePicker?: (options?: { multiple?: boolean; types?: FilePickerType[] }) => Promise<LocalFileHandle[]>
+  showSaveFilePicker?: (options?: { suggestedName?: string; types?: FilePickerType[] }) => Promise<LocalFileHandle>
+}
 
 const editableAttributeConverter = {
   fromAttribute: (value: string | null): boolean => {
@@ -47,11 +66,17 @@ class DemoPane extends LitElement {
   @property({ type: Boolean, attribute: 'readonly', reflect: true })
   readOnly = false
 
+  @property({ type: Boolean, attribute: 'file-access', reflect: true })
+  fileAccess = false
+
   @property({ type: String })
   layout: 'horizontal' | 'tabs' = 'horizontal'
 
   @property({ type: String, attribute: 'default-tab' })
   defaultTab: 'data' | 'markup' | 'output' = 'output'
+
+  @property({ type: String, attribute: 'editor-title' })
+  editorTitle = 'Data & template'
 
   @property({ type: String, attribute: 'data-label' })
   dataLabel = ''
@@ -106,6 +131,13 @@ class DemoPane extends LitElement {
 
   @state()
   private _draftImports = '[]'
+
+  @state()
+  private _fileError: string | null = null
+
+  private _dataFileHandle: LocalFileHandle | null = null
+
+  private _templateFileHandle: LocalFileHandle | null = null
 
   @state()
   private _outputVersion = 0
@@ -324,6 +356,155 @@ class DemoPane extends LitElement {
       return `Template error: ${error.message}`
     }
     return `Template error: ${String(error)}`
+  }
+
+  private get filePickerWindow(): FilePickerWindow {
+    return globalThis as typeof globalThis & FilePickerWindow
+  }
+
+  private get isFileAccessSupported(): boolean {
+    return globalThis.isSecureContext === true &&
+      typeof this.filePickerWindow.showOpenFilePicker === 'function' &&
+      typeof this.filePickerWindow.showSaveFilePicker === 'function'
+  }
+
+  private get canOpenFiles(): boolean {
+    return this.fileAccess && this.isFileAccessSupported
+  }
+
+  private get canSaveFiles(): boolean {
+    return this.fileAccess && this.isFileAccessSupported
+  }
+
+  private isPickerCancellation(error: unknown): boolean {
+    return typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError'
+  }
+
+  private openDataFile = async (): Promise<void> => {
+    await this.openLocalFile('data')
+  }
+
+  private openTemplateFile = async (): Promise<void> => {
+    await this.openLocalFile('template')
+  }
+
+  private saveDataFile = async (): Promise<void> => {
+    await this.saveLocalFile('data')
+  }
+
+  private saveTemplateFile = async (): Promise<void> => {
+    await this.saveLocalFile('template')
+  }
+
+  private async openLocalFile(kind: 'data' | 'template'): Promise<void> {
+    const picker = this.filePickerWindow.showOpenFilePicker
+    if (!picker) {
+      this._fileError = 'Opening local files is unavailable in this browser. Use Chromium over a secure connection.'
+      return
+    }
+
+    const options = kind === 'data'
+      ? {
+        multiple: false,
+        types: [{ description: 'JSON data', accept: { 'application/json': ['.json'] } }],
+      }
+      : {
+        multiple: false,
+        types: [{ description: 'Markup templates', accept: { 'text/html': ['.html', '.htm', '.vto'] } }],
+      }
+
+    let handle: LocalFileHandle | undefined
+    try {
+      ;[handle] = await picker.call(globalThis, options)
+    } catch (error) {
+      if (this.isPickerCancellation(error)) {
+        return
+      }
+      const message = error instanceof Error ? error.message : String(error)
+      const fileDescription = kind === 'data' ? 'JSON data' : 'markup template'
+      this._fileError = `Could not choose ${fileDescription}: ${message}`
+      return
+    }
+    if (!handle) {
+      return
+    }
+
+    try {
+      const text = await (await handle.getFile()).text()
+      this._fileError = null
+      if (kind === 'data') {
+        this._dataFileHandle = handle
+        this._draftData = text
+      } else {
+        this._templateFileHandle = handle
+        this._draftTemplate = text
+      }
+      this.syncEditorsFromDraft()
+      this.processData()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      const fileDescription = kind === 'data' ? 'JSON data' : 'markup template'
+      this._fileError = `Could not open ${fileDescription}: ${message}`
+    }
+  }
+
+  private async saveLocalFile(kind: 'data' | 'template'): Promise<void> {
+    let handle = kind === 'data' ? this._dataFileHandle : this._templateFileHandle
+    const picker = this.filePickerWindow.showSaveFilePicker
+    if (!handle && !picker) {
+      this._fileError = 'Saving local files is unavailable in this browser. Use Chromium over a secure connection.'
+      return
+    }
+
+    const options = kind === 'data'
+      ? {
+        suggestedName: 'data.json',
+        types: [{ description: 'JSON data', accept: { 'application/json': ['.json'] } }],
+      }
+      : {
+        suggestedName: 'template.html',
+        types: [{ description: 'Markup templates', accept: { 'text/html': ['.html', '.htm', '.vto'] } }],
+      }
+    if (!handle && picker) {
+      try {
+        handle = await picker.call(globalThis, options)
+      } catch (error) {
+        if (this.isPickerCancellation(error)) {
+          return
+        }
+        const message = error instanceof Error ? error.message : String(error)
+        const fileDescription = kind === 'data' ? 'JSON data' : 'markup template'
+        this._fileError = `Could not choose a destination for ${fileDescription}: ${message}`
+        return
+      }
+    }
+    if (!handle) {
+      return
+    }
+
+    let writable: Awaited<ReturnType<LocalFileHandle['createWritable']>> | null = null
+    try {
+      writable = await handle.createWritable()
+      await writable.write(kind === 'data' ? this._draftData : this._draftTemplate)
+      await writable.close()
+      if (kind === 'data') {
+        this._dataFileHandle = handle
+      } else {
+        this._templateFileHandle = handle
+      }
+      this._fileError = null
+    } catch (error) {
+      if (writable) {
+        try {
+          await writable.abort?.()
+        } catch {
+          // Keep the original write error visible.
+        }
+      }
+      const message = error instanceof Error ? error.message : String(error)
+      const fileDescription = kind === 'data' ? 'JSON data' : 'markup template'
+      this._fileError = `Could not save ${fileDescription}: ${message}`
+    }
   }
 
   private processData(): void {
@@ -761,7 +942,7 @@ class DemoPane extends LitElement {
 
   private async loadImports(): Promise<void> {
     try {
-      const required = ['button', 'icon', 'split-panel', 'details']
+      const required = ['button', 'icon', 'split-panel', 'details', 'tooltip']
       const explicit = this.parseImportList(this._draftImports)
       const autoDetected = this.detectWebAwesomeComponents(this._draftTemplate)
       const componentNames = new Set<string>([...required, ...explicit, ...autoDetected])
@@ -974,7 +1155,8 @@ class DemoPane extends LitElement {
 
   private getEditorFieldChromeHeight(field: HTMLElement, fieldContent: HTMLElement): number {
     const extraRows = [...field.children].filter((child): child is HTMLElement =>
-      child instanceof HTMLElement && child !== fieldContent && child.getBoundingClientRect().height > 0
+      child instanceof HTMLElement && child !== fieldContent && !child.contains(fieldContent) &&
+      child.getBoundingClientRect().height > 0
     )
     if (extraRows.length === 0) {
       return 0
@@ -1049,6 +1231,39 @@ class DemoPane extends LitElement {
     return 80
   }
 
+  private renderTooltipButton(
+    id: string,
+    label: string,
+    icon: string,
+    action: () => void,
+    options: {
+      disabled?: boolean
+      pressed?: boolean
+      title?: string
+      variant?: 'brand' | 'neutral'
+    } = {},
+  ): unknown {
+    const title = options.title ?? label
+    return html`
+      <span class="editor-action">
+        <wa-button
+          id="${id}"
+          size="small"
+          variant="${options.variant ?? 'neutral'}"
+          appearance="plain"
+          aria-label="${label}"
+          title="${title}"
+          aria-pressed="${options.pressed === undefined ? nothing : String(options.pressed)}"
+          ?disabled="${options.disabled ?? false}"
+          @click="${action}"
+        >
+          <wa-icon name="${icon}" label="${title}"></wa-icon>
+        </wa-button>
+        <wa-tooltip for="${id}">${title}</wa-tooltip>
+      </span>
+    `
+  }
+
   private renderEditor(): unknown {
     if (!this.canEdit) {
       return null
@@ -1071,7 +1286,7 @@ class DemoPane extends LitElement {
         @wa-show="${() => (this.editorOpen = true)}"
         @wa-hide="${() => (this.editorOpen = false)}"
       >
-        <span slot="summary">Data & template</span>
+        <span slot="summary">${this.editorTitle}</span>
         <div class="editor-panel-content" style="${editorContentStyle}">
           <wa-split-panel
             class="editor-split"
@@ -1085,7 +1300,30 @@ class DemoPane extends LitElement {
                   <span>${dataLabel}</span>
                 `
                 : null}
-              <div id="json-editor" class="editor-host"></div>
+              <div class="editor-field-content">
+                <div id="json-editor" class="editor-host"></div>
+                <div class="editor-field-actions" role="group" aria-label="JSON editor actions">
+                  ${this.renderTooltipButton('format-json-action', 'Format JSON', 'code', () => this.formatJson())}
+                  ${this.fileAccess
+                    ? this.renderTooltipButton(
+                      'open-json-action',
+                      'Open JSON file',
+                      'folder-open',
+                      () => this.openDataFile(),
+                      { disabled: !this.canOpenFiles },
+                    )
+                    : nothing}
+                  ${this.fileAccess
+                    ? this.renderTooltipButton(
+                      'save-json-action',
+                      'Save JSON file',
+                      'floppy-disk',
+                      () => this.saveDataFile(),
+                      { disabled: !this.canSaveFiles },
+                    )
+                    : nothing}
+                </div>
+              </div>
             </label>
 
             <label class="editor-field" slot="end">
@@ -1094,72 +1332,68 @@ class DemoPane extends LitElement {
                   <span>${templateLabel}</span>
                 `
                 : null}
-              <div id="template-editor" class="editor-host"></div>
+              <div class="editor-field-content">
+                <div id="template-editor" class="editor-host"></div>
+                <div class="editor-field-actions" role="group" aria-label="Markup editor actions">
+                  ${this.renderTooltipButton(
+                    'format-markup-action',
+                    'Format HTML',
+                    'file-code',
+                    () => this.formatHtml(),
+                  )}
+                  ${this.fileAccess
+                    ? this.renderTooltipButton(
+                      'open-markup-action',
+                      'Open markup file',
+                      'folder-open',
+                      () => this.openTemplateFile(),
+                      { disabled: !this.canOpenFiles },
+                    )
+                    : nothing}
+                  ${this.fileAccess
+                    ? this.renderTooltipButton(
+                      'save-markup-action',
+                      'Save markup file',
+                      'floppy-disk',
+                      () => this.saveTemplateFile(),
+                      { disabled: !this.canSaveFiles },
+                    )
+                    : nothing}
+                </div>
+              </div>
             </label>
           </wa-split-panel>
           <div class="editor-actions">
-            <wa-button
-              size="small"
-              variant="brand"
-              appearance="plain"
-              aria-label="Run demo"
-              title="Run demo"
-              @click="${this.runDemo}"
-            >
-              <wa-icon name="play" label="Run demo"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Format JSON"
-              title="Format JSON"
-              @click="${this.formatJson}"
-            >
-              <wa-icon name="code" label="Format JSON"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Format HTML"
-              title="Format HTML"
-              @click="${this.formatHtml}"
-            >
-              <wa-icon name="file-code" label="Format HTML"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Toggle output height"
-              aria-pressed="${this._isPreviewHeightFitted ? 'true' : 'false'}"
-              title="${previewHeightToggleLabel}"
-              @click="${this.togglePreviewHeightFit}"
-            >
-              <wa-icon name="bars" label="${previewHeightToggleLabel}"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Toggle editor height"
-              aria-pressed="${this._isEditorHeightFitted ? 'true' : 'false'}"
-              title="${editorHeightToggleLabel}"
-              @click="${this.toggleEditorPanelHeightFit}"
-            >
-              <wa-icon name="bars" label="${editorHeightToggleLabel}"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Reset demo"
-              title="Reset demo"
-              @click="${this.resetDemo}"
-            >
-              <wa-icon name="arrows-rotate" label="Reset demo"></wa-icon>
-            </wa-button>
+            ${this.renderTooltipButton('run-demo-action', 'Run demo', 'play', () => this.runDemo(), {
+              variant: 'brand',
+            })}
+            ${this.renderTooltipButton(
+              'output-height-action',
+              'Toggle output height',
+              'bars',
+              () => this.togglePreviewHeightFit(),
+              { pressed: this._isPreviewHeightFitted, title: previewHeightToggleLabel },
+            )}
+            ${this.renderTooltipButton(
+              'editor-height-action',
+              'Toggle editor height',
+              'bars',
+              () => this.toggleEditorPanelHeightFit(),
+              { pressed: this._isEditorHeightFitted, title: editorHeightToggleLabel },
+            )}
+            ${this.renderTooltipButton('reset-demo-action', 'Reset demo', 'arrows-rotate', () => this.resetDemo())}
+            ${!this.isFileAccessSupported
+              ? html`
+                <span class="visually-hidden file-access-status" role="status">
+                  Local file access requires Chromium on a secure connection.
+                </span>
+              `
+              : null}
+            ${this._fileError
+              ? html`
+                <div class="error file-access-error" role="alert">${this._fileError}</div>
+              `
+              : null}
           </div>
           <div
             class="editor-resizer ${this._isResizingEditors ? 'is-active' : ''}"
@@ -1167,8 +1401,7 @@ class DemoPane extends LitElement {
             aria-orientation="horizontal"
             aria-label="Resize editors"
             @pointerdown="${this.handleEditorResizeStart}"
-          >
-          </div>
+          ></div>
         </div>
       </wa-details>
     `
@@ -1199,16 +1432,21 @@ class DemoPane extends LitElement {
     return html`
       <div class="pane">
         <div class="pane-toolbar">
-          <wa-button
-            id="${buttonId}"
-            class="copy-button"
-            variant="neutral"
-            appearance="plain"
-            size="small"
-            @click="${() => this.copyToClipboard(copyText, buttonId)}"
-          >
-            <wa-icon name="copy" label="Copy"></wa-icon>
-          </wa-button>
+          <span class="editor-action">
+            <wa-button
+              id="${buttonId}"
+              class="copy-button"
+              variant="neutral"
+              appearance="plain"
+              size="small"
+              aria-label="Copy ${type === 'json' ? 'JSON' : 'markup'}"
+              title="Copy ${type === 'json' ? 'JSON' : 'markup'}"
+              @click="${() => this.copyToClipboard(copyText, buttonId)}"
+            >
+              <wa-icon name="copy" label="Copy ${type === 'json' ? 'JSON' : 'markup'}"></wa-icon>
+            </wa-button>
+            <wa-tooltip for="${buttonId}">Copy ${type === 'json' ? 'JSON' : 'markup'}</wa-tooltip>
+          </span>
         </div>
         <div class="pane-content">
           <pre><code class="language-${type}">${unsafeHTML(content)}</code></pre>
@@ -1261,8 +1499,7 @@ class DemoPane extends LitElement {
               aria-orientation="horizontal"
               aria-label="Resize rendered output"
               @pointerdown="${this.handlePreviewResizeStart}"
-            >
-            </div>
+            ></div>
           `
           : null}
       </div>
@@ -1324,7 +1561,7 @@ class DemoPane extends LitElement {
 
     return html`
       <wa-details class="editor-panel" appearance="plain" open>
-        <span slot="summary">Data & template</span>
+        <span slot="summary">${this.editorTitle}</span>
         <div class="editor-panel-content" style="${editorContentStyle}">
           <wa-split-panel
             class="editor-split"
@@ -1347,8 +1584,7 @@ class DemoPane extends LitElement {
             aria-orientation="horizontal"
             aria-label="Resize editors"
             @pointerdown="${this.handleEditorResizeStart}"
-          >
-          </div>
+          ></div>
         </div>
       </wa-details>
     `

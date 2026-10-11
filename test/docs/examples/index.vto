@@ -38,6 +38,28 @@ console.log(`${release.version} is ${release.status}`)
   </section>
 
   <section class="docs-section">
+    <h2>Code Example (CSS)</h2>
+    <!-- deno-fmt-ignore -->
+    <code-example language="css">
+.release-banner {
+  display: grid;
+  gap: 0.5rem;
+  color: var(--wa-color-brand-fill-loud);
+}
+    </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Code Example (Padded TSX)</h2>
+    <!-- deno-fmt-ignore -->
+    <code-example language="tsx" padded>
+export function ReleaseBadge() {
+  return &lt;wa-badge variant="success"&gt;Ready&lt;/wa-badge&gt;
+}
+    </code-example>
+  </section>
+
+  <section class="docs-section">
     <h2>Editable Demo Pane</h2>
     <demo-pane
       data='{"title":"Release v0.2.0","state":"Ready","items":["Navigation offsets","TOC active state","Resizable editors"]}'
