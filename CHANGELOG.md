@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/zenwork/theme-webawesome/compare/v1.1.1...v1.2.0) (2026-10-11)
+
+
+### Bug Fixes
+
+* release please worflow ([0370e20](https://github.com/zenwork/theme-webawesome/commit/0370e20ddd603df24011ff34705326fc08b7c665))
+
+
+### Features
+
+* **components:** enhance interactive code examples and demo pane ([#8](https://github.com/zenwork/theme-webawesome/issues/8)) ([c8a9024](https://github.com/zenwork/theme-webawesome/commit/c8a902424363b44e5b9e1e2168f1b5a8dc6e30c3))
+
 ## [1.1.1](https://github.com/zenwork/theme-webawesome/compare/v1.1.0...v1.1.1) (2026-05-29)
 
 
