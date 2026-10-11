@@ -1,4 +1,4 @@
-import { html, LitElement, PropertyValueMap } from 'lit'
+import { html, LitElement, nothing, PropertyValueMap } from 'lit'
 import { property, state } from 'lit/decorators.js'
 import { unsafeHTML } from 'lit/directives/unsafe-html.js'
 import { EditorState } from '@codemirror/state'
@@ -930,7 +930,7 @@ class DemoPane extends LitElement {
 
   private async loadImports(): Promise<void> {
     try {
-      const required = ['button', 'icon', 'split-panel', 'details']
+      const required = ['button', 'icon', 'split-panel', 'details', 'tooltip']
       const explicit = this.parseImportList(this._draftImports)
       const autoDetected = this.detectWebAwesomeComponents(this._draftTemplate)
       const componentNames = new Set<string>([...required, ...explicit, ...autoDetected])
@@ -1143,7 +1143,8 @@ class DemoPane extends LitElement {
 
   private getEditorFieldChromeHeight(field: HTMLElement, fieldContent: HTMLElement): number {
     const extraRows = [...field.children].filter((child): child is HTMLElement =>
-      child instanceof HTMLElement && child !== fieldContent && child.getBoundingClientRect().height > 0
+      child instanceof HTMLElement && child !== fieldContent && !child.contains(fieldContent) &&
+      child.getBoundingClientRect().height > 0
     )
     if (extraRows.length === 0) {
       return 0
@@ -1218,6 +1219,39 @@ class DemoPane extends LitElement {
     return 80
   }
 
+  private renderTooltipButton(
+    id: string,
+    label: string,
+    icon: string,
+    action: () => void,
+    options: {
+      disabled?: boolean
+      pressed?: boolean
+      title?: string
+      variant?: 'brand' | 'neutral'
+    } = {},
+  ): unknown {
+    const title = options.title ?? label
+    return html`
+      <span class="editor-action">
+        <wa-button
+          id="${id}"
+          size="small"
+          variant="${options.variant ?? 'neutral'}"
+          appearance="plain"
+          aria-label="${label}"
+          title="${title}"
+          aria-pressed="${options.pressed === undefined ? nothing : String(options.pressed)}"
+          ?disabled="${options.disabled ?? false}"
+          @click="${action}"
+        >
+          <wa-icon name="${icon}" label="${title}"></wa-icon>
+        </wa-button>
+        <wa-tooltip for="${id}">${title}</wa-tooltip>
+      </span>
+    `
+  }
+
   private renderEditor(): unknown {
     if (!this.canEdit) {
       return null
@@ -1254,7 +1288,26 @@ class DemoPane extends LitElement {
                   <span>${dataLabel}</span>
                 `
                 : null}
-              <div id="json-editor" class="editor-host"></div>
+              <div class="editor-field-content">
+                <div id="json-editor" class="editor-host"></div>
+                <div class="editor-field-actions" role="group" aria-label="JSON editor actions">
+                  ${this.renderTooltipButton('format-json-action', 'Format JSON', 'code', () => this.formatJson())}
+                  ${this.renderTooltipButton(
+                    'open-json-action',
+                    'Open JSON file',
+                    'folder-open',
+                    () => this.openDataFile(),
+                    { disabled: !this.canOpenFiles },
+                  )}
+                  ${this.renderTooltipButton(
+                    'save-json-action',
+                    'Save JSON file',
+                    'floppy-disk',
+                    () => this.saveDataFile(),
+                    { disabled: !this.canSaveFiles },
+                  )}
+                </div>
+              </div>
             </label>
 
             <label class="editor-field" slot="end">
@@ -1263,116 +1316,52 @@ class DemoPane extends LitElement {
                   <span>${templateLabel}</span>
                 `
                 : null}
-              <div id="template-editor" class="editor-host"></div>
+              <div class="editor-field-content">
+                <div id="template-editor" class="editor-host"></div>
+                <div class="editor-field-actions" role="group" aria-label="Markup editor actions">
+                  ${this.renderTooltipButton(
+                    'format-markup-action',
+                    'Format HTML',
+                    'file-code',
+                    () => this.formatHtml(),
+                  )}
+                  ${this.renderTooltipButton(
+                    'open-markup-action',
+                    'Open markup file',
+                    'folder-open',
+                    () => this.openTemplateFile(),
+                    { disabled: !this.canOpenFiles },
+                  )}
+                  ${this.renderTooltipButton(
+                    'save-markup-action',
+                    'Save markup file',
+                    'floppy-disk',
+                    () => this.saveTemplateFile(),
+                    { disabled: !this.canSaveFiles },
+                  )}
+                </div>
+              </div>
             </label>
           </wa-split-panel>
           <div class="editor-actions">
-            <wa-button
-              size="small"
-              variant="brand"
-              appearance="plain"
-              aria-label="Run demo"
-              title="Run demo"
-              @click="${this.runDemo}"
-            >
-              <wa-icon name="play" label="Run demo"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Format JSON"
-              title="Format JSON"
-              @click="${this.formatJson}"
-            >
-              <wa-icon name="code" label="Format JSON"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Format HTML"
-              title="Format HTML"
-              @click="${this.formatHtml}"
-            >
-              <wa-icon name="file-code" label="Format HTML"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Open JSON file"
-              title="Open JSON file"
-              ?disabled="${!this.canOpenFiles}"
-              @click="${this.openDataFile}"
-            >
-              <wa-icon name="folder-open" label="Open JSON file"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Open markup file"
-              title="Open markup file"
-              ?disabled="${!this.canOpenFiles}"
-              @click="${this.openTemplateFile}"
-            >
-              <wa-icon name="folder-open" label="Open markup file"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Save JSON file"
-              title="Save JSON file"
-              ?disabled="${!this.canSaveFiles}"
-              @click="${this.saveDataFile}"
-            >
-              <wa-icon name="floppy-disk" label="Save JSON file"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Save markup file"
-              title="Save markup file"
-              ?disabled="${!this.canSaveFiles}"
-              @click="${this.saveTemplateFile}"
-            >
-              <wa-icon name="floppy-disk" label="Save markup file"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Toggle output height"
-              aria-pressed="${this._isPreviewHeightFitted ? 'true' : 'false'}"
-              title="${previewHeightToggleLabel}"
-              @click="${this.togglePreviewHeightFit}"
-            >
-              <wa-icon name="bars" label="${previewHeightToggleLabel}"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Toggle editor height"
-              aria-pressed="${this._isEditorHeightFitted ? 'true' : 'false'}"
-              title="${editorHeightToggleLabel}"
-              @click="${this.toggleEditorPanelHeightFit}"
-            >
-              <wa-icon name="bars" label="${editorHeightToggleLabel}"></wa-icon>
-            </wa-button>
-            <wa-button
-              size="small"
-              variant="neutral"
-              appearance="plain"
-              aria-label="Reset demo"
-              title="Reset demo"
-              @click="${this.resetDemo}"
-            >
-              <wa-icon name="arrows-rotate" label="Reset demo"></wa-icon>
-            </wa-button>
+            ${this.renderTooltipButton('run-demo-action', 'Run demo', 'play', () => this.runDemo(), {
+              variant: 'brand',
+            })}
+            ${this.renderTooltipButton(
+              'output-height-action',
+              'Toggle output height',
+              'bars',
+              () => this.togglePreviewHeightFit(),
+              { pressed: this._isPreviewHeightFitted, title: previewHeightToggleLabel },
+            )}
+            ${this.renderTooltipButton(
+              'editor-height-action',
+              'Toggle editor height',
+              'bars',
+              () => this.toggleEditorPanelHeightFit(),
+              { pressed: this._isEditorHeightFitted, title: editorHeightToggleLabel },
+            )}
+            ${this.renderTooltipButton('reset-demo-action', 'Reset demo', 'arrows-rotate', () => this.resetDemo())}
             ${!this.canOpenFiles || !this.canSaveFiles
               ? html`
                 <span class="file-access-status" role="status">
@@ -1392,8 +1381,7 @@ class DemoPane extends LitElement {
             aria-orientation="horizontal"
             aria-label="Resize editors"
             @pointerdown="${this.handleEditorResizeStart}"
-          >
-          </div>
+          ></div>
         </div>
       </wa-details>
     `
@@ -1424,16 +1412,21 @@ class DemoPane extends LitElement {
     return html`
       <div class="pane">
         <div class="pane-toolbar">
-          <wa-button
-            id="${buttonId}"
-            class="copy-button"
-            variant="neutral"
-            appearance="plain"
-            size="small"
-            @click="${() => this.copyToClipboard(copyText, buttonId)}"
-          >
-            <wa-icon name="copy" label="Copy"></wa-icon>
-          </wa-button>
+          <span class="editor-action">
+            <wa-button
+              id="${buttonId}"
+              class="copy-button"
+              variant="neutral"
+              appearance="plain"
+              size="small"
+              aria-label="Copy ${type === 'json' ? 'JSON' : 'markup'}"
+              title="Copy ${type === 'json' ? 'JSON' : 'markup'}"
+              @click="${() => this.copyToClipboard(copyText, buttonId)}"
+            >
+              <wa-icon name="copy" label="Copy ${type === 'json' ? 'JSON' : 'markup'}"></wa-icon>
+            </wa-button>
+            <wa-tooltip for="${buttonId}">Copy ${type === 'json' ? 'JSON' : 'markup'}</wa-tooltip>
+          </span>
         </div>
         <div class="pane-content">
           <pre><code class="language-${type}">${unsafeHTML(content)}</code></pre>
@@ -1486,8 +1479,7 @@ class DemoPane extends LitElement {
               aria-orientation="horizontal"
               aria-label="Resize rendered output"
               @pointerdown="${this.handlePreviewResizeStart}"
-            >
-            </div>
+            ></div>
           `
           : null}
       </div>
@@ -1572,8 +1564,7 @@ class DemoPane extends LitElement {
             aria-orientation="horizontal"
             aria-label="Resize editors"
             @pointerdown="${this.handleEditorResizeStart}"
-          >
-          </div>
+          ></div>
         </div>
       </wa-details>
     `

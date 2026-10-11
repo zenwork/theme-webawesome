@@ -167,6 +167,7 @@ export const styles: CSSResultGroup = css`
   .editor-split {
     --divider-width: 12px;
     --divider-hit-area: 24px;
+    container-type: inline-size;
     block-size: auto;
     min-block-size: var(--demo-editor-min-height);
     background: var(--demo-editor-bg);
@@ -179,10 +180,10 @@ export const styles: CSSResultGroup = css`
   .editor-split::part(divider) {
     background:
       radial-gradient(
-        circle at center,
-        color-mix(in srgb, var(--wa-color-neutral-500) 70%, transparent) 1px,
-        transparent 1.5px
-      ) center / 6px 6px repeat-y,
+      circle at center,
+      color-mix(in srgb, var(--wa-color-neutral-500) 70%, transparent) 1px,
+      transparent 1.5px
+    ) center / 6px 6px repeat-y,
       transparent;
     border-inline: 1px dashed var(--wa-color-neutral-400);
     transition: border-color 0.16s ease, background-color 0.16s ease;
@@ -222,6 +223,29 @@ export const styles: CSSResultGroup = css`
     background: var(--demo-editor-bg);
   }
 
+  .editor-field-content {
+    position: relative;
+    grid-row: 2;
+    min-inline-size: 0;
+    min-block-size: 0;
+    block-size: 100%;
+  }
+
+  .editor-field-actions {
+    position: absolute;
+    z-index: 1;
+    inset-block-start: 0.375rem;
+    inset-inline-end: 0.375rem;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+    max-inline-size: calc(100% - 0.75rem);
+    overflow-x: auto;
+    padding: 0.125rem;
+    border-radius: var(--wa-border-radius-s);
+    background: color-mix(in srgb, var(--demo-editor-bg) 94%, transparent);
+  }
+
   .editor-host {
     min-inline-size: 0;
     min-height: 0;
@@ -247,10 +271,12 @@ export const styles: CSSResultGroup = css`
   }
 
   .editor-host .cm-editor {
+    box-sizing: border-box;
     min-inline-size: 0;
     inline-size: 100%;
     max-inline-size: 100%;
     block-size: 100%;
+    padding-block-start: 2.5rem;
     font-size: var(--wa-font-size-xs);
   }
 
@@ -277,11 +303,16 @@ export const styles: CSSResultGroup = css`
     /*border-top: .1rem solid var(--demo-editor-divider);*/
   }
 
-  .editor-actions wa-button::part(base) {
+  .editor-actions wa-button::part(base),
+  .editor-field-actions wa-button::part(base) {
     inline-size: 1.75rem;
     min-inline-size: 1.75rem;
     block-size: 1.75rem;
     padding: 0;
+  }
+
+  .editor-action {
+    display: inline-flex;
   }
 
   .file-access-status,
@@ -484,6 +515,22 @@ export const styles: CSSResultGroup = css`
     .tab-btn {
       font-size: var(--wa-font-size-xs);
       padding: 0.4375rem 0.5rem;
+    }
+  }
+
+  @container (max-width: 560px) {
+    .editor-field-actions {
+      gap: 0.125rem;
+    }
+
+    .editor-field-actions wa-button::part(base) {
+      inline-size: 1.625rem;
+      min-inline-size: 1.625rem;
+      block-size: 1.625rem;
+    }
+
+    .editor-host .cm-editor {
+      padding-block-start: 2.25rem;
     }
   }
 `

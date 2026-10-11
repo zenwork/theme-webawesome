@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import './demo-pane.ts'
 import { formatHtmlTemplate } from './template-renderer.ts'
+import { styles } from './styles.ts'
 
 type FileHandle = {
   getFile: () => Promise<{ text: () => Promise<string> }>
@@ -251,5 +252,58 @@ describe('demo-pane local file loading', () => {
       .toContain(failure === 'write' ? 'Could not save JSON data: Disk full' : 'Could not save JSON data: Close failed')
     expect(file.writable.abort).toHaveBeenCalledOnce()
     expect(pane._dataFileHandle).toBe(file.handle)
+  })
+})
+
+describe('demo-pane editor actions', () => {
+  it('groups JSON, markup, and shared actions with their respective editors', async () => {
+    const pane = await createDemoPane()
+    const shadowRoot = pane.shadowRoot
+
+    const actionLabels = (selector: string) =>
+      Array.from(shadowRoot?.querySelectorAll<HTMLElement>(selector) ?? [])
+        .map((button) => button.getAttribute('aria-label'))
+
+    expect(actionLabels('.editor-field[slot="start"] .editor-field-actions wa-button')).toEqual([
+      'Format JSON',
+      'Open JSON file',
+      'Save JSON file',
+    ])
+    expect(actionLabels('.editor-field[slot="end"] .editor-field-actions wa-button')).toEqual([
+      'Format HTML',
+      'Open markup file',
+      'Save markup file',
+    ])
+    expect(actionLabels('.editor-actions wa-button')).toEqual([
+      'Run demo',
+      'Toggle output height',
+      'Toggle editor height',
+      'Reset demo',
+    ])
+  })
+
+  it('provides a matching tooltip for every icon action', async () => {
+    const pane = await createDemoPane()
+    const buttons = Array.from(pane.shadowRoot?.querySelectorAll<HTMLElement>('wa-button[aria-label]') ?? [])
+
+    expect(buttons.length).toBeGreaterThan(0)
+    for (const button of buttons) {
+      expect(button.id).not.toBe('')
+      const tooltip = pane.shadowRoot?.querySelector(`wa-tooltip[for="${button.id}"]`)
+      expect(tooltip?.textContent?.trim()).toBe(button.title)
+      expect(button.getAttribute('aria-label')).not.toBe('')
+    }
+  })
+
+  it('reserves editor space for action clusters and adapts them to compact panes', () => {
+    const cssText = (styles as { cssText: string }).cssText
+
+    expect(cssText).toContain('.editor-field-actions')
+    expect(cssText).toContain('grid-row: 2')
+    expect(cssText).toContain('padding-block-start: 2.5rem')
+    expect(cssText).toContain('max-inline-size: calc(100% - 0.75rem)')
+    expect(cssText).toContain('overflow-x: auto')
+    expect(cssText).toContain('@media (max-width: 768px)')
+    expect(cssText).toContain('padding-block-start: 2.25rem')
   })
 })
