@@ -1,7 +1,10 @@
 _site
 _cache
+.vite
 .DS_Store
 .idea
+
+src/components/__screenshots__
 
 /node_modules/**/*
 /out/**/*

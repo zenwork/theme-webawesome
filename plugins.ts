@@ -11,6 +11,8 @@ import createSlugifier from 'lume/core/slugifier.ts'
 import esbuild from 'lume/plugins/esbuild.ts'
 import toc from 'https://deno.land/x/lume_markdown_plugins@v0.9.0/toc.ts'
 import { isAbsolute, join } from 'jsr:@std/path@1.1.2'
+import { convertMarkdownCodeFencesToCodeExamples } from './src/markdown-code-fences.ts'
+import { convertMarkdownDemoPaneFences } from './src/markdown-demo-panes.ts'
 
 import 'lume/types.ts'
 
@@ -35,12 +37,22 @@ export interface SiteLogoOptions {
   alt?: string
 }
 
+export interface CodeExamplesOptions {
+  markdownFences?: boolean
+}
+
+export interface DemoPanesOptions {
+  markdownFences?: boolean
+}
+
 export interface Options {
   sitemap?: Partial<SitemapOptions>
   favicon?: Partial<FaviconOptions>
   webawesome?: WebAwesomeOptions
   siteToc?: SiteTocOptions
   siteLogo?: SiteLogoOptions
+  codeExamples?: CodeExamplesOptions
+  demoPanes?: DemoPanesOptions
   componentEntrypoint?: string
   additionalComponentEntrypoints?: string[]
 }
@@ -79,6 +91,12 @@ export const defaults: Options = {
   webawesome: {
     mode: 'free',
     assetBasePath: '/lib/webawesome/dist-cdn',
+  },
+  codeExamples: {
+    markdownFences: true,
+  },
+  demoPanes: {
+    markdownFences: true,
   },
   componentEntrypoint: 'components/index.ts',
   additionalComponentEntrypoints: [],
@@ -508,22 +526,26 @@ export default function (userOptions?: Options) {
       )
     }`
 
+    const convertMarkdownCodeFences = options.codeExamples?.markdownFences ?? true
+    const convertMarkdownDemoPanes = options.demoPanes?.markdownFences ?? true
+
     site.preprocess(['.html'], (pages) => {
       for (const page of pages) {
         const content = typeof page.data.content === 'string' ? page.data.content : ''
+        let nextContent = content
 
-        if (!content.includes('<h')) {
-          continue
+        if (nextContent.includes('<h')) {
+          const { content: contentWithHeadingIds, toc: htmlToc } = buildHtmlToc(nextContent)
+          nextContent = contentWithHeadingIds
+
+          if (htmlToc.length) {
+            page.data.toc = htmlToc
+          }
         }
 
-        const { content: nextContent, toc: htmlToc } = buildHtmlToc(content)
-
-        if (!htmlToc.length) {
-          continue
+        if (nextContent !== content) {
+          page.data.content = nextContent
         }
-
-        page.data.content = nextContent
-        page.data.toc = htmlToc
       }
 
       const resolvedSections = buildThemeSections(pages)
@@ -535,6 +557,26 @@ export default function (userOptions?: Options) {
         page.data.themeNavigation = navigation
       }
     })
+
+    if (convertMarkdownCodeFences || convertMarkdownDemoPanes) {
+      site.process(['.html'], (pages) => {
+        for (const page of pages) {
+          const content = page.text
+          let nextContent = content
+
+          if (convertMarkdownDemoPanes) {
+            nextContent = convertMarkdownDemoPaneFences(nextContent)
+          }
+          if (convertMarkdownCodeFences) {
+            nextContent = convertMarkdownCodeFencesToCodeExamples(nextContent)
+          }
+
+          if (nextContent !== content) {
+            page.text = nextContent
+          }
+        }
+      })
+    }
 
     site.data('webawesome', webawesome)
     site.data('themeComponents', {

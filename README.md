@@ -89,6 +89,11 @@ From [`plugins.ts`](./plugins.ts), `theme()` wires up:
   - `mode`: `'free' | 'pro'` (default: `'free'`)
   - `assetBasePath`, `cssPath`, `loaderPath`, `splitPanelPath`
   - `customPropertiesCssPath`
+- `codeExamples`
+  - `markdownFences`: `boolean` (default: `true`) converts supported Markdown fenced code blocks to `<code-example>`
+- `demoPanes`
+  - `markdownFences`: `boolean` (default: `true`) converts grouped `json` + `html` Markdown fenced code blocks to
+    `<demo-pane>`
 - `siteToc`
   - `root` (required by interface, defaults to `'.'`)
   - `sections` (`[{ folder, label, order, icon? }]`)
@@ -206,13 +211,16 @@ Key features:
 
 - theme-consistent syntax highlighting,
 - indentation normalization for slotted multiline content,
+- automatic conversion from supported Markdown fenced code blocks,
+- optional one-line padding before and after snippets,
 - optional language inference from slotted content (`data-language`, `language-*` class, or HTML element content).
 
 Attributes:
 
 - `code` (string, default empty): explicit snippet text.
-- `language` (`json | html | javascript | typescript | text`, default inferred or `text`).
-- `line-numbers` (boolean, default `true`).
+- `language` (`json | html | javascript | typescript | jsx | tsx | css | text`, default inferred or `text`).
+- `no-line-numbers` (boolean, default `false`): hide the line number gutter.
+- `padded` (boolean, default `false`): render exactly one blank line before and after the snippet.
 
 Basic usage (slotted code):
 
@@ -231,6 +239,58 @@ Basic usage (explicit `code` value):
 ></code-example>
 ```
 
+Padded JSX example:
+
+```html
+<code-example language="tsx" padded>
+  export function StatusBadge() { return <wa-badge variant="success">Ready</wa-badge>
+  }
+</code-example>
+```
+
+Markdown pages can use supported fenced code languages directly. The theme converts these blocks to `<code-example>`
+during preprocessing:
+
+````md
+```ts
+const status = 'ready'
+console.log(status)
+```
+````
+
+Use an HTML comment immediately before a supported fence to pass boolean attributes:
+
+````md
+<!-- code-example padded no-line-numbers -->
+
+```ts
+const status = 'ready'
+console.log(status)
+```
+````
+
+Use a `demo-pane` comment immediately before a `json` fence and an `html` fence to create a runnable example. The HTML
+fence is passed through as Lit template source, so `${...}` interpolation and Lit bindings are preserved:
+
+````md
+<!-- demo-pane imports="button" default-tab="output" editor-open -->
+
+```json
+{
+  "label": "Deploy",
+  "variant": "brand"
+}
+```
+
+```html
+<wa-button variant="${variant}">
+  ${label}
+</wa-button>
+```
+````
+
+Set `codeExamples.markdownFences: false` or `demoPanes.markdownFences: false` to opt out of either conversion.
+
 ## Development commands
 
 Theme repo root:
@@ -239,6 +299,7 @@ Theme repo root:
 deno task serve
 deno task build
 deno lint
+deno task test:unit
 deno task test:browser
 ```
 

@@ -47,11 +47,44 @@ order: 40
       loaderPath: '/lib/webawesome/dist-cdn/webawesome.loader.js',
       splitPanelPath: '/lib/webawesome/dist-cdn/components/split-panel/split-panel.js',
     },
+    codeExamples: {
+      markdownFences: true,
+    },
     componentEntrypoint: 'components/index.ts',
     additionalComponentEntrypoints: ['components/custom.ts'],
   }),
 )
     </code-example>
+  </section>
+
+  <section class="docs-section">
+    <h2>Markdown Code Fences</h2>
+    <p>
+      By default, Markdown fenced code blocks with supported language labels are converted to
+      <code>&lt;code-example&gt;</code> during preprocessing. Unlabeled and unsupported fences remain regular Markdown
+      code blocks.
+    </p>
+    <p>
+      Use an HTML comment immediately before a supported fence to pass boolean attributes:
+      <code>&lt;!-- code-example padded no-line-numbers --&gt;</code>.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="typescript">
+site.use(
+  theme({
+    codeExamples: {
+      markdownFences: false,
+    },
+    demoPanes: {
+      markdownFences: false,
+    },
+  }),
+)
+    </code-example>
+    <p>
+      Demo pane fence groups use a <code>demo-pane</code> comment followed by a <code>json</code> fence and an
+      <code>html</code> fence. Disable that conversion with <code>demoPanes.markdownFences: false</code>.
+    </p>
   </section>
 
   <section class="docs-section">

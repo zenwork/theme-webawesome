@@ -190,6 +190,7 @@ a {
 
 .site-toc-panel {
   display: none;
+  border-right: 1px solid var(--wa-color-brand-border-loud);
 }
 
 .docs-content {
@@ -229,6 +230,11 @@ a {
 .site-toc-shell,
 .page-toc-shell {
   padding: 0.75rem 0.9rem;
+
+}
+
+.page-toc-shell {
+  border-left: 1px solid var(--wa-color-brand-border-loud);
 }
 
 .site-toc-nav {
@@ -514,6 +520,8 @@ code {
 
   .docs-shell {
     grid-template-columns: minmax(220px, 278px) minmax(0, 1fr) minmax(210px, 248px);
+    margin-top: 0;
+    padding-top: 0;
   }
 
   .docs-shell-full {
@@ -526,7 +534,7 @@ code {
     top: var(--docs-sticky-top);
     align-self: start;
     min-height: calc(100vh - var(--docs-sticky-top));
-    border-inline-end: 1px solid var(--docs-divider-color);
+    /*border-inline-end: 1px solid var(--docs-divider-color);*/
   }
 
   .docs-content {

@@ -15,6 +15,25 @@ import '../code-example.ts'
 import { styles } from './styles.ts'
 import { formatHtmlTemplate, parseJSON, RenderedTemplate, renderTemplate, TemplateData } from './template-renderer.ts'
 
+interface LocalFileHandle {
+  getFile(): Promise<{ text(): Promise<string> }>
+  createWritable(): Promise<{
+    write(contents: string): Promise<void>
+    close(): Promise<void>
+    abort?(): Promise<void>
+  }>
+}
+
+interface FilePickerType {
+  description: string
+  accept: Record<string, string[]>
+}
+
+interface FilePickerWindow {
+  showOpenFilePicker?: (options?: { multiple?: boolean; types?: FilePickerType[] }) => Promise<LocalFileHandle[]>
+  showSaveFilePicker?: (options?: { suggestedName?: string; types?: FilePickerType[] }) => Promise<LocalFileHandle>
+}
+
 const editableAttributeConverter = {
   fromAttribute: (value: string | null): boolean => {
     if (value === null) {
@@ -106,6 +125,13 @@ class DemoPane extends LitElement {
 
   @state()
   private _draftImports = '[]'
+
+  @state()
+  private _fileError: string | null = null
+
+  private _dataFileHandle: LocalFileHandle | null = null
+
+  private _templateFileHandle: LocalFileHandle | null = null
 
   @state()
   private _outputVersion = 0
@@ -324,6 +350,149 @@ class DemoPane extends LitElement {
       return `Template error: ${error.message}`
     }
     return `Template error: ${String(error)}`
+  }
+
+  private get filePickerWindow(): FilePickerWindow {
+    return globalThis as typeof globalThis & FilePickerWindow
+  }
+
+  private get canOpenFiles(): boolean {
+    return typeof this.filePickerWindow.showOpenFilePicker === 'function'
+  }
+
+  private get canSaveFiles(): boolean {
+    return typeof this.filePickerWindow.showSaveFilePicker === 'function'
+  }
+
+  private isPickerCancellation(error: unknown): boolean {
+    return typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError'
+  }
+
+  private openDataFile = async (): Promise<void> => {
+    await this.openLocalFile('data')
+  }
+
+  private openTemplateFile = async (): Promise<void> => {
+    await this.openLocalFile('template')
+  }
+
+  private saveDataFile = async (): Promise<void> => {
+    await this.saveLocalFile('data')
+  }
+
+  private saveTemplateFile = async (): Promise<void> => {
+    await this.saveLocalFile('template')
+  }
+
+  private async openLocalFile(kind: 'data' | 'template'): Promise<void> {
+    const picker = this.filePickerWindow.showOpenFilePicker
+    if (!picker) {
+      this._fileError = 'Opening local files is unavailable in this browser. Use Chromium over a secure connection.'
+      return
+    }
+
+    const options = kind === 'data'
+      ? {
+        multiple: false,
+        types: [{ description: 'JSON data', accept: { 'application/json': ['.json'] } }],
+      }
+      : {
+        multiple: false,
+        types: [{ description: 'Markup templates', accept: { 'text/html': ['.html', '.htm', '.vto'] } }],
+      }
+
+    let handle: LocalFileHandle | undefined
+    try {
+      ;[handle] = await picker.call(globalThis, options)
+    } catch (error) {
+      if (this.isPickerCancellation(error)) {
+        return
+      }
+      const message = error instanceof Error ? error.message : String(error)
+      const fileDescription = kind === 'data' ? 'JSON data' : 'markup template'
+      this._fileError = `Could not choose ${fileDescription}: ${message}`
+      return
+    }
+    if (!handle) {
+      return
+    }
+
+    try {
+      const text = await (await handle.getFile()).text()
+      this._fileError = null
+      if (kind === 'data') {
+        this._dataFileHandle = handle
+        this._draftData = text
+      } else {
+        this._templateFileHandle = handle
+        this._draftTemplate = text
+      }
+      this.syncEditorsFromDraft()
+      this.processData()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      const fileDescription = kind === 'data' ? 'JSON data' : 'markup template'
+      this._fileError = `Could not open ${fileDescription}: ${message}`
+    }
+  }
+
+  private async saveLocalFile(kind: 'data' | 'template'): Promise<void> {
+    let handle = kind === 'data' ? this._dataFileHandle : this._templateFileHandle
+    const picker = this.filePickerWindow.showSaveFilePicker
+    if (!handle && !picker) {
+      this._fileError = 'Saving local files is unavailable in this browser. Use Chromium over a secure connection.'
+      return
+    }
+
+    const options = kind === 'data'
+      ? {
+        suggestedName: 'data.json',
+        types: [{ description: 'JSON data', accept: { 'application/json': ['.json'] } }],
+      }
+      : {
+        suggestedName: 'template.html',
+        types: [{ description: 'Markup templates', accept: { 'text/html': ['.html', '.htm', '.vto'] } }],
+      }
+    if (!handle && picker) {
+      try {
+        handle = await picker.call(globalThis, options)
+      } catch (error) {
+        if (this.isPickerCancellation(error)) {
+          return
+        }
+        const message = error instanceof Error ? error.message : String(error)
+        const fileDescription = kind === 'data' ? 'JSON data' : 'markup template'
+        this._fileError = `Could not choose a destination for ${fileDescription}: ${message}`
+        return
+      }
+    }
+    if (!handle) {
+      return
+    }
+
+    let writable: Awaited<ReturnType<LocalFileHandle['createWritable']>> | null = null
+    try {
+      writable = await handle.createWritable()
+      await writable.write(kind === 'data' ? this._draftData : this._draftTemplate)
+      await writable.close()
+      if (kind === 'data') {
+        this._dataFileHandle = handle
+      } else {
+        this._templateFileHandle = handle
+      }
+      this._fileError = null
+    } catch (error) {
+      if (writable) {
+        try {
+          await writable.abort?.()
+        } catch {
+          // Keep the original write error visible.
+        }
+      }
+      const message = error instanceof Error ? error.message : String(error)
+      const fileDescription = kind === 'data' ? 'JSON data' : 'markup template'
+      this._fileError = `Could not save ${fileDescription}: ${message}`
+    }
   }
 
   private processData(): void {
@@ -1132,6 +1301,50 @@ class DemoPane extends LitElement {
               size="small"
               variant="neutral"
               appearance="plain"
+              aria-label="Open JSON file"
+              title="Open JSON file"
+              ?disabled="${!this.canOpenFiles}"
+              @click="${this.openDataFile}"
+            >
+              <wa-icon name="folder-open" label="Open JSON file"></wa-icon>
+            </wa-button>
+            <wa-button
+              size="small"
+              variant="neutral"
+              appearance="plain"
+              aria-label="Open markup file"
+              title="Open markup file"
+              ?disabled="${!this.canOpenFiles}"
+              @click="${this.openTemplateFile}"
+            >
+              <wa-icon name="folder-open" label="Open markup file"></wa-icon>
+            </wa-button>
+            <wa-button
+              size="small"
+              variant="neutral"
+              appearance="plain"
+              aria-label="Save JSON file"
+              title="Save JSON file"
+              ?disabled="${!this.canSaveFiles}"
+              @click="${this.saveDataFile}"
+            >
+              <wa-icon name="floppy-disk" label="Save JSON file"></wa-icon>
+            </wa-button>
+            <wa-button
+              size="small"
+              variant="neutral"
+              appearance="plain"
+              aria-label="Save markup file"
+              title="Save markup file"
+              ?disabled="${!this.canSaveFiles}"
+              @click="${this.saveTemplateFile}"
+            >
+              <wa-icon name="floppy-disk" label="Save markup file"></wa-icon>
+            </wa-button>
+            <wa-button
+              size="small"
+              variant="neutral"
+              appearance="plain"
               aria-label="Toggle output height"
               aria-pressed="${this._isPreviewHeightFitted ? 'true' : 'false'}"
               title="${previewHeightToggleLabel}"
@@ -1160,6 +1373,18 @@ class DemoPane extends LitElement {
             >
               <wa-icon name="arrows-rotate" label="Reset demo"></wa-icon>
             </wa-button>
+            ${!this.canOpenFiles || !this.canSaveFiles
+              ? html`
+                <span class="file-access-status" role="status">
+                  Local file access requires Chromium on a secure connection.
+                </span>
+              `
+              : null}
+            ${this._fileError
+              ? html`
+                <div class="error file-access-error" role="alert">${this._fileError}</div>
+              `
+              : null}
           </div>
           <div
             class="editor-resizer ${this._isResizingEditors ? 'is-active' : ''}"
@@ -1167,8 +1392,7 @@ class DemoPane extends LitElement {
             aria-orientation="horizontal"
             aria-label="Resize editors"
             @pointerdown="${this.handleEditorResizeStart}"
-          >
-          </div>
+          ></div>
         </div>
       </wa-details>
     `
@@ -1261,8 +1485,7 @@ class DemoPane extends LitElement {
               aria-orientation="horizontal"
               aria-label="Resize rendered output"
               @pointerdown="${this.handlePreviewResizeStart}"
-            >
-            </div>
+            ></div>
           `
           : null}
       </div>
@@ -1347,8 +1570,7 @@ class DemoPane extends LitElement {
             aria-orientation="horizontal"
             aria-label="Resize editors"
             @pointerdown="${this.handleEditorResizeStart}"
-          >
-          </div>
+          ></div>
         </div>
       </wa-details>
     `
