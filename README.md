@@ -91,6 +91,9 @@ From [`plugins.ts`](./plugins.ts), `theme()` wires up:
   - `customPropertiesCssPath`
 - `codeExamples`
   - `markdownFences`: `boolean` (default: `true`) converts supported Markdown fenced code blocks to `<code-example>`
+- `demoPanes`
+  - `markdownFences`: `boolean` (default: `true`) converts grouped `json` + `html` Markdown fenced code blocks to
+    `<demo-pane>`
 - `siteToc`
   - `root` (required by interface, defaults to `'.'`)
   - `sections` (`[{ folder, label, order, icon? }]`)
@@ -266,7 +269,27 @@ console.log(status)
 ```
 ````
 
-Set `codeExamples.markdownFences: false` to keep Markdown-generated `<pre><code>` output.
+Use a `demo-pane` comment immediately before a `json` fence and an `html` fence to create a runnable example. The HTML
+fence is passed through as Lit template source, so `${...}` interpolation and Lit bindings are preserved:
+
+````md
+<!-- demo-pane imports="button" default-tab="output" editor-open -->
+
+```json
+{
+  "label": "Deploy",
+  "variant": "brand"
+}
+```
+
+```html
+<wa-button variant="${variant}">
+  ${label}
+</wa-button>
+```
+````
+
+Set `codeExamples.markdownFences: false` or `demoPanes.markdownFences: false` to opt out of either conversion.
 
 ## Development commands
 

@@ -12,6 +12,7 @@ import esbuild from 'lume/plugins/esbuild.ts'
 import toc from 'https://deno.land/x/lume_markdown_plugins@v0.9.0/toc.ts'
 import { isAbsolute, join } from 'jsr:@std/path@1.1.2'
 import { convertMarkdownCodeFencesToCodeExamples } from './src/markdown-code-fences.ts'
+import { convertMarkdownDemoPaneFences } from './src/markdown-demo-panes.ts'
 
 import 'lume/types.ts'
 
@@ -40,6 +41,10 @@ export interface CodeExamplesOptions {
   markdownFences?: boolean
 }
 
+export interface DemoPanesOptions {
+  markdownFences?: boolean
+}
+
 export interface Options {
   sitemap?: Partial<SitemapOptions>
   favicon?: Partial<FaviconOptions>
@@ -47,6 +52,7 @@ export interface Options {
   siteToc?: SiteTocOptions
   siteLogo?: SiteLogoOptions
   codeExamples?: CodeExamplesOptions
+  demoPanes?: DemoPanesOptions
   componentEntrypoint?: string
   additionalComponentEntrypoints?: string[]
 }
@@ -87,6 +93,9 @@ export const defaults: Options = {
     assetBasePath: '/lib/webawesome/dist-cdn',
   },
   codeExamples: {
+    markdownFences: true,
+  },
+  demoPanes: {
     markdownFences: true,
   },
   componentEntrypoint: 'components/index.ts',
@@ -518,6 +527,7 @@ export default function (userOptions?: Options) {
     }`
 
     const convertMarkdownCodeFences = options.codeExamples?.markdownFences ?? true
+    const convertMarkdownDemoPanes = options.demoPanes?.markdownFences ?? true
 
     site.preprocess(['.html'], (pages) => {
       for (const page of pages) {
@@ -548,11 +558,18 @@ export default function (userOptions?: Options) {
       }
     })
 
-    if (convertMarkdownCodeFences) {
+    if (convertMarkdownCodeFences || convertMarkdownDemoPanes) {
       site.process(['.html'], (pages) => {
         for (const page of pages) {
           const content = page.text
-          const nextContent = convertMarkdownCodeFencesToCodeExamples(content)
+          let nextContent = content
+
+          if (convertMarkdownDemoPanes) {
+            nextContent = convertMarkdownDemoPaneFences(nextContent)
+          }
+          if (convertMarkdownCodeFences) {
+            nextContent = convertMarkdownCodeFencesToCodeExamples(nextContent)
+          }
 
           if (nextContent !== content) {
             page.text = nextContent

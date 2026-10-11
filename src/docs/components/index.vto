@@ -81,6 +81,27 @@ console.log(status)
     <p>
       Use <code>&lt;demo-pane&gt;</code> when readers should modify data or templates and see immediate output.
     </p>
+    <p>
+      Markdown pages can create a demo pane with a <code>demo-pane</code> HTML comment followed by a
+      <code>json</code> fence and an <code>html</code> fence. The HTML fence is passed through as Lit template source,
+      so <code>${...}</code> interpolation and Lit bindings are preserved.
+    </p>
+    <!-- deno-fmt-ignore -->
+    <code-example language="text">
+&lt;!-- demo-pane imports="button" default-tab="output" editor-open --&gt;
+```json
+{
+  "label": "Deploy",
+  "variant": "brand"
+}
+```
+
+```html
+&lt;wa-button variant="${variant}"&gt;
+  ${label}
+&lt;/wa-button&gt;
+```
+    </code-example>
     <demo-pane
       data='{"label":"Deploy","variant":"brand","size":"small"}'
       template='<wa-button variant="${variant}" size="${size}">${label}</wa-button>'

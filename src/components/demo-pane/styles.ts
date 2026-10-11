@@ -179,10 +179,10 @@ export const styles: CSSResultGroup = css`
   .editor-split::part(divider) {
     background:
       radial-gradient(
-        circle at center,
-        color-mix(in srgb, var(--wa-color-neutral-500) 70%, transparent) 1px,
-        transparent 1.5px
-      ) center / 6px 6px repeat-y,
+      circle at center,
+      color-mix(in srgb, var(--wa-color-neutral-500) 70%, transparent) 1px,
+      transparent 1.5px
+    ) center / 6px 6px repeat-y,
       transparent;
     border-inline: 1px dashed var(--wa-color-neutral-400);
     transition: border-color 0.16s ease, background-color 0.16s ease;
@@ -282,6 +282,21 @@ export const styles: CSSResultGroup = css`
     min-inline-size: 1.75rem;
     block-size: 1.75rem;
     padding: 0;
+  }
+
+  .file-access-status,
+  .file-access-error {
+    flex: 1 1 100%;
+    margin: 0.25rem 0 0;
+  }
+
+  .file-access-status {
+    color: var(--wa-color-neutral-600);
+    font-size: var(--wa-font-size-xs);
+  }
+
+  .file-access-error {
+    padding: 0.5rem 0.625rem;
   }
 
   .pane-toolbar wa-button::part(base) {

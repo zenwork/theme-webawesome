@@ -15,6 +15,21 @@ export function SmokeStatus() {
 }
 ```
 
+<!-- demo-pane imports="badge" default-tab="output" fit-content -->
+
+```json
+{
+  "label": "Demo pane smoke",
+  "variant": "brand"
+}
+```
+
+```html
+<wa-badge variant="${variant}">
+  ${label}
+</wa-badge>
+```
+
 This unsupported fence should remain a regular Markdown code block.
 
 ```bash

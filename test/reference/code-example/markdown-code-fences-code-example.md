@@ -47,6 +47,7 @@ Unlabeled fences remain regular Markdown code blocks.
 Place a `code-example` HTML comment immediately before a supported fence to pass boolean attributes.
 
 <!-- code-example padded no-line-numbers -->
+
 ```ts
 const options = ['padded', 'no-line-numbers']
 console.log(options.join(', '))

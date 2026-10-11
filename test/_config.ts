@@ -4,6 +4,7 @@ import theme from 'theme/mod.ts'
 const site = lume()
 
 site.copy('logos')
+site.copy('images')
 
 site.use(theme({
   siteLogo: {
