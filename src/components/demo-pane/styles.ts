@@ -284,6 +284,21 @@ export const styles: CSSResultGroup = css`
     padding: 0;
   }
 
+  .file-access-status,
+  .file-access-error {
+    flex: 1 1 100%;
+    margin: 0.25rem 0 0;
+  }
+
+  .file-access-status {
+    color: var(--wa-color-neutral-600);
+    font-size: var(--wa-font-size-xs);
+  }
+
+  .file-access-error {
+    padding: 0.5rem 0.625rem;
+  }
+
   .pane-toolbar wa-button::part(base) {
     inline-size: 2rem;
     min-inline-size: 2rem;
